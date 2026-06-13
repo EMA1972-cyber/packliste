@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Packliste</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Packliste">
+<meta name="theme-color" content="#1A3A5C">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --blue-900: #0D2137;
+  --blue-800: #1A3A5C;
+  --blue-700: #1E4976;
+  --blue-500: #2E6FAD;
+  --blue-300: #6FA8D6;
+  --blue-100: #D6E8F5;
+  --blue-50:  #EBF4FA;
+  --sand:     #F4F1EB;
+  --white:    #FFFFFF;
+  --ink:      #0D2137;
+  --muted:    #7A8FA0;
+  --border:   #D8E6F0;
+  --green:    #1A7A4A;
+  --green-bg: #E4F5ED;
+  --red:      #B83225;
+  --red-bg:   #FDECEA;
+  --warn:     #D4700A;
+  --warn-bg:  #FEF3E4;
+  --radius:   14px;
+  --shadow:   0 2px 12px rgba(13,33,55,0.09);
+  --shadow-lg:0 8px 36px rgba(13,33,55,0.16);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.app-header {
+  background: var(--blue-800);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(13,33,55,0.3);
+}
+.app-header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  flex: 1;
+}
+.back-btn {
+  background: rgba(255,255,255,0.15);
+  border: none; color: white;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: none;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* HOME */
+.home-hero {
+  background: linear-gradient(155deg, var(--blue-800) 0%, var(--blue-700) 60%, #2E6FAD 100%);
+  color: white;
+  padding: 36px 20px 48px;
+  text-align: center;
+}
+.hero-icon { font-size: 64px; margin-bottom: 12px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+.home-hero h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; font-weight: 400; margin-bottom: 6px; }
+.home-hero p { opacity: .7; font-size: 14px; }
+
+.new-btn {
+  display: flex; align-items: center; gap: 10px;
+  background: white; color: var(--blue-800);
+  border: none; border-radius: var(--radius);
+  margin: -24px 20px 0; padding: 18px 24px;
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.05rem; cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  position: relative; z-index: 10;
+  transition: transform .15s;
+  width: calc(100% - 40px);
+}
+.new-btn:active { transform: scale(.98); }
+.new-btn-plus {
+  width: 36px; height: 36px;
+  background: var(--blue-50); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: var(--blue-500); flex-shrink: 0;
+}
+
+.trips-section { padding: 28px 20px 0; }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+.trip-card {
+  background: white; border-radius: var(--radius);
+  padding: 16px; margin-bottom: 10px;
+  box-shadow: var(--shadow); cursor: pointer;
+  border: 1.5px solid transparent;
+  display: flex; align-items: center; gap: 14px;
+  transition: all .15s;
+}
+.trip-card:active { border-color: var(--blue-300); transform: scale(.99); }
+.tc-icon { width: 50px; height: 50px; background: var(--blue-50); border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.tc-body { flex: 1; min-width: 0; }
+.tc-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tc-prog { margin-top: 8px; }
+.prog-wrap { background: var(--blue-100); border-radius: 3px; height: 5px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; background: var(--blue-500); transition: width .5s; }
+.prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 3px; }
+.trip-card.done .tc-icon { background: var(--green-bg); }
+.trip-card.done .prog-fill { background: var(--green); }
+.tc-arrow { color: var(--muted); font-size: 16px; }
+
+/* WIZARD */
+.wiz-prog { padding: 14px 20px 0; display: flex; gap: 5px; }
+.wiz-pip { height: 4px; border-radius: 2px; background: var(--border); flex: 1; transition: background .3s; }
+.wiz-pip.done { background: var(--blue-500); }
+.wiz-pip.active { background: var(--blue-300); }
+
+.wiz-step { padding: 24px 20px 0; display: none; }
+.wiz-step.active { display: block; }
+
+.step-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--blue-300); margin-bottom: 8px; }
+.step-q { font-family: 'DM Serif Display', serif; font-size: 1.65rem; line-height: 1.2; color: var(--ink); margin-bottom: 24px; }
+
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice {
+  background: white; border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px;
+  cursor: pointer; display: flex; align-items: center; gap: 14px;
+  transition: all .15s; box-shadow: var(--shadow);
+  font-family: 'DM Sans', sans-serif; text-align: left;
+}
+.choice:active, .choice.sel { border-color: var(--blue-500); background: var(--blue-50); }
+.choice-ico { font-size: 30px; flex-shrink: 0; }
+.choice-txt strong { display: block; font-size: 15px; font-weight: 600; color: var(--ink); }
+.choice-txt small { font-size: 13px; color: var(--muted); font-weight: 400; }
+
+.inp-group { margin-bottom: 14px; }
+.inp-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+.inp-field {
+  width: 100%; background: white; border: 2px solid var(--border);
+  border-radius: 10px; padding: 13px 15px;
+  font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--ink);
+  outline: none; box-shadow: var(--shadow); transition: border .15s;
+}
+.inp-field:focus { border-color: var(--blue-500); }
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.climate-card {
+  background: var(--blue-50); border: 1.5px solid var(--blue-100);
+  border-radius: 12px; padding: 14px 16px; margin-top: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.climate-card .ci { font-size: 30px; }
+.climate-card strong { display: block; font-size: 14px; color: var(--blue-800); }
+.climate-card span { font-size: 12px; color: var(--muted); }
+
+.acts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.act-btn {
+  background: white; border: 2px solid var(--border);
+  border-radius: 12px; padding: 16px 12px;
+  cursor: pointer; text-align: center;
+  transition: all .15s; box-shadow: var(--shadow);
+  font-family: 'DM Sans', sans-serif;
+}
+.act-btn .ai { font-size: 30px; display: block; margin-bottom: 5px; }
+.act-btn .al { font-size: 13px; font-weight: 500; color: var(--muted); }
+.act-btn.sel { border-color: var(--blue-500); background: var(--blue-50); }
+.act-btn.sel .al { color: var(--blue-800); }
+
+.wiz-cta { padding: 24px 20px 40px; }
+.btn-main {
+  width: 100%; background: var(--blue-800); color: white;
+  border: none; border-radius: var(--radius); padding: 16px;
+  font-family: 'DM Serif Display', serif; font-size: 1.05rem;
+  cursor: pointer; transition: all .15s; box-shadow: var(--shadow);
+}
+.btn-main:active { background: var(--blue-900); transform: scale(.99); }
+.btn-main:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+.btn-skip { width: 100%; background: transparent; color: var(--muted); border: 2px solid var(--border); border-radius: var(--radius); padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; margin-top: 10px; display: none; }
+
+.summary-box { background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: var(--shadow); }
+.summary-box .si { font-size: 28px; }
+.summary-box strong { display: block; font-size: 15px; margin-bottom: 4px; }
+.summary-box span { font-size: 13px; color: var(--muted); line-height: 1.6; display: block; }
+
+/* TRIP VIEW */
+.trip-hdr { background: linear-gradient(160deg, var(--blue-800) 0%, var(--blue-700) 100%); color: white; padding: 20px; }
+.trip-hdr h2 { font-family: 'DM Serif Display', serif; font-size: 1.45rem; font-weight: 400; margin-bottom: 3px; }
+.trip-hdr .th-meta { font-size: 13px; opacity: .7; margin-bottom: 16px; }
+.pack-prog { background: rgba(255,255,255,0.12); border-radius: 12px; padding: 14px 16px; }
+.pp-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.pp-pct { font-family: 'DM Serif Display', serif; font-size: 2.2rem; line-height: 1; }
+.pp-label { font-size: 13px; opacity: .75; }
+.pp-bar { background: rgba(255,255,255,0.2); border-radius: 3px; height: 6px; overflow: hidden; }
+.pp-fill { height: 100%; background: white; border-radius: 3px; transition: width .5s; }
+
+.tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 57px; z-index: 50; }
+.tab-btn { flex: 1; padding: 13px 6px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+.tab-btn.active { color: var(--blue-800); border-bottom-color: var(--blue-500); }
+
+.tab-pane { display: none; padding-bottom: 100px; }
+.tab-pane.active { display: block; }
+
+.cat-block { margin: 14px 16px 0; background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.cat-hd { padding: 13px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.cat-hd-ico { font-size: 17px; }
+.cat-hd-title { font-weight: 600; font-size: 14px; flex: 1; }
+.cat-count { font-size: 11px; font-weight: 600; background: var(--blue-50); color: var(--blue-500); border-radius: 8px; padding: 2px 8px; }
+.cat-count.done { background: var(--green-bg); color: var(--green); }
+.cat-chev { color: var(--muted); font-size: 11px; transition: transform .2s; }
+.cat-chev.open { transform: rotate(180deg); }
+
+.subcat-hd { padding: 9px 15px 8px 38px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--blue-500); background: var(--blue-50); border-bottom: 1px solid var(--blue-100); }
+
+.undo-strip { display: flex; align-items: center; gap: 10px; padding: 10px 15px; background: var(--warn-bg); border-bottom: 1px solid #F5C890; font-size: 13px; }
+.undo-strip .un { flex: 1; color: var(--warn); font-weight: 500; }
+.undo-strip button { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--warn); padding: 2px 4px; }
+
+.item-row { display: flex; align-items: center; gap: 10px; padding: 11px 15px; border-bottom: 1px solid var(--border); transition: background .1s; }
+.item-row:last-child { border-bottom: none; }
+.item-row.faded { background: var(--sand); opacity: .6; }
+.iname { flex: 1; font-size: 14px; }
+.iname.packed { text-decoration: line-through; color: var(--muted); }
+.iqty { font-size: 11px; background: var(--blue-50); color: var(--blue-500); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+.ipool { font-size: 10px; background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
+
+.ja-nein { display: flex; gap: 6px; flex-shrink: 0; }
+.ja-b, .nein-b { border: none; border-radius: 8px; padding: 7px 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .12s; }
+.ja-b { background: var(--green-bg); color: var(--green); }
+.ja-b:active { background: var(--green); color: white; }
+.nein-b { background: var(--red-bg); color: var(--red); }
+.nein-b:active { background: var(--red); color: white; }
+
+.ichk { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all .15s; background: white; font-size: 13px; font-weight: 700; }
+.ichk.on { background: var(--green); border-color: var(--green); color: white; }
+
+.add-row { display: flex; gap: 8px; padding: 10px 15px 12px; border-top: 1px dashed var(--border); }
+.add-inp { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 11px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--sand); color: var(--ink); outline: none; }
+.add-inp:focus { border-color: var(--blue-500); background: white; }
+.add-go { background: var(--blue-50); border: 1.5px solid var(--blue-300); color: var(--blue-700); border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; }
+
+.todo-row { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-bottom: 1px solid var(--border); }
+.todo-row:last-child { border-bottom: none; }
+.tname { flex: 1; font-size: 14px; }
+.tname.nein { text-decoration: line-through; color: var(--muted); }
+
+.fab { position: fixed; bottom: 24px; right: 16px; background: var(--blue-800); color: white; border: none; border-radius: 50px; padding: 12px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px; z-index: 40; transition: transform .15s; }
+.fab:active { transform: scale(.96); }
+
+.done-bnr { margin: 16px; background: var(--green-bg); border: 1.5px solid var(--green); border-radius: var(--radius); padding: 20px; text-align: center; }
+.done-bnr h3 { font-family: 'DM Serif Display', serif; color: var(--green); font-size: 1.3rem; font-weight: 400; }
+.done-bnr p { font-size: 13px; color: var(--green); margin-top: 4px; opacity: .8; }
+
+.modal-ov { display: none; position: fixed; inset: 0; background: rgba(13,33,55,.5); z-index: 200; align-items: flex-end; justify-content: center; }
+.modal-ov.open { display: flex; }
+.modal-sh { background: white; border-radius: 20px 20px 0 0; padding: 20px 20px 40px; width: 100%; max-width: 480px; animation: up .25s ease; }
+@keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-bar { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; margin-bottom: 18px; }
+.ml { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 5px; }
+.mi { width: 100%; border: 2px solid var(--border); border-radius: 10px; padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; background: var(--sand); color: var(--ink); outline: none; }
+.mi:focus { border-color: var(--blue-500); background: white; }
+.modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+.btn-ghost { background: transparent; border: 2px solid var(--border); color: var(--muted); border-radius: var(--radius); padding: 12px 20px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; }
+
+.loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--muted); gap: 16px; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--blue-500); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-box { margin: 20px; background: var(--red-bg); border: 1.5px solid #f5b8b3; border-radius: var(--radius); padding: 16px; font-size: 14px; color: var(--red); }
+
+.spacer { height: 24px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
+  <h1 id="hTitle">🧳 Packliste</h1>
+</div>
+
+<!-- HOME -->
+<div class="screen active" id="sHome">
+  <div class="home-hero">
+    <span class="hero-icon">🧳</span>
+    <h2>Meine Reisen</h2>
+    <p>Nie wieder etwas vergessen</p>
+  </div>
+  <button class="new-btn" onclick="startWizard()">
+    <div class="new-btn-plus">＋</div>
+    <span>Neue Reise planen</span>
+  </button>
+  <div class="trips-section" id="homeTrips">
+    <div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>
+  </div>
+</div>
+
+<!-- WIZARD -->
+<div class="screen" id="sWizard">
+  <div class="wiz-prog" id="wizProg"></div>
+
+  <div class="wiz-step active" id="ws1">
+    <div class="step-eyebrow">Schritt 1 von 5</div>
+    <div class="step-q">Wann und wohin geht die Reise?</div>
+    <div class="inp-group">
+      <label class="inp-label">Reiseziel</label>
+      <input class="inp-field" id="wDest" type="text" placeholder="z.B. Hurghada, Berlin, Kapstadt …" oninput="onDestInput()" autocomplete="off">
+    </div>
+    <div class="date-row">
+      <div class="inp-group">
+        <label class="inp-label">Abreise</label>
+        <input class="inp-field" id="wFrom" type="date" onchange="onDateChg()">
+      </div>
+      <div class="inp-group">
+        <label class="inp-label">Rückreise</label>
+        <input class="inp-field" id="wTo" type="date" onchange="onDateChg()">
+      </div>
+    </div>
+    <div class="climate-card" id="climCard" style="display:none">
+      <div class="ci" id="climIco">🌡️</div>
+      <div><strong id="climTitle">…</strong><span id="climSub"></span></div>
+    </div>
+  </div>
+
+  <div class="wiz-step" id="ws2">
+    <div class="step-eyebrow">Schritt 2 von 5</div>
+    <div class="step-q">Was für eine Reise ist das?</div>
+    <div class="choices">
+      <button class="choice" onclick="setType('urlaub',this)">
+        <span class="choice-ico">🏖️</span>
+        <div class="choice-txt"><strong>Urlaub</strong><small>Erholung, Sport, Abenteuer</small></div>
+      </button>
+      <button class="choice" onclick="setType('business',this)">
+        <span class="choice-ico">💼</span>
+        <div class="choice-txt"><strong>Business Trip</strong><small>Meetings, Konferenzen, Arbeit</small></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="wiz-step" id="ws3">
+    <div class="step-eyebrow">Schritt 3 von 5</div>
+    <div class="step-q">Ist Bikepacking dabei?</div>
+    <div class="choices">
+      <button class="choice" onclick="setBike(true,this)">
+        <span class="choice-ico">🚴</span>
+        <div class="choice-txt"><strong>Ja, Bikepacking!</strong><small>Packliste nach Taschen</small></div>
+      </button>
+      <button class="choice" onclick="setBike(false,this)">
+        <span class="choice-ico">🏖️</span>
+        <div class="choice-txt"><strong>Nein, normaler Urlaub</strong><small>Standard Packliste</small></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="wiz-step" id="ws3b">
+    <div class="step-eyebrow">Schritt 3 von 5</div>
+    <div class="step-q">Solo oder zu zweit?</div>
+    <div class="choices">
+      <button class="choice" onclick="setMode('solo',this)">
+        <span class="choice-ico">🚴</span>
+        <div class="choice-txt"><strong>Solo</strong><small>Ich fahre alleine</small></div>
+      </button>
+      <button class="choice" onclick="setMode('duo',this)">
+        <span class="choice-ico">👫</span>
+        <div class="choice-txt"><strong>Duo</strong><small>Ich packe für uns beide</small></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="wiz-step" id="ws4">
+    <div class="step-eyebrow">Schritt 4 von 5</div>
+    <div class="step-q">Welche Aktivitäten sind dabei?</div>
+    <div class="acts-grid">
+      <button class="act-btn" onclick="togAct('tauchen',this)"><span class="ai">🤿</span><span class="al">Tauchen</span></button>
+      <button class="act-btn" onclick="togAct('golf',this)"><span class="ai">⛳</span><span class="al">Golf</span></button>
+      <button class="act-btn" onclick="togAct('ski',this)"><span class="ai">⛷️</span><span class="al">Ski / Snowboard</span></button>
+      <button class="act-btn" onclick="togAct('wandern',this)"><span class="ai">🥾</span><span class="al">Wandern</span></button>
+      <button class="act-btn" onclick="togAct('yoga',this)"><span class="ai">🧘</span><span class="al">Yoga</span></button>
+      <button class="act-btn" onclick="togAct('tischtennis',this)"><span class="ai">🏓</span><span class="al">Tischtennis</span></button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:14px;text-align:center">Mehrfachauswahl möglich</p>
+  </div>
+
+  <div class="wiz-step" id="ws5">
+    <div class="step-eyebrow">Schritt 5 von 5</div>
+    <div class="step-q">Fast fertig!</div>
+    <div class="inp-group">
+      <label class="inp-label">Name der Reise</label>
+      <input class="inp-field" id="wName" type="text" placeholder="z.B. Hurghada Sommer 2026">
+    </div>
+    <div class="summary-box" id="wSummary">
+      <div class="si">📋</div>
+      <div><strong>Zusammenfassung</strong><span id="wSumText">–</span></div>
+    </div>
+  </div>
+
+  <div class="wiz-cta">
+    <button class="btn-main" id="wizNext" onclick="wizNext()">Weiter →</button>
+    <button class="btn-skip" id="wizSkip" onclick="wizNext()">Überspringen</button>
+  </div>
+</div>
+
+<!-- TRIP VIEW -->
+<div class="screen" id="sTrip">
+  <div class="trip-hdr">
+    <h2 id="tName">–</h2>
+    <div class="th-meta" id="tMeta">–</div>
+    <div class="pack-prog">
+      <div class="pp-row">
+        <div class="pp-pct" id="tPct">0%</div>
+        <div class="pp-label" id="tSub">0 von 0 eingepackt</div>
+      </div>
+      <div class="pp-bar"><div class="pp-fill" id="tBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('Vorschlaege',this)">📋 Vorschläge</button>
+    <button class="tab-btn" onclick="showTab('Packen',this)">🧳 Packen</button>
+    <button class="tab-btn" onclick="showTab('Todos',this)">✅ ToDos</button>
+  </div>
+
+  <div class="tab-pane active" id="tpVorschlaege"></div>
+  <div class="tab-pane" id="tpPacken"></div>
+  <div class="tab-pane" id="tpTodos"></div>
+
+  <button class="fab" onclick="openPool()">💡 Für nächstes Mal merken</button>
+</div>
+
+<!-- Modal: Pool -->
+<div class="modal-ov" id="mPool">
+  <div class="modal-sh">
+    <div class="modal-bar"></div>
+    <div class="modal-title">💡 Für nächstes Mal merken</div>
+    <label class="ml">Was soll hinzugefügt werden?</label>
+    <input class="mi" id="mPoolName" type="text" placeholder="z.B. Hydrocortison Salbe">
+    <label class="ml">Kategorie</label>
+    <select class="mi" id="mPoolCat"></select>
+    <label class="ml">Notiz (optional)</label>
+    <input class="mi" id="mPoolNote" type="text" placeholder="z.B. Bei Sonnenallergie">
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModal('mPool')">Abbrechen</button>
+      <button class="btn-main" style="flex:1" onclick="savePool()">Speichern ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════════════════
+const SUPA_URL = 'https://dzignltxlpymglikyyox.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTI0NTIsImV4cCI6MjA5NjkyODQ1Mn0.a6VhC2QFLw9KRmtNam3fXvX4KX0mfdEn7NoPCqpqYYk';
+
+// ── Supabase API Helper ──
+async function sb(method, table, params = {}, body = null) {
+  let url = `${SUPA_URL}/rest/v1/${table}`;
+  const qs = [];
+  if (params.select)  qs.push(`select=${params.select}`);
+  if (params.filter)  Object.entries(params.filter).forEach(([k,v]) => qs.push(`${k}=${v}`));
+  if (params.order)   qs.push(`order=${params.order}`);
+  if (params.limit)   qs.push(`limit=${params.limit}`);
+  if (qs.length)      url += '?' + qs.join('&');
+
+  const headers = {
+    'apikey': SUPA_KEY,
+    'Authorization': `Bearer ${SUPA_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+  };
+
+  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message || res.statusText); }
+  if (method === 'DELETE' || (method === 'PATCH' && headers.Prefer === 'return=minimal')) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function sbGet(table, params = {})       { return sb('GET',    table, params); }
+async function sbPost(table, body)             { return sb('POST',   table, {}, body); }
+async function sbPatch(table, filter, body)    { return sb('PATCH',  table, { filter }, body); }
+async function sbDelete(table, filter)         { return sb('DELETE', table, { filter }); }
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let wiz = {};
+let curTripId = null;
+let curTrip   = null;
+let curItems  = [];
+let curTodos  = [];
+let undoLast  = null;
+let climTimer = null;
+let categories = [];
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCategories();
+  await goHome();
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('wFrom').min = today;
+  document.getElementById('wTo').min   = today;
+});
+
+async function loadCategories() {
+  try { categories = await sbGet('categories', { order: 'sort_order' }); }
+  catch(e) { console.error('Kategorien laden:', e); }
+}
+
+// ══════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════
+async function goHome() {
+  show('sHome'); setHeader('🧳 Packliste', false);
+  document.getElementById('homeTrips').innerHTML =
+    '<div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>';
+  try {
+    const trips = await sbGet('trips', { order: 'created_at.desc' });
+    renderHome(trips || []);
+  } catch(e) {
+    document.getElementById('homeTrips').innerHTML =
+      `<div class="error-box">⚠️ Verbindungsfehler: ${e.message}</div>`;
+  }
+}
+
+async function renderHome(trips) {
+  if (!trips.length) {
+    document.getElementById('homeTrips').innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:48px;margin-bottom:12px">✈️</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)">Noch keine Reisen</div>
+        <div style="font-size:14px;margin-top:6px">Plane deine erste Reise!</div>
+      </div>`;
+    return;
+  }
+
+  const active = trips.filter(t => t.status !== 'done');
+  const done   = trips.filter(t => t.status === 'done');
+  let h = '';
+
+  // Fortschritt pro Trip laden
+  for (const t of trips) {
+    const ti = await sbGet('trip_items', { filter: { trip_id: `eq.${t.id}`, decision: 'eq.ja' }, select: 'is_checked' });
+    t._ja = ti?.length || 0;
+    t._packed = ti?.filter(i => i.is_checked).length || 0;
+  }
+
+  if (active.length) { h += `<div class="section-label">Aktuelle Reisen</div>`; active.forEach(t => h += tripCard(t)); }
+  if (done.length)   { h += `<div class="section-label" style="margin-top:24px">Abgeschlossen</div>`; done.forEach(t => h += tripCard(t)); }
+
+  document.getElementById('homeTrips').innerHTML = h + '<div class="spacer"></div>';
+}
+
+function tripCard(t) {
+  const pct = t._ja > 0 ? Math.round(t._packed / t._ja * 100) : 0;
+  const icon = t.is_bikepacking ? '🚴' : t.trip_type === 'business' ? '💼' : '🏖️';
+  const nights = calcNights(t.date_from, t.date_to);
+  const isDone = t.status === 'done';
+  return `<div class="trip-card${isDone?' done':''}" onclick="openTrip('${t.id}')">
+    <div class="tc-icon">${icon}</div>
+    <div class="tc-body">
+      <div class="tc-name">${t.name}</div>
+      <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination} · ${nights} Nächte</div>
+      ${!isDone ? `<div class="tc-prog">
+        <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div class="prog-label"><span>${t._packed} von ${t._ja} eingepackt</span><span>${pct}%</span></div>
+      </div>` : ''}
+    </div>
+    <div class="tc-arrow">›</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// WIZARD
+// ══════════════════════════════════════════
+function startWizard() {
+  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null };
+  document.querySelectorAll('.choice').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
+  ['wDest','wFrom','wTo','wName'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('climCard').style.display='none';
+  show('sWizard'); setHeader('Neue Reise', true);
+  showStep(1);
+}
+
+function getSteps() {
+  let s = ['ws1','ws2'];
+  if (wiz.type === 'urlaub' || !wiz.type) {
+    s.push(wiz.bike ? 'ws3b' : 'ws3');
+    if (!wiz.bike) s.push('ws4');
+  }
+  s.push('ws5');
+  return s;
+}
+
+function showStep(s) {
+  wiz.step = s;
+  const steps = getSteps();
+  document.querySelectorAll('.wiz-step').forEach(e => e.classList.remove('active'));
+  document.getElementById(steps[s-1])?.classList.add('active');
+
+  const pips = document.getElementById('wizProg');
+  pips.innerHTML = steps.map((_,i) =>
+    `<div class="wiz-pip ${i<s-1?'done':i===s-1?'active':''}"></div>`).join('');
+
+  document.querySelectorAll('.step-eyebrow').forEach(e =>
+    e.textContent = `Schritt ${s} von ${steps.length}`);
+
+  document.getElementById('wizNext').textContent = s===steps.length ? '🧳 Packliste erstellen' : 'Weiter →';
+  document.getElementById('wizSkip').style.display = steps[s-1]==='ws4' ? 'block' : 'none';
+
+  if (steps[s-1]==='ws5') updateSummary();
+  updateNextBtn();
+}
+
+function updateNextBtn() {
+  const steps = getSteps();
+  const s = steps[wiz.step-1];
+  let ok = true;
+  if (s==='ws1') ok = !!(wiz.dest && wiz.from && wiz.to);
+  if (s==='ws2') ok = !!wiz.type;
+  document.getElementById('wizNext').disabled = !ok;
+}
+
+function wizNext() {
+  const steps = getSteps();
+  if (wiz.step === steps.length) { createTrip(); return; }
+  showStep(wiz.step + 1);
+}
+
+function setType(t, btn) {
+  wiz.type = t;
+  document.querySelectorAll('#ws2 .choice').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel'); updateNextBtn();
+}
+function setBike(v, btn) {
+  wiz.bike = v;
+  document.querySelectorAll('#ws3 .choice').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel'); setTimeout(wizNext, 280);
+}
+function setMode(m, btn) {
+  wiz.mode = m;
+  document.querySelectorAll('#ws3b .choice').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel'); setTimeout(wizNext, 280);
+}
+function togAct(id, btn) {
+  btn.classList.toggle('sel');
+  wiz.acts = btn.classList.contains('sel') ? [...wiz.acts, id] : wiz.acts.filter(a => a !== id);
+}
+
+function onDestInput() {
+  wiz.dest = document.getElementById('wDest').value.trim();
+  if (climTimer) clearTimeout(climTimer);
+  if (wiz.dest && wiz.from) climTimer = setTimeout(fetchClimate, 800);
+}
+function onDateChg() {
+  wiz.from = document.getElementById('wFrom').value;
+  wiz.to   = document.getElementById('wTo').value;
+  if (wiz.to && wiz.from && wiz.to < wiz.from) {
+    document.getElementById('wTo').value = wiz.from; wiz.to = wiz.from;
+  }
+  if (wiz.dest && wiz.from) { if (climTimer) clearTimeout(climTimer); climTimer = setTimeout(fetchClimate, 600); }
+  updateNextBtn();
+}
+
+async function fetchClimate() {
+  const card = document.getElementById('climCard');
+  card.style.display = 'flex';
+  document.getElementById('climTitle').textContent = 'Lade Klimadaten…';
+  document.getElementById('climSub').textContent = '';
+
+  try {
+    // Geocoding
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=1&language=de&format=json`);
+    const geoData = await geoRes.json();
+    if (!geoData.results?.length) throw new Error('Ort nicht gefunden');
+
+    const { latitude: lat, longitude: lon, country_code: cc, name: cityName } = geoData.results[0];
+    wiz.abroad = cc !== 'DE';
+
+    // Wetterdaten
+    const dateFrom = wiz.from;
+    const dateTo   = wiz.to || wiz.from;
+    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${dateFrom}&end_date=${dateTo}&timezone=auto&forecast_days=16`);
+    const wData = await wRes.json();
+
+    let avgTemp = 20, climate = 'gemäßigt', icon = '🌤️';
+    if (wData.daily?.temperature_2m_max?.length) {
+      const max = wData.daily.temperature_2m_max;
+      const min = wData.daily.temperature_2m_min;
+      avgTemp = Math.round((max.reduce((a,b)=>a+b,0)/max.length + min.reduce((a,b)=>a+b,0)/min.length) / 2);
+    }
+    if (avgTemp >= 28)     { climate='tropisch';  icon='🌴'; }
+    else if (avgTemp >= 22){ climate='warm';       icon='☀️'; }
+    else if (avgTemp >= 14){ climate='gemäßigt';  icon='🌤️'; }
+    else if (avgTemp >= 5) { climate='kühl';       icon='🍂'; }
+    else                   { climate='kalt';       icon='❄️'; }
+
+    wiz.temp = avgTemp; wiz.climate = climate;
+
+    document.getElementById('climIco').textContent   = icon;
+    document.getElementById('climTitle').textContent = `${cityName} · ø ${avgTemp}°C · ${climate}`;
+    document.getElementById('climSub').textContent   = wiz.abroad ? '✈️ Auslandsreise erkannt' : '🏠 Inlandsreise erkannt';
+
+    if (!document.getElementById('wName').value && wiz.from)
+      document.getElementById('wName').value = `${cityName} ${wiz.from.substring(0,4)}`;
+
+  } catch(e) {
+    document.getElementById('climTitle').textContent = 'Reiseziel nicht gefunden';
+    document.getElementById('climSub').textContent   = 'Bitte prüfen';
+  }
+  updateNextBtn();
+}
+
+function updateSummary() {
+  const nights = calcNights(wiz.from, wiz.to);
+  const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',tischtennis:'🏓'};
+  const acts = wiz.acts.map(a => icons[a]||a).join(' ');
+  const type = wiz.type==='business'?'💼 Business':'🏖️ Urlaub';
+  document.getElementById('wSumText').innerHTML =
+    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} Nächte<br>${type} · ${wiz.abroad?'✈️ Ausland':'🏠 Inland'}${acts?' · '+acts:''}`;
+}
+
+async function createTrip() {
+  const name = document.getElementById('wName').value.trim() || `${wiz.dest} ${wiz.from?.substring(0,4)}`;
+  const btn = document.getElementById('wizNext');
+  btn.disabled = true; btn.textContent = 'Erstelle Packliste…';
+
+  try {
+    // Trip anlegen
+    const [trip] = await sbPost('trips', {
+      name, destination: wiz.dest,
+      date_from: wiz.from, date_to: wiz.to,
+      trip_type: wiz.type, is_abroad: wiz.abroad,
+      is_bikepacking: wiz.bike, bike_mode: wiz.mode,
+      activities: wiz.acts, climate: wiz.climate, avg_temp: wiz.temp
+    });
+
+    // Items generieren
+    await generateTripItems(trip.id);
+    await generateTripTodos(trip.id);
+
+    await openTrip(trip.id);
+  } catch(e) {
+    alert('Fehler: ' + e.message);
+    btn.disabled = false; btn.textContent = '🧳 Packliste erstellen';
+  }
+}
+
+async function generateTripItems(tripId) {
+  // Alle passenden Items laden
+  const allItems = await sbGet('items', { select: '*', order: 'sort_order' });
+  const nights = calcNights(wiz.from, wiz.to);
+  const toInsert = [];
+
+  for (const item of allItems) {
+    if (wiz.type === 'urlaub'   && !item.show_urlaub)   continue;
+    if (wiz.type === 'business' && !item.show_business)  continue;
+    if (item.show_abroad === 2  && !wiz.abroad)          continue;
+    if (item.show_abroad === 0  &&  wiz.abroad)          continue;
+    if (item.min_temp !== null  && (wiz.temp||20) > item.min_temp) continue;
+    if (item.max_temp !== null  && (wiz.temp||20) < item.max_temp) continue;
+    if (item.activity_key && !wiz.acts.includes(item.activity_key)) continue;
+    if (item.is_bikepacking && !wiz.bike) continue;
+
+    let qty = item.default_qty;
+    if (qty === 'n=nights')   qty = `${nights}x`;
+    if (qty === 'n+1=nights') qty = `${nights+1}x`;
+
+    toInsert.push({ trip_id: tripId, item_id: item.id, qty });
+  }
+
+  // Batch insert (50er Pakete)
+  for (let i = 0; i < toInsert.length; i += 50) {
+    await sbPost('trip_items', toInsert.slice(i, i+50));
+  }
+}
+
+async function generateTripTodos(tripId) {
+  const templates = await sbGet('todo_templates', { order: 'sort_order' });
+  const toInsert = [];
+
+  for (const t of templates) {
+    if (wiz.type === 'urlaub'   && !t.show_urlaub)   continue;
+    if (wiz.type === 'business' && !t.show_business)  continue;
+    if (t.show_abroad === 2     && !wiz.abroad)        continue;
+    toInsert.push({ trip_id: tripId, name: t.name, show_abroad: t.show_abroad, show_urlaub: t.show_urlaub, show_business: t.show_business, sort_order: t.sort_order });
+  }
+
+  if (toInsert.length) await sbPost('trip_todos', toInsert);
+}
+
+// ══════════════════════════════════════════
+// TRIP VIEW
+// ══════════════════════════════════════════
+async function openTrip(id) {
+  curTripId = id;
+  show('sTrip');
+  document.getElementById('tpVorschlaege').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade…</span></div>';
+
+  try {
+    // Trip laden
+    const trips = await sbGet('trips', { filter: { id: `eq.${id}` } });
+    curTrip = trips[0];
+
+    // Items mit Item-Details laden
+    const rawItems = await sbGet('trip_items', {
+      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,activity_key)',
+      filter: { trip_id: `eq.${id}` }
+    });
+    curItems = rawItems || [];
+
+    // Todos laden
+    curTodos = await sbGet('trip_todos', { filter: { trip_id: `eq.${id}` }, order: 'sort_order' }) || [];
+
+    // Kategorien + Subkats
+    const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
+
+    setHeader(curTrip.name, true);
+    document.getElementById('tName').textContent  = curTrip.name;
+    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}`;
+
+    // Pool-Modal Kategorien befüllen
+    document.getElementById('mPoolCat').innerHTML = categories.map(c =>
+      `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+
+    renderAll(subs);
+  } catch(e) {
+    document.getElementById('tpVorschlaege').innerHTML = `<div class="error-box">⚠️ Fehler: ${e.message}</div>`;
+  }
+}
+
+function renderAll(subs) {
+  const s = subs || window._subs || [];
+  window._subs = s;
+  updateProgress();
+  renderVorschlaege(s);
+  renderPacken(s);
+  renderTodos();
+}
+
+function updateProgress() {
+  const ja = curItems.filter(i => i.decision === 'ja');
+  const packed = ja.filter(i => i.is_checked).length;
+  const pct = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
+  document.getElementById('tPct').textContent = pct === 100 && ja.length > 0 ? '🎉 100%' : pct+'%';
+  document.getElementById('tSub').textContent = `${packed} von ${ja.length} eingepackt`;
+  document.getElementById('tBar').style.width = pct+'%';
+}
+
+function getItemsByCat(catId, subId, pendingOnly, jaOnly) {
+  return curItems.filter(ti => {
+    const item = ti.items;
+    if (!item) return false;
+    if (item.category_id !== catId) return false;
+    if (subId !== undefined) { if (item.subcategory_id !== subId) return false; }
+    else { if (item.subcategory_id !== null) return false; }
+    if (pendingOnly && ti.decision !== 'pending') return false;
+    if (jaOnly && ti.decision !== 'ja') return false;
+    return true;
+  });
+}
+
+// ── VORSCHLÄGE ──
+function renderVorschlaege(subs) {
+  let h = '';
+  if (undoLast) {
+    h += `<div class="undo-strip">
+      <span class="un">Zuletzt: <strong>${undoLast.name}</strong></span>
+      <button onclick="doUndo()" title="Rückgängig">↩️</button>
+    </div>`;
+  }
+
+  const pending = curItems.filter(i => i.decision === 'pending');
+  if (!pending.length) h += `<div class="done-bnr"><h3>✅ Alle Vorschläge bewertet!</h3><p>Jetzt zum Packen wechseln →</p></div>`;
+
+  categories.forEach(cat => {
+    if (curTrip.trip_type === 'urlaub'   && !cat.show_urlaub)   return;
+    if (curTrip.trip_type === 'business' && !cat.show_business)  return;
+
+    // Alle pending Items dieser Kategorie
+    const catPending = curItems.filter(ti => ti.items?.category_id === cat.id && ti.decision === 'pending');
+    if (!catPending.length) return;
+
+    h += `<div class="cat-block">
+      <div class="cat-hd" onclick="togCat(this)">
+        <span class="cat-hd-ico">${cat.icon}</span>
+        <span class="cat-hd-title">${cat.name}</span>
+        <span class="cat-count">${catPending.length} offen</span>
+        <span class="cat-chev open">▼</span>
+      </div><div class="cat-body">`;
+
+    // Direkte Items (keine Subkat)
+    getItemsByCat(cat.id, null, true, false).forEach(ti => h += vorschlagRow(ti));
+
+    // Subkategorien
+    subs.filter(s => s.category_id === cat.id).forEach(sub => {
+      const subPending = getItemsByCat(cat.id, sub.id, true, false);
+      if (!subPending.length) return;
+      h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
+      subPending.forEach(ti => h += vorschlagRow(ti));
+    });
+
+    h += `<div class="add-row">
+      <input class="add-inp" type="text" placeholder="Eigenes Item …" id="ai_${cat.id}"
+        onkeydown="if(event.key==='Enter')addItem(${cat.id})">
+      <button class="add-go" onclick="addItem(${cat.id})">+</button>
+    </div></div></div>`;
+  });
+
+  document.getElementById('tpVorschlaege').innerHTML = h + '<div class="spacer"></div>';
+}
+
+function vorschlagRow(ti) {
+  const item = ti.items;
+  const qty  = ti.qty ? `<span class="iqty">${ti.qty}</span>` : '';
+  const pool = item?.is_pool ? `<span class="ipool">💡 neu</span>` : '';
+  return `<div class="item-row" id="vr_${ti.id}">
+    <span class="iname">${item?.name || '?'}</span>
+    ${pool}${qty}
+    <div class="ja-nein">
+      <button class="ja-b"   onclick="decide('${ti.id}','ja')">JA</button>
+      <button class="nein-b" onclick="decide('${ti.id}','nein')">NEIN</button>
+    </div>
+  </div>`;
+}
+
+// ── PACKEN ──
+function renderPacken(subs) {
+  const jaAll = curItems.filter(i => i.decision === 'ja');
+  if (!jaAll.length) {
+    document.getElementById('tpPacken').innerHTML =
+      `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:40px;margin-bottom:10px">📋</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--ink)">Noch keine JA-Items</div>
+        <div style="font-size:13px;margin-top:5px">Erst Vorschläge bewerten!</div>
+      </div>`;
+    return;
+  }
+
+  let h = '';
+  const packed = jaAll.filter(i => i.is_checked).length;
+  if (packed === jaAll.length) h += `<div class="done-bnr"><h3>🎉 Koffer ist gepackt!</h3><p>Gute Reise!</p></div>`;
+
+  categories.forEach(cat => {
+    const catJa = curItems.filter(ti => ti.items?.category_id === cat.id && ti.decision === 'ja');
+    if (!catJa.length) return;
+    const p = catJa.filter(i => i.is_checked).length;
+
+    h += `<div class="cat-block">
+      <div class="cat-hd" onclick="togCat(this)">
+        <span class="cat-hd-ico">${cat.icon}</span>
+        <span class="cat-hd-title">${cat.name}</span>
+        <span class="cat-count${p===catJa.length?' done':''}">${p}/${catJa.length}</span>
+        <span class="cat-chev open">▼</span>
+      </div><div class="cat-body">`;
+
+    getItemsByCat(cat.id, null, false, true).forEach(ti => h += packRow(ti));
+
+    subs.filter(s => s.category_id === cat.id).forEach(sub => {
+      const sj = getItemsByCat(cat.id, sub.id, false, true);
+      if (!sj.length) return;
+      h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
+      sj.forEach(ti => h += packRow(ti));
+    });
+
+    h += `</div></div>`;
+  });
+
+  document.getElementById('tpPacken').innerHTML = h + '<div class="spacer"></div>';
+}
+
+function packRow(ti) {
+  const chk = ti.is_checked;
+  const qty = ti.qty ? `<span class="iqty">${ti.qty}</span>` : '';
+  return `<div class="item-row${chk?' faded':''}" id="pr_${ti.id}">
+    <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
+    <span class="iname${chk?' packed':''}">${ti.items?.name||'?'}</span>
+    ${qty}
+  </div>`;
+}
+
+// ── TODOS ──
+function renderTodos() {
+  const done = curTodos.filter(t => t.decision !== 'pending').length;
+  let h = `<div class="cat-block" style="margin-top:14px">
+    <div class="cat-hd">
+      <span class="cat-hd-ico">📋</span>
+      <span class="cat-hd-title">Vor der Abreise erledigen</span>
+      <span class="cat-count${done===curTodos.length&&curTodos.length?' done':''}">${done}/${curTodos.length}</span>
+    </div><div class="cat-body">`;
+
+  curTodos.forEach(todo => {
+    h += `<div class="todo-row">
+      <span class="tname${todo.decision==='nein'?' nein':''}">${todo.name}</span>
+      ${todo.decision==='pending'
+        ? `<div class="ja-nein">
+             <button class="ja-b"   onclick="decideTodo('${todo.id}','ja')">JA</button>
+             <button class="nein-b" onclick="decideTodo('${todo.id}','nein')">NEIN</button>
+           </div>`
+        : `<span style="font-size:18px">${todo.decision==='ja'?'✅':'❌'}</span>`}
+    </div>`;
+  });
+
+  h += `</div></div><div class="spacer"></div>`;
+  document.getElementById('tpTodos').innerHTML = h;
+}
+
+// ══════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════
+async function decide(tiId, decision) {
+  const ti = curItems.find(i => i.id === tiId);
+  if (!ti) return;
+  undoLast = { id: tiId, name: ti.items?.name || '?', prev: 'pending' };
+  ti.decision = decision;
+
+  await sbPatch('trip_items', { id: `eq.${tiId}` }, { decision, decided_at: new Date().toISOString() });
+  renderAll();
+}
+
+async function doUndo() {
+  if (!undoLast) return;
+  const ti = curItems.find(i => i.id === undoLast.id);
+  if (ti) ti.decision = 'pending';
+  await sbPatch('trip_items', { id: `eq.${undoLast.id}` }, { decision: 'pending', decided_at: null });
+  undoLast = null;
+  renderAll();
+}
+
+async function checkItem(tiId, checked) {
+  const ti = curItems.find(i => i.id === tiId);
+  if (ti) ti.is_checked = checked;
+  await sbPatch('trip_items', { id: `eq.${tiId}` }, { is_checked: checked });
+  renderAll();
+}
+
+async function decideTodo(todoId, decision) {
+  const todo = curTodos.find(t => t.id === todoId);
+  if (todo) todo.decision = decision;
+  await sbPatch('trip_todos', { id: `eq.${todoId}` }, { decision });
+  renderTodos();
+}
+
+async function addItem(catId) {
+  const inp = document.getElementById('ai_' + catId);
+  const name = inp?.value?.trim();
+  if (!name) return;
+
+  // Item in globalen Pool
+  const [newItem] = await sbPost('items', { category_id: catId, name, show_urlaub: true, show_business: true });
+  // Direkt zum Trip hinzufügen
+  const [ti] = await sbPost('trip_items', { trip_id: curTripId, item_id: newItem.id, decision: 'pending' });
+  ti.items = newItem;
+  curItems.push(ti);
+
+  if (inp) inp.value = '';
+  renderAll();
+}
+
+// ══════════════════════════════════════════
+// POOL
+// ══════════════════════════════════════════
+function openPool() { document.getElementById('mPool').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function savePool() {
+  const name  = document.getElementById('mPoolName').value.trim();
+  const catId = parseInt(document.getElementById('mPoolCat').value);
+  const note  = document.getElementById('mPoolNote').value.trim();
+  if (!name) return;
+
+  const [newItem] = await sbPost('items', { category_id: catId, name, is_pool: true, pool_note: note, show_urlaub: true, show_business: true });
+  const [ti] = await sbPost('trip_items', { trip_id: curTripId, item_id: newItem.id, decision: 'pending' });
+  ti.items = newItem;
+  curItems.push(ti);
+
+  closeModal('mPool');
+  document.getElementById('mPoolName').value = '';
+  document.getElementById('mPoolNote').value = '';
+  renderAll();
+
+  const fab = document.querySelector('.fab');
+  const orig = fab.textContent;
+  fab.textContent = '✅ Vorgemerkt!';
+  setTimeout(() => fab.textContent = orig, 2000);
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function setHeader(title, back) {
+  document.getElementById('hTitle').textContent = title;
+  document.getElementById('backBtn').style.display = back ? 'block' : 'none';
+}
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tp' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function togCat(hd) {
+  const body = hd.nextElementSibling;
+  const chev = hd.querySelector('.cat-chev');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  chev.classList.toggle('open', !open);
+}
+function fmtDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}.${m}.${y}`; }
+function calcNights(a,b) { if(!a||!b) return 0; return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000)); }
+
+document.querySelectorAll('.modal-ov').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
