@@ -344,11 +344,6 @@ body {
   <div class="wiz-step active" id="ws1">
     <div class="step-eyebrow">Schritt 1 von 5</div>
     <div class="step-q">Wann und wohin geht die Reise?</div>
-    <div class="inp-group">
-      <label class="inp-label">Reiseziel</label>
-      <input class="inp-field" id="wDest" type="text" placeholder="z.B. Hurghada, Berlin, Kapstadt …" oninput="onDestInput()" autocomplete="off">
-      <div class="dest-alts" id="destAlts" style="display:none"></div>
-    </div>
     <div class="date-row">
       <div class="inp-group">
         <label class="inp-label">Abreise</label>
@@ -358,6 +353,11 @@ body {
         <label class="inp-label">Rückreise</label>
         <input class="inp-field" id="wTo" type="date" onchange="onDateChg()">
       </div>
+    </div>
+    <div class="inp-group">
+      <label class="inp-label">Reiseziel</label>
+      <input class="inp-field" id="wDest" type="text" placeholder="z.B. Hurghada, Berlin, Kapstadt …" oninput="onDestInput()" autocomplete="off">
+      <div class="dest-alts" id="destAlts" style="display:none"></div>
     </div>
     <div class="climate-card" id="climCard" style="display:none">
       <div class="ci" id="climIco">🌡️</div>
