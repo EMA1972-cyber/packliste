@@ -644,7 +644,7 @@ async function deleteTrip(id, name) {
 // WIZARD
 // ══════════════════════════════════════════
 function startWizard() {
-  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null, resolvedCity:null, country:null };
+  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null, resolvedCity:null, country:null, lat:null, lon:null };
   document.querySelectorAll('.choice').forEach(b=>b.classList.remove('sel'));
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
   ['wDest','wFrom','wTo','wName','wNotes'].forEach(id => document.getElementById(id).value='');
@@ -730,7 +730,13 @@ function onDestInput() {
   wiz.dest = document.getElementById('wDest').value.trim();
   document.getElementById('destAlts').style.display = 'none';
   if (climTimer) clearTimeout(climTimer);
-  if (wiz.dest && wiz.from) climTimer = setTimeout(() => fetchClimate(), 800);
+  if (wiz.dest) {
+    climTimer = setTimeout(() => resolveAndFetch(), 800);
+  } else {
+    wiz.lat = null; wiz.resolvedCity = null; wiz.geoResults = null;
+    document.getElementById('climCard').style.display = 'none';
+    updateNextBtn();
+  }
 }
 function onDateChg() {
   wiz.from = document.getElementById('wFrom').value;
@@ -746,40 +752,59 @@ function onDateChg() {
       wiz.to = wiz.from;
     }
   }
-  if (wiz.dest && wiz.from) { if (climTimer) clearTimeout(climTimer); climTimer = setTimeout(() => fetchClimate(), 600); }
+
+  if (climTimer) clearTimeout(climTimer);
+  if (wiz.dest) {
+    // Ort bereits aufgelöst? -> nur Wetter nachladen, kein erneutes Geocoding
+    if (wiz.lat) climTimer = setTimeout(() => fetchWeather(), 300);
+    else          climTimer = setTimeout(() => resolveAndFetch(), 300);
+  }
   updateNextBtn();
 }
 
-async function fetchClimate(forcedResult = null) {
+// ── Schritt A: Ort auflösen (läuft sofort beim Tippen, ohne Datum) ──
+async function resolveDestination(forcedResult = null) {
+  let result = forcedResult;
+
+  if (!result) {
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=10&language=de&format=json`);
+    const geoData = await geoRes.json();
+    if (!geoData.results?.length) {
+      wiz.lat = null; wiz.resolvedCity = null; wiz.geoResults = null;
+      document.getElementById('destAlts').style.display = 'none';
+      const card = document.getElementById('climCard');
+      card.style.display = 'flex';
+      document.getElementById('climIco').textContent   = '🌍';
+      document.getElementById('climTitle').textContent = 'Reiseziel nicht gefunden';
+      document.getElementById('climSub').textContent   = 'Bitte prüfen';
+      return false;
+    }
+    wiz.geoResults = geoData.results;
+    if (geoData.results.length > 1) {
+      renderDestAlts(geoData.results);
+    } else {
+      document.getElementById('destAlts').style.display = 'none';
+    }
+    result = geoData.results[0];
+  }
+
+  const { latitude, longitude, country_code: cc, country, name } = result;
+  wiz.lat = latitude; wiz.lon = longitude;
+  wiz.abroad = cc !== 'DE';
+  wiz.resolvedCity = name;
+  wiz.country = country || null;
+  return true;
+}
+
+// ── Schritt B: Temperatur abfragen (braucht Ort + Datum) ──
+async function fetchWeather() {
+  if (!wiz.lat || !wiz.from) return;
   const card = document.getElementById('climCard');
   card.style.display = 'flex';
   document.getElementById('climTitle').textContent = 'Lade Klimadaten…';
   document.getElementById('climSub').textContent = '';
 
   try {
-    let result = forcedResult;
-
-    if (!result) {
-      // Geocoding - mehrere Treffer anfragen für Auswahl bei mehrdeutigen Namen
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=10&language=de&format=json`);
-      const geoData = await geoRes.json();
-      if (!geoData.results?.length) throw new Error('Ort nicht gefunden');
-
-      wiz.geoResults = geoData.results;
-      if (geoData.results.length > 1) {
-        renderDestAlts(geoData.results);
-      } else {
-        document.getElementById('destAlts').style.display = 'none';
-      }
-      result = geoData.results[0];
-    }
-
-    const { latitude: lat, longitude: lon, country_code: cc, country, name: cityName } = result;
-    wiz.abroad = cc !== 'DE';
-    wiz.resolvedCity = cityName;
-    wiz.country = country || null;
-
-    // Wetterdaten: Forecast oder historische Klimadaten
     const dateFrom = wiz.from;
     const dateTo   = wiz.to || wiz.from;
     const daysUntil = Math.round((new Date(dateFrom) - new Date()) / 86400000);
@@ -788,7 +813,7 @@ async function fetchClimate(forcedResult = null) {
 
     if (daysUntil <= 14) {
       // Forecast für nahe Zukunft
-      const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${dateFrom}&end_date=${dateTo}&timezone=auto&forecast_days=16`);
+      const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${wiz.lat}&longitude=${wiz.lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${dateFrom}&end_date=${dateTo}&timezone=auto&forecast_days=16`);
       const wData = await wRes.json();
       if (wData.daily?.temperature_2m_max?.length) {
         const max = wData.daily.temperature_2m_max;
@@ -801,7 +826,7 @@ async function fetchClimate(forcedResult = null) {
       const lastYear = parseInt(dateFrom.split('-')[0]) - 1;
       const histFrom = `${lastYear}-${String(month).padStart(2,'0')}-01`;
       const histTo   = `${lastYear}-${String(month).padStart(2,'0')}-28`;
-      const hRes = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${histFrom}&end_date=${histTo}&timezone=auto`);
+      const hRes = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${wiz.lat}&longitude=${wiz.lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${histFrom}&end_date=${histTo}&timezone=auto`);
       const hData = await hRes.json();
       if (hData.daily?.temperature_2m_max?.length) {
         const max = hData.daily.temperature_2m_max.filter(v => v !== null);
@@ -819,25 +844,44 @@ async function fetchClimate(forcedResult = null) {
 
     wiz.temp = avgTemp; wiz.climate = climate;
 
-    const countryLabel = country ? `, ${country}` : '';
+    const countryLabel = wiz.country ? `, ${wiz.country}` : '';
     document.getElementById('climIco').textContent   = icon;
-    document.getElementById('climTitle').textContent = `${cityName}${countryLabel} · ø ${avgTemp}°C · ${climate}`;
+    document.getElementById('climTitle').textContent = `${wiz.resolvedCity}${countryLabel} · ø ${avgTemp}°C · ${climate}`;
     document.getElementById('climSub').textContent   = wiz.abroad ? '✈️ Auslandsreise erkannt' : '🏠 Inlandsreise erkannt';
 
     // Namensvorschlag - bleibt "live" solange der Nutzer ihn nicht
     // selbst verändert hat (verhindert das "Pa"-Problem bei Tippen)
     const nameField = document.getElementById('wName');
-    const suggested = `${cityName} ${wiz.from.substring(0,4)}`;
+    const suggested = `${wiz.resolvedCity} ${wiz.from.substring(0,4)}`;
     if (!nameField.value || nameField.value === wiz.autoName) {
       nameField.value = suggested;
       wiz.autoName = suggested;
     }
 
   } catch(e) {
-    document.getElementById('climTitle').textContent = 'Reiseziel nicht gefunden';
-    document.getElementById('climSub').textContent   = 'Bitte prüfen';
+    document.getElementById('climTitle').textContent = 'Fehler beim Laden der Klimadaten';
+    document.getElementById('climSub').textContent   = '';
   }
   updateNextBtn();
+}
+
+// ── Kombiniert: Ort auflösen, dann ggf. Wetter laden ──
+async function resolveAndFetch(forcedResult = null) {
+  const ok = await resolveDestination(forcedResult);
+  if (!ok) { updateNextBtn(); return; }
+
+  if (wiz.from) {
+    await fetchWeather();
+  } else {
+    // Vorschau: Ort schon erkannt, Datum fehlt noch
+    const card = document.getElementById('climCard');
+    card.style.display = 'flex';
+    const countryLabel = wiz.country ? `, ${wiz.country}` : '';
+    document.getElementById('climIco').textContent   = '📍';
+    document.getElementById('climTitle').textContent = `${wiz.resolvedCity}${countryLabel}`;
+    document.getElementById('climSub').textContent   = 'Datum wählen für Klimadaten';
+    updateNextBtn();
+  }
 }
 
 function renderDestAlts(results) {
@@ -851,7 +895,7 @@ function renderDestAlts(results) {
 
 function selectDest(i) {
   document.querySelectorAll('.dest-alt-btn').forEach((b,idx) => b.classList.toggle('sel', idx===i));
-  fetchClimate(wiz.geoResults[i]);
+  resolveAndFetch(wiz.geoResults[i]);
 }
 
 function updateSummary() {
