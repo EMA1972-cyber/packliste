@@ -432,7 +432,7 @@ body {
       <input class="inp-field" id="wName" type="text" placeholder="z.B. Hurghada Sommer 2026">
     </div>
     <div class="inp-group">
-      <label class="inp-label">Notiz (optional)</label>
+      <label class="inp-label">Zusatzinfo (optional)</label>
       <input class="inp-field" id="wNotes" type="text" placeholder="z.B. Euromed Conference">
     </div>
     <div class="summary-box" id="wSummary">
@@ -613,7 +613,7 @@ function tripCard(t) {
       <div class="tc-icon">${icon}</div>
       <div class="tc-body">
         <div class="tc-name">${t.name}</div>
-        <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination} · ${nights} Nächte</div>
+        <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination}${t.destination_country ? ', '+t.destination_country : ''} · ${nights} Nächte</div>
         ${t.notes ? `<div class="tc-meta" style="font-style:italic;margin-top:2px">📝 ${t.notes}</div>` : ''}
         ${!isDone ? `<div class="tc-prog">
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
@@ -644,7 +644,7 @@ async function deleteTrip(id, name) {
 // WIZARD
 // ══════════════════════════════════════════
 function startWizard() {
-  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null };
+  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null, resolvedCity:null, country:null };
   document.querySelectorAll('.choice').forEach(b=>b.classList.remove('sel'));
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
   ['wDest','wFrom','wTo','wName','wNotes'].forEach(id => document.getElementById(id).value='');
@@ -761,7 +761,7 @@ async function fetchClimate(forcedResult = null) {
 
     if (!result) {
       // Geocoding - mehrere Treffer anfragen für Auswahl bei mehrdeutigen Namen
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=5&language=de&format=json`);
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=10&language=de&format=json`);
       const geoData = await geoRes.json();
       if (!geoData.results?.length) throw new Error('Ort nicht gefunden');
 
@@ -776,6 +776,8 @@ async function fetchClimate(forcedResult = null) {
 
     const { latitude: lat, longitude: lon, country_code: cc, country, name: cityName } = result;
     wiz.abroad = cc !== 'DE';
+    wiz.resolvedCity = cityName;
+    wiz.country = country || null;
 
     // Wetterdaten: Forecast oder historische Klimadaten
     const dateFrom = wiz.from;
@@ -840,7 +842,7 @@ async function fetchClimate(forcedResult = null) {
 
 function renderDestAlts(results) {
   const container = document.getElementById('destAlts');
-  container.innerHTML = results.slice(0,4).map((r,i) => {
+  container.innerHTML = results.map((r,i) => {
     const region = r.admin1 ? `, ${r.admin1}` : '';
     return `<button class="dest-alt-btn${i===0?' sel':''}" onclick="selectDest(${i})">${r.name}${region}, ${r.country}</button>`;
   }).join('');
@@ -864,13 +866,14 @@ function updateSummary() {
 async function createTrip() {
   const name = document.getElementById('wName').value.trim() || `${wiz.dest} ${wiz.from?.substring(0,4)}`;
   const notes = document.getElementById('wNotes').value.trim() || null;
+  const destination = wiz.resolvedCity || wiz.dest;
   const btn = document.getElementById('wizNext');
   btn.disabled = true; btn.textContent = 'Erstelle Packliste…';
 
   try {
     // Trip anlegen
     const [trip] = await sbPost('trips', {
-      name, destination: wiz.dest,
+      name, destination, destination_country: wiz.country,
       date_from: wiz.from, date_to: wiz.to,
       trip_type: wiz.type, is_abroad: wiz.abroad,
       is_bikepacking: wiz.bike, bike_mode: wiz.mode,
@@ -961,7 +964,7 @@ async function openTrip(id) {
 
     setHeader(curTrip.name, true);
     document.getElementById('tName').textContent  = curTrip.name;
-    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
+    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
 
     // Pool-Modal Kategorien befüllen
     document.getElementById('mPoolCat').innerHTML = categories.map(c =>
