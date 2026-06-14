@@ -369,16 +369,16 @@ body {
   <div class="manage-grid">
     <div class="manage-col">
       <div class="manage-label">🧳 Reisen</div>
-      <button class="manage-btn primary" onclick="startWizard()">➕ Neu</button>
-      <button class="manage-btn" onclick="scrollToTrips()">📋 Aktuell</button>
+      <button class="manage-btn primary" onclick="startWizard()">✏️ NEU</button>
+      <button class="manage-btn" onclick="toggleTripsList()">📋 AKTUELL</button>
     </div>
     <div class="manage-col">
       <div class="manage-label">📦 Items</div>
-      <button class="manage-btn primary" onclick="openItemModal()">➕ Neu</button>
-      <button class="manage-btn" onclick="openItemsManager()">📋 Aktuell</button>
+      <button class="manage-btn primary" onclick="openItemModal()">✏️ NEU</button>
+      <button class="manage-btn" onclick="openItemsManager()">📋 AKTUELL</button>
     </div>
   </div>
-  <div class="trips-section" id="homeTrips">
+  <div class="trips-section" id="homeTrips" style="display:none">
     <div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>
   </div>
 </div>
@@ -1382,8 +1382,11 @@ async function saveNewItem() {
   allItemsCache = null;
 }
 
-function scrollToTrips() {
-  document.getElementById('homeTrips').scrollIntoView({ behavior: 'smooth' });
+function toggleTripsList() {
+  const el = document.getElementById('homeTrips');
+  const willShow = el.style.display === 'none';
+  el.style.display = willShow ? 'block' : 'none';
+  if (willShow) el.scrollIntoView({ behavior: 'smooth' });
 }
 
 // ══════════════════════════════════════════
