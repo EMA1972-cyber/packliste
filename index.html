@@ -203,6 +203,22 @@ body {
 .btn-main:active { background: var(--blue-900); transform: scale(.99); }
 .btn-main:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
 .btn-skip { width: 100%; background: transparent; color: var(--muted); border: 2px solid var(--border); border-radius: var(--radius); padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; margin-top: 10px; display: none; }
+.btn-back {
+  flex: 0 0 auto; background: transparent; color: var(--blue-800);
+  border: 2px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; font-family: 'DM Serif Display', serif;
+  font-size: 1.05rem; cursor: pointer; transition: all .15s;
+}
+.btn-back:active { background: var(--sand); }
+
+.dest-alts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.dest-alt-btn {
+  background: var(--blue-50); border: 1.5px solid var(--blue-100);
+  color: var(--blue-700); border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer;
+  transition: all .15s;
+}
+.dest-alt-btn.sel { background: var(--blue-500); color: white; border-color: var(--blue-500); }
 
 .summary-box { background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: var(--shadow); }
 .summary-box .si { font-size: 28px; }
@@ -331,6 +347,7 @@ body {
     <div class="inp-group">
       <label class="inp-label">Reiseziel</label>
       <input class="inp-field" id="wDest" type="text" placeholder="z.B. Hurghada, Berlin, Kapstadt …" oninput="onDestInput()" autocomplete="off">
+      <div class="dest-alts" id="destAlts" style="display:none"></div>
     </div>
     <div class="date-row">
       <div class="inp-group">
@@ -402,7 +419,7 @@ body {
       <button class="act-btn" onclick="togAct('ski',this)"><span class="ai">⛷️</span><span class="al">Ski / Snowboard</span></button>
       <button class="act-btn" onclick="togAct('wandern',this)"><span class="ai">🥾</span><span class="al">Wandern</span></button>
       <button class="act-btn" onclick="togAct('yoga',this)"><span class="ai">🧘</span><span class="al">Yoga</span></button>
-      <button class="act-btn" onclick="togAct('tischtennis',this)"><span class="ai">🏓</span><span class="al">Tischtennis</span></button>
+      <button class="act-btn" onclick="togAct('sonstiger_sport',this)"><span class="ai">🏓</span><span class="al">Sonstiger Sport</span></button>
     </div>
     <p style="font-size:13px;color:var(--muted);margin-top:14px;text-align:center">Mehrfachauswahl möglich</p>
   </div>
@@ -414,6 +431,10 @@ body {
       <label class="inp-label">Name der Reise</label>
       <input class="inp-field" id="wName" type="text" placeholder="z.B. Hurghada Sommer 2026">
     </div>
+    <div class="inp-group">
+      <label class="inp-label">Notiz (optional)</label>
+      <input class="inp-field" id="wNotes" type="text" placeholder="z.B. Euromed Conference">
+    </div>
     <div class="summary-box" id="wSummary">
       <div class="si">📋</div>
       <div><strong>Zusammenfassung</strong><span id="wSumText">–</span></div>
@@ -421,7 +442,10 @@ body {
   </div>
 
   <div class="wiz-cta">
-    <button class="btn-main" id="wizNext" onclick="wizNext()">Weiter →</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn-back" id="wizBack" onclick="wizPrev()">← Zurück</button>
+      <button class="btn-main" id="wizNext" onclick="wizNext()" style="flex:1">Weiter →</button>
+    </div>
     <button class="btn-skip" id="wizSkip" onclick="wizNext()">Überspringen</button>
   </div>
 </div>
@@ -590,6 +614,7 @@ function tripCard(t) {
       <div class="tc-body">
         <div class="tc-name">${t.name}</div>
         <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination} · ${nights} Nächte</div>
+        ${t.notes ? `<div class="tc-meta" style="font-style:italic;margin-top:2px">📝 ${t.notes}</div>` : ''}
         ${!isDone ? `<div class="tc-prog">
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
           <div class="prog-label"><span>${t._packed} von ${t._ja} eingepackt</span><span>${pct}%</span></div>
@@ -619,11 +644,13 @@ async function deleteTrip(id, name) {
 // WIZARD
 // ══════════════════════════════════════════
 function startWizard() {
-  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null };
+  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null };
   document.querySelectorAll('.choice').forEach(b=>b.classList.remove('sel'));
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
-  ['wDest','wFrom','wTo','wName'].forEach(id => document.getElementById(id).value='');
+  ['wDest','wFrom','wTo','wName','wNotes'].forEach(id => document.getElementById(id).value='');
   document.getElementById('climCard').style.display='none';
+  document.getElementById('destAlts').style.display='none';
+  document.getElementById('destAlts').innerHTML='';
   show('sWizard'); setHeader('Neue Reise', true);
   showStep(1);
 }
@@ -653,9 +680,15 @@ function showStep(s) {
 
   document.getElementById('wizNext').textContent = s===steps.length ? '🧳 Packliste erstellen' : 'Weiter →';
   document.getElementById('wizSkip').style.display = steps[s-1]==='ws4' ? 'block' : 'none';
+  document.getElementById('wizBack').style.display = s===1 ? 'none' : 'block';
 
   if (steps[s-1]==='ws5') updateSummary();
   updateNextBtn();
+}
+
+function wizPrev() {
+  if (wiz.step <= 1) { goHome(); return; }
+  showStep(wiz.step - 1);
 }
 
 function updateNextBtn() {
@@ -695,38 +728,53 @@ function togAct(id, btn) {
 
 function onDestInput() {
   wiz.dest = document.getElementById('wDest').value.trim();
+  document.getElementById('destAlts').style.display = 'none';
   if (climTimer) clearTimeout(climTimer);
-  if (wiz.dest && wiz.from) climTimer = setTimeout(fetchClimate, 800);
+  if (wiz.dest && wiz.from) climTimer = setTimeout(() => fetchClimate(), 800);
 }
 function onDateChg() {
   wiz.from = document.getElementById('wFrom').value;
   wiz.to   = document.getElementById('wTo').value;
 
-  // Rückreise-Minimum auf Abreisedatum setzen
+  // Rückreise-Minimum auf Abreisedatum setzen + vorbefüllen
+  // (damit der iOS-Kalender direkt im richtigen Monat öffnet)
   if (wiz.from) {
-    document.getElementById('wTo').min = wiz.from;
-    if (wiz.to && wiz.to < wiz.from) {
-      document.getElementById('wTo').value = wiz.from;
+    const toInput = document.getElementById('wTo');
+    toInput.min = wiz.from;
+    if (!toInput.value || toInput.value < wiz.from) {
+      toInput.value = wiz.from;
       wiz.to = wiz.from;
     }
   }
-  if (wiz.dest && wiz.from) { if (climTimer) clearTimeout(climTimer); climTimer = setTimeout(fetchClimate, 600); }
+  if (wiz.dest && wiz.from) { if (climTimer) clearTimeout(climTimer); climTimer = setTimeout(() => fetchClimate(), 600); }
   updateNextBtn();
 }
 
-async function fetchClimate() {
+async function fetchClimate(forcedResult = null) {
   const card = document.getElementById('climCard');
   card.style.display = 'flex';
   document.getElementById('climTitle').textContent = 'Lade Klimadaten…';
   document.getElementById('climSub').textContent = '';
 
   try {
-    // Geocoding
-    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=1&language=de&format=json`);
-    const geoData = await geoRes.json();
-    if (!geoData.results?.length) throw new Error('Ort nicht gefunden');
+    let result = forcedResult;
 
-    const { latitude: lat, longitude: lon, country_code: cc, name: cityName } = geoData.results[0];
+    if (!result) {
+      // Geocoding - mehrere Treffer anfragen für Auswahl bei mehrdeutigen Namen
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(wiz.dest)}&count=5&language=de&format=json`);
+      const geoData = await geoRes.json();
+      if (!geoData.results?.length) throw new Error('Ort nicht gefunden');
+
+      wiz.geoResults = geoData.results;
+      if (geoData.results.length > 1) {
+        renderDestAlts(geoData.results);
+      } else {
+        document.getElementById('destAlts').style.display = 'none';
+      }
+      result = geoData.results[0];
+    }
+
+    const { latitude: lat, longitude: lon, country_code: cc, country, name: cityName } = result;
     wiz.abroad = cc !== 'DE';
 
     // Wetterdaten: Forecast oder historische Klimadaten
@@ -769,12 +817,19 @@ async function fetchClimate() {
 
     wiz.temp = avgTemp; wiz.climate = climate;
 
+    const countryLabel = country ? `, ${country}` : '';
     document.getElementById('climIco').textContent   = icon;
-    document.getElementById('climTitle').textContent = `${cityName} · ø ${avgTemp}°C · ${climate}`;
+    document.getElementById('climTitle').textContent = `${cityName}${countryLabel} · ø ${avgTemp}°C · ${climate}`;
     document.getElementById('climSub').textContent   = wiz.abroad ? '✈️ Auslandsreise erkannt' : '🏠 Inlandsreise erkannt';
 
-    if (!document.getElementById('wName').value && wiz.from)
-      document.getElementById('wName').value = `${cityName} ${wiz.from.substring(0,4)}`;
+    // Namensvorschlag - bleibt "live" solange der Nutzer ihn nicht
+    // selbst verändert hat (verhindert das "Pa"-Problem bei Tippen)
+    const nameField = document.getElementById('wName');
+    const suggested = `${cityName} ${wiz.from.substring(0,4)}`;
+    if (!nameField.value || nameField.value === wiz.autoName) {
+      nameField.value = suggested;
+      wiz.autoName = suggested;
+    }
 
   } catch(e) {
     document.getElementById('climTitle').textContent = 'Reiseziel nicht gefunden';
@@ -783,9 +838,23 @@ async function fetchClimate() {
   updateNextBtn();
 }
 
+function renderDestAlts(results) {
+  const container = document.getElementById('destAlts');
+  container.innerHTML = results.slice(0,4).map((r,i) => {
+    const region = r.admin1 ? `, ${r.admin1}` : '';
+    return `<button class="dest-alt-btn${i===0?' sel':''}" onclick="selectDest(${i})">${r.name}${region}, ${r.country}</button>`;
+  }).join('');
+  container.style.display = 'flex';
+}
+
+function selectDest(i) {
+  document.querySelectorAll('.dest-alt-btn').forEach((b,idx) => b.classList.toggle('sel', idx===i));
+  fetchClimate(wiz.geoResults[i]);
+}
+
 function updateSummary() {
   const nights = calcNights(wiz.from, wiz.to);
-  const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',tischtennis:'🏓'};
+  const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',sonstiger_sport:'🏓'};
   const acts = wiz.acts.map(a => icons[a]||a).join(' ');
   const type = wiz.type==='business'?'💼 Business':'🏖️ Urlaub';
   document.getElementById('wSumText').innerHTML =
@@ -794,6 +863,7 @@ function updateSummary() {
 
 async function createTrip() {
   const name = document.getElementById('wName').value.trim() || `${wiz.dest} ${wiz.from?.substring(0,4)}`;
+  const notes = document.getElementById('wNotes').value.trim() || null;
   const btn = document.getElementById('wizNext');
   btn.disabled = true; btn.textContent = 'Erstelle Packliste…';
 
@@ -804,7 +874,8 @@ async function createTrip() {
       date_from: wiz.from, date_to: wiz.to,
       trip_type: wiz.type, is_abroad: wiz.abroad,
       is_bikepacking: wiz.bike, bike_mode: wiz.mode,
-      activities: wiz.acts, climate: wiz.climate, avg_temp: wiz.temp
+      activities: wiz.acts, climate: wiz.climate, avg_temp: wiz.temp,
+      notes
     });
 
     // Items generieren
@@ -877,7 +948,7 @@ async function openTrip(id) {
 
     // Items mit Item-Details laden
     const rawItems = await sbGet('trip_items', {
-      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,activity_key)',
+      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key)',
       filter: { trip_id: `eq.${id}` }
     });
     curItems = rawItems || [];
@@ -890,7 +961,7 @@ async function openTrip(id) {
 
     setHeader(curTrip.name, true);
     document.getElementById('tName').textContent  = curTrip.name;
-    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}`;
+    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
 
     // Pool-Modal Kategorien befüllen
     document.getElementById('mPoolCat').innerHTML = categories.map(c =>
