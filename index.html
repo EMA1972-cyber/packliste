@@ -127,9 +127,9 @@ body {
 }
 .irow-btn.save { background: var(--green-bg); color: var(--green); }
 .irow-btn.del { background: var(--red-bg); }
-.item-edit { display: flex; gap: 6px; align-items: center; width: 100%; }
-.item-edit .add-inp { font-size: 13px; padding: 8px 9px; }
-.item-edit select.add-inp { flex: 0 0 auto; max-width: 38%; }
+.item-edit-form { display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 6px 0; }
+.item-edit-form .add-inp { font-size: 13px; padding: 8px 9px; flex: 1; }
+.item-edit-row { display: flex; gap: 6px; }
 .new-btn {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: white; color: var(--blue-800);
@@ -370,7 +370,7 @@ body {
     <div class="manage-col">
       <div class="manage-label">🧳 Reisen</div>
       <button class="manage-btn primary" onclick="startWizard()">✏️ NEU</button>
-      <button class="manage-btn" onclick="toggleTripsList()">📋 AKTUELL</button>
+      <button class="manage-btn" onclick="openTripsList()">📋 AKTUELL</button>
     </div>
     <div class="manage-col">
       <div class="manage-label">📦 Items</div>
@@ -378,7 +378,11 @@ body {
       <button class="manage-btn" onclick="openItemsManager()">📋 AKTUELL</button>
     </div>
   </div>
-  <div class="trips-section" id="homeTrips" style="display:none">
+</div>
+
+<!-- AKTUELLE REISEN -->
+<div class="screen" id="sTripsList">
+  <div class="trips-section" id="homeTrips">
     <div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>
   </div>
 </div>
@@ -635,15 +639,23 @@ async function loadCategories() {
 // ══════════════════════════════════════════
 async function goHome() {
   show('sHome'); setHeader('🧳 Packliste', false);
+  await refreshTripsList();
+}
+
+async function refreshTripsList() {
   document.getElementById('homeTrips').innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>';
   try {
     const trips = await sbGet('trips', { order: 'created_at.desc' });
-    renderHome(trips || []);
+    await renderHome(trips || []);
   } catch(e) {
     document.getElementById('homeTrips').innerHTML =
       `<div class="error-box">⚠️ Verbindungsfehler: ${e.message}</div>`;
   }
+}
+
+function openTripsList() {
+  show('sTripsList'); setHeader('Aktuelle Reisen', true);
 }
 
 async function renderHome(trips) {
@@ -705,7 +717,7 @@ async function deleteTrip(id, name) {
     await sbDelete('trip_items', { trip_id: `eq.${id}` });
     await sbDelete('trip_todos', { trip_id: `eq.${id}` });
     await sbDelete('trips', { id: `eq.${id}` });
-    await goHome();
+    await refreshTripsList();
   } catch(e) {
     alert('Fehler beim Löschen: ' + e.message);
   }
@@ -1382,13 +1394,6 @@ async function saveNewItem() {
   allItemsCache = null;
 }
 
-function toggleTripsList() {
-  const el = document.getElementById('homeTrips');
-  const willShow = el.style.display === 'none';
-  el.style.display = willShow ? 'block' : 'none';
-  if (willShow) el.scrollIntoView({ behavior: 'smooth' });
-}
-
 // ══════════════════════════════════════════
 // ITEMS VERWALTEN
 // ══════════════════════════════════════════
@@ -1404,7 +1409,7 @@ async function openItemsManager() {
     try {
       const [items, subs] = await Promise.all([
         sbGet('items', { select: 'id,name,category_id,subcategory_id', order: 'category_id,name' }),
-        sbGet('subcategories', { select: 'id,name,category_id' })
+        sbGet('subcategories', { select: 'id,name,category_id,icon' })
       ]);
       allItemsCache = items || [];
       allSubsCache  = subs || [];
@@ -1464,31 +1469,45 @@ function editItemRow(id) {
   const catOptions = categories.map(c =>
     `<option value="${c.id}"${c.id===item.category_id?' selected':''}>${c.icon} ${c.name}</option>`).join('');
   row.innerHTML = `
-    <div class="item-edit">
-      <input class="add-inp" id="editName_${id}" value="${item.name}">
-      <select class="add-inp" id="editCat_${id}">${catOptions}</select>
-      <div class="irow-actions">
-        <button class="irow-btn save" onclick="saveItemRow(${id})" title="Speichern">✓</button>
+    <div class="item-edit-form">
+      <input class="add-inp" id="editName_${id}" value="${item.name}" placeholder="Name">
+      <div class="item-edit-row">
+        <select class="add-inp" id="editCat_${id}" onchange="updateSubcatOptions(${id})">${catOptions}</select>
+        <select class="add-inp" id="editSub_${id}"></select>
+      </div>
+      <div class="item-edit-row" style="justify-content:flex-end">
         <button class="irow-btn" onclick="renderItemsManager()" title="Abbrechen">✕</button>
+        <button class="irow-btn save" onclick="saveItemRow(${id})" title="Speichern">✓</button>
       </div>
     </div>`;
+  updateSubcatOptions(id);
+}
+
+function updateSubcatOptions(id) {
+  const catId = parseInt(document.getElementById('editCat_'+id).value);
+  const item = allItemsCache.find(i => i.id === id);
+  // Aktuelle Unterkategorie nur vorauswählen, wenn sie zur gewählten Hauptkategorie passt
+  const currentSub = (item.category_id === catId) ? item.subcategory_id : null;
+  const subs = allSubsCache.filter(s => s.category_id === catId);
+
+  let opts = `<option value="">– keine Unterkategorie –</option>`;
+  opts += subs.map(s =>
+    `<option value="${s.id}"${s.id===currentSub?' selected':''}>${s.icon||''} ${s.name}</option>`).join('');
+
+  document.getElementById('editSub_'+id).innerHTML = opts;
 }
 
 async function saveItemRow(id) {
-  const name  = document.getElementById('editName_'+id).value.trim();
-  const catId = parseInt(document.getElementById('editCat_'+id).value);
+  const name   = document.getElementById('editName_'+id).value.trim();
+  const catId  = parseInt(document.getElementById('editCat_'+id).value);
+  const subVal = document.getElementById('editSub_'+id).value;
+  const subId  = subVal ? parseInt(subVal) : null;
   if (!name) return;
 
   const item = allItemsCache.find(i => i.id === id);
-  const patch = { name, category_id: catId };
-  // Bei Kategorie-Wechsel Subkategorie zurücksetzen
-  // (sonst könnte das Item in der neuen Kategorie "verschwinden")
-  if (catId !== item.category_id) patch.subcategory_id = null;
+  await sbPatch('items', { id: `eq.${id}` }, { name, category_id: catId, subcategory_id: subId });
 
-  await sbPatch('items', { id: `eq.${id}` }, patch);
-
-  item.name = name; item.category_id = catId;
-  if (patch.subcategory_id !== undefined) item.subcategory_id = null;
+  item.name = name; item.category_id = catId; item.subcategory_id = subId;
   renderItemsManager();
 }
 
