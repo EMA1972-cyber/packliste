@@ -584,18 +584,35 @@ function tripCard(t) {
   const icon = t.is_bikepacking ? '🚴' : t.trip_type === 'business' ? '💼' : '🏖️';
   const nights = calcNights(t.date_from, t.date_to);
   const isDone = t.status === 'done';
-  return `<div class="trip-card${isDone?' done':''}" onclick="openTrip('${t.id}')">
-    <div class="tc-icon">${icon}</div>
-    <div class="tc-body">
-      <div class="tc-name">${t.name}</div>
-      <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination} · ${nights} Nächte</div>
-      ${!isDone ? `<div class="tc-prog">
-        <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
-        <div class="prog-label"><span>${t._packed} von ${t._ja} eingepackt</span><span>${pct}%</span></div>
-      </div>` : ''}
+  return `<div class="trip-card${isDone?' done':''}" style="position:relative">
+    <div onclick="openTrip('${t.id}')" style="display:flex;align-items:center;gap:14px;flex:1;cursor:pointer">
+      <div class="tc-icon">${icon}</div>
+      <div class="tc-body">
+        <div class="tc-name">${t.name}</div>
+        <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination} · ${nights} Nächte</div>
+        ${!isDone ? `<div class="tc-prog">
+          <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <div class="prog-label"><span>${t._packed} von ${t._ja} eingepackt</span><span>${pct}%</span></div>
+        </div>` : ''}
+      </div>
+      <div class="tc-arrow">›</div>
     </div>
-    <div class="tc-arrow">›</div>
+    <button onclick="deleteTrip('${t.id}','${t.name}')"
+      style="position:absolute;top:8px;right:8px;background:rgba(184,50,37,0.1);border:none;color:#B83225;border-radius:6px;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1"
+      title="Reise löschen">✕</button>
   </div>`;
+}
+
+async function deleteTrip(id, name) {
+  if (!confirm(`"${name}" wirklich löschen?`)) return;
+  try {
+    await sbDelete('trip_items', { trip_id: `eq.${id}` });
+    await sbDelete('trip_todos', { trip_id: `eq.${id}` });
+    await sbDelete('trips', { id: `eq.${id}` });
+    await goHome();
+  } catch(e) {
+    alert('Fehler beim Löschen: ' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════
@@ -684,8 +701,14 @@ function onDestInput() {
 function onDateChg() {
   wiz.from = document.getElementById('wFrom').value;
   wiz.to   = document.getElementById('wTo').value;
-  if (wiz.to && wiz.from && wiz.to < wiz.from) {
-    document.getElementById('wTo').value = wiz.from; wiz.to = wiz.from;
+
+  // Rückreise-Minimum auf Abreisedatum setzen
+  if (wiz.from) {
+    document.getElementById('wTo').min = wiz.from;
+    if (wiz.to && wiz.to < wiz.from) {
+      document.getElementById('wTo').value = wiz.from;
+      wiz.to = wiz.from;
+    }
   }
   if (wiz.dest && wiz.from) { if (climTimer) clearTimeout(climTimer); climTimer = setTimeout(fetchClimate, 600); }
   updateNextBtn();
@@ -706,17 +729,37 @@ async function fetchClimate() {
     const { latitude: lat, longitude: lon, country_code: cc, name: cityName } = geoData.results[0];
     wiz.abroad = cc !== 'DE';
 
-    // Wetterdaten
+    // Wetterdaten: Forecast oder historische Klimadaten
     const dateFrom = wiz.from;
     const dateTo   = wiz.to || wiz.from;
-    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${dateFrom}&end_date=${dateTo}&timezone=auto&forecast_days=16`);
-    const wData = await wRes.json();
+    const daysUntil = Math.round((new Date(dateFrom) - new Date()) / 86400000);
 
     let avgTemp = 20, climate = 'gemäßigt', icon = '🌤️';
-    if (wData.daily?.temperature_2m_max?.length) {
-      const max = wData.daily.temperature_2m_max;
-      const min = wData.daily.temperature_2m_min;
-      avgTemp = Math.round((max.reduce((a,b)=>a+b,0)/max.length + min.reduce((a,b)=>a+b,0)/min.length) / 2);
+
+    if (daysUntil <= 14) {
+      // Forecast für nahe Zukunft
+      const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${dateFrom}&end_date=${dateTo}&timezone=auto&forecast_days=16`);
+      const wData = await wRes.json();
+      if (wData.daily?.temperature_2m_max?.length) {
+        const max = wData.daily.temperature_2m_max;
+        const min = wData.daily.temperature_2m_min;
+        avgTemp = Math.round((max.reduce((a,b)=>a+b,0)/max.length + min.reduce((a,b)=>a+b,0)/min.length) / 2);
+      }
+    } else {
+      // Historische Klimadaten für weiter entfernte Daten
+      const month = parseInt(dateFrom.split('-')[1]);
+      const lastYear = parseInt(dateFrom.split('-')[0]) - 1;
+      const histFrom = `${lastYear}-${String(month).padStart(2,'0')}-01`;
+      const histTo   = `${lastYear}-${String(month).padStart(2,'0')}-28`;
+      const hRes = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&start_date=${histFrom}&end_date=${histTo}&timezone=auto`);
+      const hData = await hRes.json();
+      if (hData.daily?.temperature_2m_max?.length) {
+        const max = hData.daily.temperature_2m_max.filter(v => v !== null);
+        const min = hData.daily.temperature_2m_min.filter(v => v !== null);
+        if (max.length && min.length) {
+          avgTemp = Math.round((max.reduce((a,b)=>a+b,0)/max.length + min.reduce((a,b)=>a+b,0)/min.length) / 2);
+        }
+      }
     }
     if (avgTemp >= 28)     { climate='tropisch';  icon='🌴'; }
     else if (avgTemp >= 22){ climate='warm';       icon='☀️'; }
@@ -776,7 +819,6 @@ async function createTrip() {
 }
 
 async function generateTripItems(tripId) {
-  // Alle passenden Items laden
   const allItems = await sbGet('items', { select: '*', order: 'sort_order' });
   const nights = calcNights(wiz.from, wiz.to);
   const toInsert = [];
@@ -795,10 +837,12 @@ async function generateTripItems(tripId) {
     if (qty === 'n=nights')   qty = `${nights}x`;
     if (qty === 'n+1=nights') qty = `${nights+1}x`;
 
-    toInsert.push({ trip_id: tripId, item_id: item.id, qty });
+    // Mandatory Items direkt als JA vorausfüllen
+    const decision = item.is_mandatory ? 'ja' : 'pending';
+
+    toInsert.push({ trip_id: tripId, item_id: item.id, qty, decision });
   }
 
-  // Batch insert (50er Pakete)
   for (let i = 0; i < toInsert.length; i += 50) {
     await sbPost('trip_items', toInsert.slice(i, i+50));
   }
@@ -892,6 +936,16 @@ function getItemsByCat(catId, subId, pendingOnly, jaOnly) {
 // ── VORSCHLÄGE ──
 function renderVorschlaege(subs) {
   let h = '';
+
+  // Info-Banner: mandatory Items bereits vorausgefüllt
+  const mandatoryCount = curItems.filter(i => i.items?.is_mandatory && i.decision === 'ja').length;
+  if (mandatoryCount > 0) {
+    h += `<div style="display:flex;align-items:center;gap:10px;padding:10px 15px;background:#E4F5ED;border-bottom:1px solid #a8dfc0;font-size:13px">
+      <span style="font-size:16px">✅</span>
+      <span style="color:#1A7A4A;font-weight:500">${mandatoryCount} Pflicht-Items bereits vorgemerkt</span>
+    </div>`;
+  }
+
   if (undoLast) {
     h += `<div class="undo-strip">
       <span class="un">Zuletzt: <strong>${undoLast.name}</strong></span>
@@ -906,7 +960,7 @@ function renderVorschlaege(subs) {
     if (curTrip.trip_type === 'urlaub'   && !cat.show_urlaub)   return;
     if (curTrip.trip_type === 'business' && !cat.show_business)  return;
 
-    // Alle pending Items dieser Kategorie
+    // Nur pending Items (mandatory sind schon ja)
     const catPending = curItems.filter(ti => ti.items?.category_id === cat.id && ti.decision === 'pending');
     if (!catPending.length) return;
 
@@ -942,7 +996,7 @@ function renderVorschlaege(subs) {
 function vorschlagRow(ti) {
   const item = ti.items;
   const qty  = ti.qty ? `<span class="iqty">${ti.qty}</span>` : '';
-  const pool = item?.is_pool ? `<span class="ipool">💡 neu</span>` : '';
+  const pool = item?.is_pool ? `<span class="ipool">⭐ neu</span>` : '';
   return `<div class="item-row" id="vr_${ti.id}">
     <span class="iname">${item?.name || '?'}</span>
     ${pool}${qty}
