@@ -96,6 +96,40 @@ body {
   margin: -24px 20px 0;
   position: relative; z-index: 10;
 }
+
+.manage-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin: -24px 20px 0; position: relative; z-index: 10;
+}
+.manage-col {
+  background: white; border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.manage-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted);
+}
+.manage-btn {
+  border: 2px solid var(--border); border-radius: 10px;
+  padding: 11px 8px; background: var(--sand); color: var(--ink);
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center; transition: all .15s;
+}
+.manage-btn.primary { background: var(--blue-800); color: white; border-color: var(--blue-800); }
+.manage-btn:active { transform: scale(.97); }
+
+.irow-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.irow-btn {
+  background: var(--blue-50); border: none; border-radius: 8px;
+  width: 32px; height: 32px; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.irow-btn.save { background: var(--green-bg); color: var(--green); }
+.irow-btn.del { background: var(--red-bg); }
+.item-edit { display: flex; gap: 6px; align-items: center; width: 100%; }
+.item-edit .add-inp { font-size: 13px; padding: 8px 9px; }
+.item-edit select.add-inp { flex: 0 0 auto; max-width: 38%; }
 .new-btn {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: white; color: var(--blue-800);
@@ -332,19 +366,29 @@ body {
     <h2>Meine Reisen</h2>
     <p>Nie wieder etwas vergessen</p>
   </div>
-  <div class="new-btn-row">
-    <button class="new-btn" onclick="startWizard()">
-      <div class="new-btn-plus">＋</div>
-      <span>Neue Reise</span>
-    </button>
-    <button class="new-btn" onclick="openItemModal()">
-      <div class="new-btn-plus">＋</div>
-      <span>Neues Item</span>
-    </button>
+  <div class="manage-grid">
+    <div class="manage-col">
+      <div class="manage-label">🧳 Reisen</div>
+      <button class="manage-btn primary" onclick="startWizard()">➕ Neu</button>
+      <button class="manage-btn" onclick="scrollToTrips()">📋 Aktuell</button>
+    </div>
+    <div class="manage-col">
+      <div class="manage-label">📦 Items</div>
+      <button class="manage-btn primary" onclick="openItemModal()">➕ Neu</button>
+      <button class="manage-btn" onclick="openItemsManager()">📋 Aktuell</button>
+    </div>
   </div>
   <div class="trips-section" id="homeTrips">
     <div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>
   </div>
+</div>
+
+<!-- ITEMS VERWALTEN -->
+<div class="screen" id="sItems">
+  <div style="padding:16px 20px 0">
+    <input class="inp-field" id="itemSearch" type="text" placeholder="🔍 Item suchen…" oninput="renderItemsManager()">
+  </div>
+  <div id="itemsMgrList"></div>
 </div>
 
 <!-- WIZARD -->
@@ -1333,6 +1377,125 @@ async function saveNewItem() {
   const fb = document.getElementById('mItemFeedback');
   fb.style.display = 'block';
   setTimeout(() => { fb.style.display = 'none'; }, 1500);
+
+  // Item-Manager Cache invalidieren, falls offen
+  allItemsCache = null;
+}
+
+function scrollToTrips() {
+  document.getElementById('homeTrips').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════
+// ITEMS VERWALTEN
+// ══════════════════════════════════════════
+let allItemsCache = null;
+let allSubsCache  = null;
+
+async function openItemsManager() {
+  show('sItems'); setHeader('Items verwalten', true);
+  document.getElementById('itemSearch').value = '';
+
+  if (!allItemsCache) {
+    document.getElementById('itemsMgrList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade Items…</span></div>';
+    try {
+      const [items, subs] = await Promise.all([
+        sbGet('items', { select: 'id,name,category_id,subcategory_id', order: 'category_id,name' }),
+        sbGet('subcategories', { select: 'id,name,category_id' })
+      ]);
+      allItemsCache = items || [];
+      allSubsCache  = subs || [];
+    } catch(e) {
+      document.getElementById('itemsMgrList').innerHTML = `<div class="error-box">⚠️ Fehler: ${e.message}</div>`;
+      return;
+    }
+  }
+  renderItemsManager();
+}
+
+function renderItemsManager() {
+  const q = document.getElementById('itemSearch').value.trim().toLowerCase();
+  let h = '';
+
+  categories.forEach(cat => {
+    const items = allItemsCache.filter(it => it.category_id === cat.id &&
+      (!q || it.name.toLowerCase().includes(q)));
+    if (!items.length) return;
+
+    h += `<div class="cat-block">
+      <div class="cat-hd" onclick="togCat(this)">
+        <span class="cat-hd-ico">${cat.icon}</span>
+        <span class="cat-hd-title">${cat.name}</span>
+        <span class="cat-count">${items.length}</span>
+        <span class="cat-chev open">▼</span>
+      </div><div class="cat-body">`;
+
+    items.forEach(it => h += itemMgrRow(it));
+
+    h += `</div></div>`;
+  });
+
+  if (!h) h = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
+    <div style="font-size:40px;margin-bottom:10px">🔍</div>
+    <div>Keine Items gefunden</div>
+  </div>`;
+
+  document.getElementById('itemsMgrList').innerHTML = h + '<div class="spacer"></div>';
+}
+
+function itemMgrRow(it) {
+  const sub = it.subcategory_id ? allSubsCache.find(s => s.id === it.subcategory_id) : null;
+  const subLabel = sub ? ` <small style="color:var(--muted);font-weight:400">· ${sub.name}</small>` : '';
+  return `<div class="item-row" id="imr_${it.id}">
+    <span class="iname">${it.name}${subLabel}</span>
+    <div class="irow-actions">
+      <button class="irow-btn" onclick="editItemRow(${it.id})" title="Bearbeiten">✏️</button>
+      <button class="irow-btn del" onclick="deleteItemRow(${it.id})" title="Löschen">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function editItemRow(id) {
+  const item = allItemsCache.find(i => i.id === id);
+  const row = document.getElementById('imr_' + id);
+  const catOptions = categories.map(c =>
+    `<option value="${c.id}"${c.id===item.category_id?' selected':''}>${c.icon} ${c.name}</option>`).join('');
+  row.innerHTML = `
+    <div class="item-edit">
+      <input class="add-inp" id="editName_${id}" value="${item.name}">
+      <select class="add-inp" id="editCat_${id}">${catOptions}</select>
+      <div class="irow-actions">
+        <button class="irow-btn save" onclick="saveItemRow(${id})" title="Speichern">✓</button>
+        <button class="irow-btn" onclick="renderItemsManager()" title="Abbrechen">✕</button>
+      </div>
+    </div>`;
+}
+
+async function saveItemRow(id) {
+  const name  = document.getElementById('editName_'+id).value.trim();
+  const catId = parseInt(document.getElementById('editCat_'+id).value);
+  if (!name) return;
+
+  const item = allItemsCache.find(i => i.id === id);
+  const patch = { name, category_id: catId };
+  // Bei Kategorie-Wechsel Subkategorie zurücksetzen
+  // (sonst könnte das Item in der neuen Kategorie "verschwinden")
+  if (catId !== item.category_id) patch.subcategory_id = null;
+
+  await sbPatch('items', { id: `eq.${id}` }, patch);
+
+  item.name = name; item.category_id = catId;
+  if (patch.subcategory_id !== undefined) item.subcategory_id = null;
+  renderItemsManager();
+}
+
+async function deleteItemRow(id) {
+  const item = allItemsCache.find(i => i.id === id);
+  if (!confirm(`"${item.name}" wirklich löschen?\n\nWird auch aus allen bestehenden Reisen entfernt.`)) return;
+
+  await sbDelete('items', { id: `eq.${id}` });
+  allItemsCache = allItemsCache.filter(i => i.id !== id);
+  renderItemsManager();
 }
 
 // ══════════════════════════════════════════
