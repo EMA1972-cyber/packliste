@@ -110,6 +110,7 @@ body {
   font-size: 11px; font-weight: 700; letter-spacing: .08em;
   text-transform: uppercase; color: var(--muted);
 }
+.manage-count { text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; }
 .manage-btn {
   border: 2px solid var(--border); border-radius: 10px;
   padding: 11px 8px; background: var(--sand); color: var(--ink);
@@ -287,6 +288,22 @@ body {
 .cat-hd-title { font-weight: 600; font-size: 14px; flex: 1; }
 .cat-count { font-size: 11px; font-weight: 600; background: var(--blue-50); color: var(--blue-500); border-radius: 8px; padding: 2px 8px; }
 .cat-count.done { background: var(--green-bg); color: var(--green); }
+.iname.mandatory { color: var(--red); font-weight: 600; }
+.mand-toggle {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 2px solid var(--border); background: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  flex-shrink: 0; color: var(--border);
+}
+.mand-toggle.on { background: var(--red); border-color: var(--red); color: white; }
+
+.cat-add-btn {
+  background: var(--blue-50); border: none; border-radius: 6px;
+  width: 26px; height: 26px; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--blue-700);
+}
 .cat-chev { color: var(--muted); font-size: 11px; transition: transform .2s; }
 .cat-chev.open { transform: rotate(180deg); }
 
@@ -363,7 +380,7 @@ body {
 <div class="screen active" id="sHome">
   <div class="home-hero">
     <span class="hero-icon">🧳</span>
-    <h2>Meine Reisen</h2>
+    <h2>Reiseplaner</h2>
     <p>Nie wieder etwas vergessen</p>
   </div>
   <div class="manage-grid">
@@ -371,11 +388,13 @@ body {
       <div class="manage-label">🧳 Reisen</div>
       <button class="manage-btn primary" onclick="startWizard()">✏️ NEU</button>
       <button class="manage-btn" onclick="openTripsList()">📋 AKTUELL</button>
+      <div class="manage-count" id="tripsCount"></div>
     </div>
     <div class="manage-col">
       <div class="manage-label">📦 Items</div>
       <button class="manage-btn primary" onclick="openItemModal()">✏️ NEU</button>
       <button class="manage-btn" onclick="openItemsManager()">📋 AKTUELL</button>
+      <div class="manage-count" id="itemsCount"></div>
     </div>
   </div>
 </div>
@@ -638,8 +657,9 @@ async function loadCategories() {
 // HOME
 // ══════════════════════════════════════════
 async function goHome() {
-  show('sHome'); setHeader('🧳 Packliste', false);
+  show('sHome'); setHeader(null, false);
   await refreshTripsList();
+  refreshItemsCount();
 }
 
 async function refreshTripsList() {
@@ -647,11 +667,19 @@ async function refreshTripsList() {
     '<div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>';
   try {
     const trips = await sbGet('trips', { order: 'created_at.desc' });
+    document.getElementById('tripsCount').textContent = `${(trips||[]).length} Reise${(trips||[]).length===1?'':'n'}`;
     await renderHome(trips || []);
   } catch(e) {
     document.getElementById('homeTrips').innerHTML =
       `<div class="error-box">⚠️ Verbindungsfehler: ${e.message}</div>`;
   }
+}
+
+async function refreshItemsCount() {
+  try {
+    const items = allItemsCache || await sbGet('items', { select: 'id' });
+    document.getElementById('itemsCount').textContent = `${(items||[]).length} Item${(items||[]).length===1?'':'s'}`;
+  } catch(e) { /* still fine, just no count shown */ }
 }
 
 function openTripsList() {
@@ -1265,28 +1293,98 @@ function packRow(ti) {
 
 // ── TODOS ──
 function renderTodos() {
-  const done = curTodos.filter(t => t.decision !== 'pending').length;
+  const done = curTodos.filter(t => t.decision === 'ja').length;
   let h = `<div class="cat-block" style="margin-top:14px">
     <div class="cat-hd">
       <span class="cat-hd-ico">📋</span>
       <span class="cat-hd-title">Vor der Abreise erledigen</span>
       <span class="cat-count${done===curTodos.length&&curTodos.length?' done':''}">${done}/${curTodos.length}</span>
-    </div><div class="cat-body">`;
+      <button class="cat-add-btn" onclick="addTodoForm(event)" title="Neues ToDo">➕</button>
+    </div><div class="cat-body" id="todoBody">`;
 
-  curTodos.forEach(todo => {
-    h += `<div class="todo-row">
-      <span class="tname${todo.decision==='nein'?' nein':''}">${todo.name}</span>
-      ${todo.decision==='pending'
-        ? `<div class="ja-nein">
-             <button class="ja-b"   onclick="decideTodo('${todo.id}','ja')">JA</button>
-             <button class="nein-b" onclick="decideTodo('${todo.id}','nein')">NEIN</button>
-           </div>`
-        : `<span style="font-size:18px">${todo.decision==='ja'?'✅':'❌'}</span>`}
-    </div>`;
-  });
+  curTodos.forEach(todo => h += todoRow(todo));
 
   h += `</div></div><div class="spacer"></div>`;
   document.getElementById('tpTodos').innerHTML = h;
+}
+
+function todoRow(todo) {
+  const chk = todo.decision === 'ja';
+  return `<div class="item-row${chk?' faded':''}" id="todo_${todo.id}">
+    <div class="ichk${chk?' on':''}" onclick="toggleTodoCheck('${todo.id}',${!chk})">${chk?'✓':''}</div>
+    <span class="iname${chk?' packed':''}">${todo.name}</span>
+    <div class="irow-actions">
+      <button class="irow-btn" onclick="editTodoRow('${todo.id}')" title="Bearbeiten">✏️</button>
+      <button class="irow-btn del" onclick="deleteTodoRow('${todo.id}')" title="Löschen">🗑️</button>
+    </div>
+  </div>`;
+}
+
+async function toggleTodoCheck(id, checked) {
+  const todo = curTodos.find(t => t.id === id);
+  const decision = checked ? 'ja' : 'pending';
+  if (todo) todo.decision = decision;
+  await sbPatch('trip_todos', { id: `eq.${id}` }, { decision });
+  renderTodos();
+}
+
+function editTodoRow(id) {
+  const todo = curTodos.find(t => t.id === id);
+  const row = document.getElementById('todo_' + id);
+  row.innerHTML = `
+    <div class="item-edit-form">
+      <input class="add-inp" id="editTodoName_${id}" value="${todo.name}" placeholder="Name">
+      <div class="item-edit-row" style="justify-content:flex-end">
+        <button class="irow-btn" onclick="renderTodos()" title="Abbrechen">✕</button>
+        <button class="irow-btn save" onclick="saveTodoRow('${id}')" title="Speichern">✓</button>
+      </div>
+    </div>`;
+}
+
+async function saveTodoRow(id) {
+  const name = document.getElementById('editTodoName_'+id).value.trim();
+  if (!name) return;
+  await sbPatch('trip_todos', { id: `eq.${id}` }, { name });
+  const todo = curTodos.find(t => t.id === id);
+  todo.name = name;
+  renderTodos();
+}
+
+async function deleteTodoRow(id) {
+  const todo = curTodos.find(t => t.id === id);
+  if (!confirm(`"${todo.name}" wirklich löschen?`)) return;
+  await sbDelete('trip_todos', { id: `eq.${id}` });
+  curTodos = curTodos.filter(t => t.id !== id);
+  renderTodos();
+}
+
+function addTodoForm(e) {
+  e.stopPropagation();
+  renderTodos(); // ggf. offenes Formular schließen
+
+  const body = document.getElementById('todoBody');
+  const form = document.createElement('div');
+  form.className = 'item-row';
+  form.id = 'newTodoForm';
+  form.innerHTML = `
+    <div class="item-edit-form">
+      <input class="add-inp" id="newTodoName" placeholder="Neues ToDo">
+      <div class="item-edit-row" style="justify-content:flex-end">
+        <button class="irow-btn" onclick="renderTodos()" title="Abbrechen">✕</button>
+        <button class="irow-btn save" onclick="saveNewTodoRow()" title="Speichern">✓</button>
+      </div>
+    </div>`;
+  body.appendChild(form);
+  document.getElementById('newTodoName').focus();
+}
+
+async function saveNewTodoRow() {
+  const name = document.getElementById('newTodoName').value.trim();
+  if (!name) return;
+  const maxOrder = curTodos.reduce((m,t) => Math.max(m, t.sort_order||0), 0);
+  const [newTodo] = await sbPost('trip_todos', { trip_id: curTripId, name, decision: 'pending', sort_order: maxOrder + 1 });
+  curTodos.push(newTodo);
+  renderTodos();
 }
 
 // ══════════════════════════════════════════
@@ -1316,13 +1414,6 @@ async function checkItem(tiId, checked) {
   if (ti) ti.is_checked = checked;
   await sbPatch('trip_items', { id: `eq.${tiId}` }, { is_checked: checked });
   renderAll();
-}
-
-async function decideTodo(todoId, decision) {
-  const todo = curTodos.find(t => t.id === todoId);
-  if (todo) todo.decision = decision;
-  await sbPatch('trip_todos', { id: `eq.${todoId}` }, { decision });
-  renderTodos();
 }
 
 async function addItem(catId) {
@@ -1408,7 +1499,7 @@ async function openItemsManager() {
     document.getElementById('itemsMgrList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade Items…</span></div>';
     try {
       const [items, subs] = await Promise.all([
-        sbGet('items', { select: 'id,name,category_id,subcategory_id', order: 'category_id,name' }),
+        sbGet('items', { select: 'id,name,category_id,subcategory_id,is_mandatory', order: 'category_id,name' }),
         sbGet('subcategories', { select: 'id,name,category_id,icon' })
       ]);
       allItemsCache = items || [];
@@ -1430,11 +1521,12 @@ function renderItemsManager() {
       (!q || it.name.toLowerCase().includes(q)));
     if (!items.length) return;
 
-    h += `<div class="cat-block">
+    h += `<div class="cat-block" data-cat="${cat.id}">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
         <span class="cat-hd-title">${cat.name}</span>
         <span class="cat-count">${items.length}</span>
+        <button class="cat-add-btn" onclick="addNewItemForm(event, ${cat.id})" title="Neues Item in ${cat.name}">➕</button>
         <span class="cat-chev open">▼</span>
       </div><div class="cat-body">`;
 
@@ -1454,13 +1546,23 @@ function renderItemsManager() {
 function itemMgrRow(it) {
   const sub = it.subcategory_id ? allSubsCache.find(s => s.id === it.subcategory_id) : null;
   const subLabel = sub ? ` <small style="color:var(--muted);font-weight:400">· ${sub.name}</small>` : '';
+  const mand = !!it.is_mandatory;
   return `<div class="item-row" id="imr_${it.id}">
-    <span class="iname">${it.name}${subLabel}</span>
+    <span class="iname${mand?' mandatory':''}">${it.name}${subLabel}</span>
+    <button class="mand-toggle${mand?' on':''}" onclick="toggleMandatory(${it.id})" title="Pflicht-Item">!</button>
     <div class="irow-actions">
       <button class="irow-btn" onclick="editItemRow(${it.id})" title="Bearbeiten">✏️</button>
       <button class="irow-btn del" onclick="deleteItemRow(${it.id})" title="Löschen">🗑️</button>
     </div>
   </div>`;
+}
+
+async function toggleMandatory(id) {
+  const item = allItemsCache.find(i => i.id === id);
+  const newVal = !item.is_mandatory;
+  await sbPatch('items', { id: `eq.${id}` }, { is_mandatory: newVal });
+  item.is_mandatory = newVal;
+  renderItemsManager();
 }
 
 function editItemRow(id) {
@@ -1520,6 +1622,46 @@ async function deleteItemRow(id) {
   renderItemsManager();
 }
 
+function addNewItemForm(e, catId) {
+  e.stopPropagation();
+  renderItemsManager(); // ggf. offenes Edit-Formular schließen
+
+  const catBody = document.querySelector(`.cat-block[data-cat="${catId}"] .cat-body`);
+  if (!catBody) return;
+
+  const subs = allSubsCache.filter(s => s.category_id === catId);
+  let subOpts = `<option value="">– keine Unterkategorie –</option>`;
+  subOpts += subs.map(s => `<option value="${s.id}">${s.icon||''} ${s.name}</option>`).join('');
+
+  const form = document.createElement('div');
+  form.className = 'item-row';
+  form.id = 'newItemForm';
+  form.innerHTML = `
+    <div class="item-edit-form">
+      <input class="add-inp" id="newItemName" placeholder="Name des neuen Items">
+      <div class="item-edit-row">
+        <select class="add-inp" id="newItemSub">${subOpts}</select>
+      </div>
+      <div class="item-edit-row" style="justify-content:flex-end">
+        <button class="irow-btn" onclick="renderItemsManager()" title="Abbrechen">✕</button>
+        <button class="irow-btn save" onclick="saveNewItemRow(${catId})" title="Speichern">✓</button>
+      </div>
+    </div>`;
+  catBody.insertBefore(form, catBody.firstChild);
+  document.getElementById('newItemName').focus();
+}
+
+async function saveNewItemRow(catId) {
+  const name = document.getElementById('newItemName').value.trim();
+  if (!name) return;
+  const subVal = document.getElementById('newItemSub').value;
+  const subId = subVal ? parseInt(subVal) : null;
+
+  const [newItem] = await sbPost('items', { category_id: catId, subcategory_id: subId, name, show_urlaub: true, show_business: true });
+  allItemsCache.push(newItem);
+  renderItemsManager();
+}
+
 // ══════════════════════════════════════════
 // UI HELPERS
 // ══════════════════════════════════════════
@@ -1529,6 +1671,12 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 function setHeader(title, back) {
+  const header = document.querySelector('.app-header');
+  if (title === null) {
+    header.style.display = 'none';
+    return;
+  }
+  header.style.display = 'flex';
   document.getElementById('hTitle').textContent = title;
   document.getElementById('backBtn').style.display = back ? 'block' : 'none';
 }
