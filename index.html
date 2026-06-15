@@ -1499,7 +1499,7 @@ async function openItemsManager() {
     document.getElementById('itemsMgrList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade Items…</span></div>';
     try {
       const [items, subs] = await Promise.all([
-        sbGet('items', { select: 'id,name,category_id,subcategory_id,is_mandatory', order: 'category_id,name' }),
+        sbGet('items', { select: 'id,name,category_id,subcategory_id,is_mandatory,bike_bag_id', order: 'category_id,name' }),
         sbGet('subcategories', { select: 'id,name,category_id,icon' })
       ]);
       allItemsCache = items || [];
@@ -1546,9 +1546,11 @@ function renderItemsManager() {
 function itemMgrRow(it) {
   const sub = it.subcategory_id ? allSubsCache.find(s => s.id === it.subcategory_id) : null;
   const subLabel = sub ? ` <small style="color:var(--muted);font-weight:400">· ${sub.name}</small>` : '';
+  const bag = it.bike_bag_id ? allSubsCache.find(s => s.id === it.bike_bag_id) : null;
+  const bagLabel = bag ? ` <small style="color:var(--blue-500);font-weight:600">🚲 ${bag.icon||''} ${bag.name}</small>` : '';
   const mand = !!it.is_mandatory;
   return `<div class="item-row" id="imr_${it.id}">
-    <span class="iname${mand?' mandatory':''}">${it.name}${subLabel}</span>
+    <span class="iname${mand?' mandatory':''}">${it.name}${subLabel}${bagLabel}</span>
     <button class="mand-toggle${mand?' on':''}" onclick="toggleMandatory(${it.id})" title="Pflicht-Item">!</button>
     <div class="irow-actions">
       <button class="irow-btn" onclick="editItemRow(${it.id})" title="Bearbeiten">✏️</button>
@@ -1570,12 +1572,23 @@ function editItemRow(id) {
   const row = document.getElementById('imr_' + id);
   const catOptions = categories.map(c =>
     `<option value="${c.id}"${c.id===item.category_id?' selected':''}>${c.icon} ${c.name}</option>`).join('');
+
+  const bikeCat = categories.find(c => c.name === 'Bikepacking');
+  const bikeBags = bikeCat ? allSubsCache.filter(s => s.category_id === bikeCat.id) : [];
+  let bagOpts = `<option value="">– keine Tasche –</option>`;
+  bagOpts += bikeBags.map(s =>
+    `<option value="${s.id}"${s.id===item.bike_bag_id?' selected':''}>${s.icon||''} ${s.name}</option>`).join('');
+
   row.innerHTML = `
     <div class="item-edit-form">
       <input class="add-inp" id="editName_${id}" value="${item.name}" placeholder="Name">
       <div class="item-edit-row">
         <select class="add-inp" id="editCat_${id}" onchange="updateSubcatOptions(${id})">${catOptions}</select>
         <select class="add-inp" id="editSub_${id}"></select>
+      </div>
+      <div class="item-edit-row" style="align-items:center">
+        <span style="font-size:12px;color:var(--muted);flex-shrink:0">🚲 Tasche:</span>
+        <select class="add-inp" id="editBag_${id}">${bagOpts}</select>
       </div>
       <div class="item-edit-row" style="justify-content:flex-end">
         <button class="irow-btn" onclick="renderItemsManager()" title="Abbrechen">✕</button>
@@ -1604,12 +1617,14 @@ async function saveItemRow(id) {
   const catId  = parseInt(document.getElementById('editCat_'+id).value);
   const subVal = document.getElementById('editSub_'+id).value;
   const subId  = subVal ? parseInt(subVal) : null;
+  const bagVal = document.getElementById('editBag_'+id).value;
+  const bagId  = bagVal ? parseInt(bagVal) : null;
   if (!name) return;
 
   const item = allItemsCache.find(i => i.id === id);
-  await sbPatch('items', { id: `eq.${id}` }, { name, category_id: catId, subcategory_id: subId });
+  await sbPatch('items', { id: `eq.${id}` }, { name, category_id: catId, subcategory_id: subId, bike_bag_id: bagId });
 
-  item.name = name; item.category_id = catId; item.subcategory_id = subId;
+  item.name = name; item.category_id = catId; item.subcategory_id = subId; item.bike_bag_id = bagId;
   renderItemsManager();
 }
 
