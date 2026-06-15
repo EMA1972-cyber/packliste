@@ -297,6 +297,7 @@ body {
   flex-shrink: 0; color: var(--border);
 }
 .mand-toggle.on { background: var(--red); border-color: var(--red); color: white; }
+.mand-toggle.bag-on { background: var(--blue-500); border-color: var(--blue-500); color: white; }
 
 .cat-add-btn {
   background: var(--blue-50); border: none; border-radius: 6px;
@@ -1552,6 +1553,7 @@ function itemMgrRow(it) {
   return `<div class="item-row" id="imr_${it.id}">
     <span class="iname${mand?' mandatory':''}">${it.name}${subLabel}${bagLabel}</span>
     <button class="mand-toggle${mand?' on':''}" onclick="toggleMandatory(${it.id})" title="Pflicht-Item">!</button>
+    <button class="mand-toggle${bag?' bag-on':''}" onclick="quickBagPicker(${it.id})" title="Bikepacking-Tasche">🚲</button>
     <div class="irow-actions">
       <button class="irow-btn" onclick="editItemRow(${it.id})" title="Bearbeiten">✏️</button>
       <button class="irow-btn del" onclick="deleteItemRow(${it.id})" title="Löschen">🗑️</button>
@@ -1564,6 +1566,33 @@ async function toggleMandatory(id) {
   const newVal = !item.is_mandatory;
   await sbPatch('items', { id: `eq.${id}` }, { is_mandatory: newVal });
   item.is_mandatory = newVal;
+  renderItemsManager();
+}
+
+function quickBagPicker(id) {
+  const item = allItemsCache.find(i => i.id === id);
+  const row = document.getElementById('imr_' + id);
+
+  const bikeCat = categories.find(c => c.name === 'Bikepacking');
+  const bikeBags = bikeCat ? allSubsCache.filter(s => s.category_id === bikeCat.id) : [];
+  let opts = `<option value="">– keine Tasche –</option>`;
+  opts += bikeBags.map(s =>
+    `<option value="${s.id}"${s.id===item.bike_bag_id?' selected':''}>${s.icon||''} ${s.name}</option>`).join('');
+
+  row.innerHTML = `
+    <div class="item-edit-row" style="width:100%;align-items:center">
+      <span class="iname">${item.name}</span>
+      <select class="add-inp" id="quickBag_${id}" onchange="saveQuickBag(${id})" style="flex:1.2">${opts}</select>
+      <button class="irow-btn" onclick="renderItemsManager()" title="Schließen">✕</button>
+    </div>`;
+}
+
+async function saveQuickBag(id) {
+  const val = document.getElementById('quickBag_'+id).value;
+  const bagId = val ? parseInt(val) : null;
+  await sbPatch('items', { id: `eq.${id}` }, { bike_bag_id: bagId });
+  const item = allItemsCache.find(i => i.id === id);
+  item.bike_bag_id = bagId;
   renderItemsManager();
 }
 
