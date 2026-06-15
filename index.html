@@ -297,7 +297,7 @@ body {
   flex-shrink: 0; color: var(--border);
 }
 .mand-toggle.on { background: var(--red); border-color: var(--red); color: white; }
-.mand-toggle.bag-on { background: var(--blue-500); border-color: var(--blue-500); color: white; }
+.mand-toggle.bag-on { background: var(--blue-50); border-color: var(--blue-500); color: var(--blue-500); }
 
 .cat-add-btn {
   background: var(--blue-50); border: none; border-radius: 6px;
@@ -545,11 +545,13 @@ body {
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('Vorschlaege',this)">📋 Vorschläge</button>
     <button class="tab-btn" onclick="showTab('Packen',this)">🧳 Packen</button>
+    <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none">🚲 Taschen</button>
     <button class="tab-btn" onclick="showTab('Todos',this)">✅ ToDos</button>
   </div>
 
   <div class="tab-pane active" id="tpVorschlaege"></div>
   <div class="tab-pane" id="tpPacken"></div>
+  <div class="tab-pane" id="tpTaschen"></div>
   <div class="tab-pane" id="tpTodos"></div>
 
   <button class="fab" onclick="openPool()">💡 Für nächstes Mal merken</button>
@@ -1107,7 +1109,7 @@ async function openTrip(id) {
 
     // Items mit Item-Details laden
     const rawItems = await sbGet('trip_items', {
-      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key)',
+      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id)',
       filter: { trip_id: `eq.${id}` }
     });
     curItems = rawItems || [];
@@ -1139,6 +1141,7 @@ function renderAll(subs) {
   renderVorschlaege(s);
   renderPacken(s);
   renderTodos();
+  renderTaschen(s);
 }
 
 function updateProgress() {
@@ -1290,6 +1293,47 @@ function packRow(ti) {
     <span class="iname${chk?' packed':''}">${ti.items?.name||'?'}</span>
     ${qty}
   </div>`;
+}
+
+// ── TASCHEN (nur Bikepacking) ──
+function renderTaschen(subs) {
+  const tab = document.getElementById('tabTaschen');
+  if (!curTrip.is_bikepacking) {
+    tab.style.display = 'none';
+    return;
+  }
+  tab.style.display = '';
+
+  const bikeCat = categories.find(c => c.name === 'Bikepacking');
+  const bags = bikeCat ? subs.filter(s => s.category_id === bikeCat.id) : [];
+
+  let h = '';
+  bags.forEach(bag => {
+    const items = curItems.filter(ti => ti.decision === 'ja' && ti.items?.bike_bag_id === bag.id);
+    if (!items.length) return;
+    const p = items.filter(i => i.is_checked).length;
+
+    h += `<div class="cat-block">
+      <div class="cat-hd" onclick="togCat(this)">
+        <span class="cat-hd-title">${bag.name}</span>
+        <span class="cat-count${p===items.length?' done':''}">${p}/${items.length}</span>
+        <span class="cat-chev open">▼</span>
+      </div><div class="cat-body">`;
+
+    items.forEach(ti => h += packRow(ti));
+
+    h += `</div></div>`;
+  });
+
+  if (!h) {
+    h = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
+      <div style="font-size:40px;margin-bottom:10px">🚲</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--ink)">Noch keine Items zugeordnet</div>
+      <div style="font-size:13px;margin-top:5px">Items in "Items verwalten" über 🚲 einer Tasche zuordnen</div>
+    </div>`;
+  }
+
+  document.getElementById('tpTaschen').innerHTML = h + '<div class="spacer"></div>';
 }
 
 // ── TODOS ──
@@ -1548,7 +1592,7 @@ function itemMgrRow(it) {
   const sub = it.subcategory_id ? allSubsCache.find(s => s.id === it.subcategory_id) : null;
   const subLabel = sub ? ` <small style="color:var(--muted);font-weight:400">· ${sub.name}</small>` : '';
   const bag = it.bike_bag_id ? allSubsCache.find(s => s.id === it.bike_bag_id) : null;
-  const bagLabel = bag ? ` <small style="color:var(--blue-500);font-weight:600">🚲 ${bag.icon||''} ${bag.name}</small>` : '';
+  const bagLabel = bag ? ` <small style="color:var(--muted);font-weight:600">${bag.name}</small>` : '';
   const mand = !!it.is_mandatory;
   return `<div class="item-row" id="imr_${it.id}">
     <span class="iname${mand?' mandatory':''}">${it.name}${subLabel}${bagLabel}</span>
