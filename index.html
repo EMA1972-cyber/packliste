@@ -586,7 +586,9 @@ body {
     <label class="ml">Name</label>
     <input class="mi" id="mItemName" type="text" placeholder="z.B. Reise-Nähset">
     <label class="ml">Kategorie</label>
-    <select class="mi" id="mItemCat"></select>
+    <select class="mi" id="mItemCat" onchange="updateItemSubOptions()"></select>
+    <label class="ml">Unterkategorie <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+    <select class="mi" id="mItemSub"></select>
     <div id="mItemFeedback" style="display:none;margin-top:14px;text-align:center;color:var(--green);font-size:14px;font-weight:600">✅ Hinzugefügt!</div>
     <div class="modal-btns">
       <button class="btn-ghost" onclick="closeModal('mNewItem')">Abbrechen</button>
@@ -642,6 +644,7 @@ let curTodos  = [];
 let undoLast  = null;
 let climTimer = null;
 let categories = [];
+let subcategories = [];
 
 // ══════════════════════════════════════════
 // INIT
@@ -655,7 +658,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadCategories() {
-  try { categories = await sbGet('categories', { order: 'sort_order' }); }
+  try {
+    const [cats, subs] = await Promise.all([
+      sbGet('categories', { order: 'sort_order' }),
+      sbGet('subcategories', { select: 'id,name,category_id,icon', order: 'sort_order' })
+    ]);
+    categories = cats || [];
+    subcategories = subs || [];
+  }
   catch(e) { console.error('Kategorien laden:', e); }
 }
 
@@ -1514,23 +1524,37 @@ function openItemModal() {
     `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
   document.getElementById('mItemFeedback').style.display = 'none';
   document.getElementById('mItemName').value = '';
+  updateItemSubOptions();
   document.getElementById('mNewItem').classList.add('open');
+}
+
+// Befüllt das Unterkategorie-Dropdown passend zur gewählten Kategorie
+function updateItemSubOptions() {
+  const catId = parseInt(document.getElementById('mItemCat').value);
+  const subs = subcategories.filter(s => s.category_id === catId);
+  const sel = document.getElementById('mItemSub');
+  sel.innerHTML = '<option value="">– keine –</option>' +
+    subs.map(s => `<option value="${s.id}">${s.icon ? s.icon + ' ' : ''}${s.name}</option>`).join('');
 }
 
 async function saveNewItem() {
   const name  = document.getElementById('mItemName').value.trim();
   const catId = parseInt(document.getElementById('mItemCat').value);
+  const subVal = document.getElementById('mItemSub').value;
+  const subId = subVal ? parseInt(subVal) : null;
   if (!name) return;
 
-  await sbPost('items', { category_id: catId, name, show_urlaub: true, show_business: true });
+  await sbPost('items', { category_id: catId, subcategory_id: subId, name, show_urlaub: true, show_business: true });
 
   document.getElementById('mItemName').value = '';
+  updateItemSubOptions();
   const fb = document.getElementById('mItemFeedback');
   fb.style.display = 'block';
   setTimeout(() => { fb.style.display = 'none'; }, 1500);
 
   // Item-Manager Cache invalidieren, falls offen
   allItemsCache = null;
+  allSubsCache = null;
 }
 
 // ══════════════════════════════════════════
