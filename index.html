@@ -8,6 +8,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Packliste">
 <meta name="theme-color" content="#1A3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Nie wieder etwas vergessen – die persönliche Reise-Packliste.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -405,6 +411,9 @@ body {
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="startWizard()" style="width:100%;padding:13px">✏️ NEUE REISE</button>
   </div>
+  <div style="padding:12px 20px 0">
+    <input class="inp-field" id="tripSearch" type="text" placeholder="🔍 Reise suchen…" oninput="renderHome(allTripsCache || [])">
+  </div>
   <div class="trips-section" id="homeTrips">
     <div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>
   </div>
@@ -413,6 +422,9 @@ body {
 <!-- ITEMS VERWALTEN -->
 <div class="screen" id="sItems">
   <div style="padding:16px 20px 0">
+    <button class="manage-btn primary" onclick="openItemModal()" style="width:100%;padding:13px">✏️ NEUES ITEM</button>
+  </div>
+  <div style="padding:12px 20px 0">
     <input class="inp-field" id="itemSearch" type="text" placeholder="🔍 Item suchen…" oninput="renderItemsManager()">
   </div>
   <div id="itemsMgrList"></div>
@@ -655,6 +667,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('wFrom').min = today;
   document.getElementById('wTo').min   = today;
+
+  // PWA: Service Worker registrieren (Grundgerüst-Caching, Supabase bleibt live)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW-Registrierung fehlgeschlagen:', err));
+  }
 });
 
 async function loadCategories() {
@@ -683,8 +700,9 @@ async function refreshTripsList() {
     '<div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>';
   try {
     const trips = await sbGet('trips', { order: 'created_at.desc' });
-    document.getElementById('tripsCount').textContent = `${(trips||[]).length} Reise${(trips||[]).length===1?'':'n'}`;
-    await renderHome(trips || []);
+    allTripsCache = trips || [];
+    document.getElementById('tripsCount').textContent = `${allTripsCache.length} Reise${allTripsCache.length===1?'':'n'}`;
+    await renderHome(allTripsCache);
   } catch(e) {
     document.getElementById('homeTrips').innerHTML =
       `<div class="error-box">⚠️ Verbindungsfehler: ${e.message}</div>`;
@@ -700,6 +718,8 @@ async function refreshItemsCount() {
 
 function openTripsList() {
   show('sTripsList'); setHeader('Aktuelle Reisen', true);
+  const ts = document.getElementById('tripSearch');
+  if (ts) ts.value = '';
 }
 
 async function renderHome(trips) {
@@ -713,16 +733,35 @@ async function renderHome(trips) {
     return;
   }
 
-  const active = trips.filter(t => t.status !== 'done');
-  const done   = trips.filter(t => t.status === 'done');
-  let h = '';
-
-  // Fortschritt pro Trip laden
+  // Fortschritt pro Trip laden (nur einmal pro Trip, dann gecached in t._ja/_packed)
   for (const t of trips) {
-    const ti = await sbGet('trip_items', { filter: { trip_id: `eq.${t.id}`, decision: 'eq.ja' }, select: 'is_checked' });
-    t._ja = ti?.length || 0;
-    t._packed = ti?.filter(i => i.is_checked).length || 0;
+    if (t._ja === undefined) {
+      const ti = await sbGet('trip_items', { filter: { trip_id: `eq.${t.id}`, decision: 'eq.ja' }, select: 'is_checked' });
+      t._ja = ti?.length || 0;
+      t._packed = ti?.filter(i => i.is_checked).length || 0;
+    }
   }
+
+  const q = (document.getElementById('tripSearch')?.value || '').trim().toLowerCase();
+  const filtered = q ? trips.filter(t =>
+    t.title.toLowerCase().includes(q) ||
+    (t.destination || '').toLowerCase().includes(q) ||
+    (t.destination_country || '').toLowerCase().includes(q) ||
+    (t.notes || '').toLowerCase().includes(q)
+  ) : trips;
+
+  if (!filtered.length) {
+    document.getElementById('homeTrips').innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:40px;margin-bottom:10px">🔍</div>
+        <div>Keine Reisen gefunden</div>
+      </div>`;
+    return;
+  }
+
+  const active = filtered.filter(t => t.status !== 'done');
+  const done   = filtered.filter(t => t.status === 'done');
+  let h = '';
 
   if (active.length) { h += `<div class="section-label">Aktuelle Reisen</div>`; active.forEach(t => h += tripCard(t)); }
   if (done.length)   { h += `<div class="section-label" style="margin-top:24px">Abgeschlossen</div>`; done.forEach(t => h += tripCard(t)); }
@@ -1562,6 +1601,7 @@ async function saveNewItem() {
 // ══════════════════════════════════════════
 let allItemsCache = null;
 let allSubsCache  = null;
+let allTripsCache = null;
 
 async function openItemsManager() {
   show('sItems'); setHeader('Items verwalten', true);
