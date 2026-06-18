@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Packliste</title>
+<title>Reiseplaner</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Packliste">
+<meta name="apple-mobile-web-app-title" content="Reiseplaner">
 <meta name="theme-color" content="#1A3A5C">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="Nie wieder etwas vergessen – die persönliche Reise-Packliste.">
+<meta name="description" content="Nie wieder etwas vergessen – dein persönlicher Reiseplaner.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -104,23 +104,24 @@ body {
 }
 
 .manage-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
   margin: -24px 20px 0; position: relative; z-index: 10;
 }
 .manage-col {
   background: white; border-radius: var(--radius);
-  box-shadow: var(--shadow-lg); padding: 14px;
-  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: var(--shadow-lg); padding: 12px 8px;
+  display: flex; flex-direction: column; gap: 7px;
 }
 .manage-label {
-  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em;
   text-transform: uppercase; color: var(--muted);
+  text-align: center;
 }
-.manage-count { text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; }
+.manage-count { text-align: center; font-size: 11px; color: var(--muted); font-weight: 600; }
 .manage-btn {
   border: 2px solid var(--border); border-radius: 10px;
-  padding: 11px 8px; background: var(--sand); color: var(--ink);
-  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  padding: 9px 4px; background: var(--sand); color: var(--ink);
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
   cursor: pointer; text-align: center; transition: all .15s;
 }
 .manage-btn.primary { background: var(--blue-800); color: white; border-color: var(--blue-800); }
@@ -380,7 +381,7 @@ body {
 
 <div class="app-header">
   <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
-  <h1 id="hTitle">🧳 Packliste</h1>
+  <h1 id="hTitle">🧳 Reiseplaner</h1>
 </div>
 
 <!-- HOME -->
@@ -402,6 +403,12 @@ body {
       <button class="manage-btn primary" onclick="openItemModal()">✏️ NEU</button>
       <button class="manage-btn" onclick="openItemsManager()">📋 AKTUELL</button>
       <div class="manage-count" id="itemsCount"></div>
+    </div>
+    <div class="manage-col">
+      <div class="manage-label">✅ ToDos</div>
+      <button class="manage-btn primary" onclick="openGeneralTodoForm()">✏️ NEU</button>
+      <button class="manage-btn" onclick="openGeneralTodos()">📋 AKTUELL</button>
+      <div class="manage-count" id="generalTodosCount"></div>
     </div>
   </div>
 </div>
@@ -428,6 +435,17 @@ body {
     <input class="inp-field" id="itemSearch" type="text" placeholder="🔍 Item suchen…" oninput="renderItemsManager()">
   </div>
   <div id="itemsMgrList"></div>
+</div>
+
+<!-- ALLGEMEINE TODOS (nicht reisegebunden) -->
+<div class="screen" id="sGeneralTodos">
+  <div style="padding:16px 20px 0">
+    <button class="manage-btn primary" onclick="openGeneralTodoForm()" style="width:100%;padding:13px">✏️ NEUES TODO</button>
+  </div>
+  <div style="padding:12px 20px 0">
+    <input class="inp-field" id="generalTodoSearch" type="text" placeholder="🔍 ToDo suchen…" oninput="renderGeneralTodos()">
+  </div>
+  <div id="generalTodosList"></div>
 </div>
 
 <!-- WIZARD -->
@@ -609,6 +627,20 @@ body {
   </div>
 </div>
 
+<div class="modal-ov" id="mNewTodo">
+  <div class="modal-sh">
+    <div class="modal-bar"></div>
+    <div class="modal-title">➕ Neues ToDo</div>
+    <label class="ml">Name</label>
+    <input class="mi" id="mTodoName" type="text" placeholder="z.B. Pass erneuern lassen">
+    <div id="mTodoFeedback" style="display:none;margin-top:14px;text-align:center;color:var(--green);font-size:14px;font-weight:600">✅ Hinzugefügt!</div>
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModal('mNewTodo')">Abbrechen</button>
+      <button class="btn-main" style="flex:1" onclick="saveNewGeneralTodoFromHome()">Speichern ✓</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // SUPABASE CONFIG
@@ -693,6 +725,7 @@ async function goHome() {
   show('sHome'); setHeader(null, false);
   await refreshTripsList();
   refreshItemsCount();
+  refreshGeneralTodosCount();
 }
 
 async function refreshTripsList() {
@@ -713,6 +746,14 @@ async function refreshItemsCount() {
   try {
     const items = allItemsCache || await sbGet('items', { select: 'id' });
     document.getElementById('itemsCount').textContent = `${(items||[]).length} Item${(items||[]).length===1?'':'s'}`;
+  } catch(e) { /* still fine, just no count shown */ }
+}
+
+async function refreshGeneralTodosCount() {
+  try {
+    const todos = allGeneralTodosCache || await sbGet('general_todos', { select: 'id,decision' });
+    const open = (todos||[]).filter(t => t.decision !== 'ja').length;
+    document.getElementById('generalTodosCount').textContent = `${open} offen${open===1?'':''}`;
   } catch(e) { /* still fine, just no count shown */ }
 }
 
@@ -1482,6 +1523,169 @@ async function saveNewTodoRow() {
   const [newTodo] = await sbPost('trip_todos', { trip_id: curTripId, name, decision: 'pending', sort_order: maxOrder + 1 });
   curTodos.push(newTodo);
   renderTodos();
+}
+
+// ══════════════════════════════════════════
+// ALLGEMEINE TODOS (nicht reisegebunden)
+// ══════════════════════════════════════════
+let allGeneralTodosCache = null;
+
+async function openGeneralTodos() {
+  show('sGeneralTodos'); setHeader('ToDos', true);
+  document.getElementById('generalTodoSearch').value = '';
+
+  document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade ToDos…</span></div>';
+  try {
+    allGeneralTodosCache = await sbGet('general_todos', { order: 'sort_order' }) || [];
+  } catch(e) {
+    document.getElementById('generalTodosList').innerHTML = `<div class="error-box">⚠️ Fehler: ${e.message}</div>`;
+    return;
+  }
+  renderGeneralTodos();
+}
+
+function renderGeneralTodos() {
+  const q = (document.getElementById('generalTodoSearch')?.value || '').trim().toLowerCase();
+  const todos = (allGeneralTodosCache || []).filter(t => !q || t.name.toLowerCase().includes(q));
+  const done = todos.filter(t => t.decision === 'ja').length;
+
+  if (!allGeneralTodosCache || !allGeneralTodosCache.length) {
+    document.getElementById('generalTodosList').innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)">Noch keine ToDos</div>
+        <div style="font-size:14px;margin-top:6px">Lege dein erstes freies ToDo an!</div>
+      </div>`;
+    return;
+  }
+
+  if (!todos.length) {
+    document.getElementById('generalTodosList').innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:40px;margin-bottom:10px">🔍</div>
+        <div>Keine ToDos gefunden</div>
+      </div>`;
+    return;
+  }
+
+  let h = `<div class="cat-block" style="margin-top:14px">
+    <div class="cat-hd">
+      <span class="cat-hd-ico">✅</span>
+      <span class="cat-hd-title">Meine ToDos</span>
+      <span class="cat-count${done===todos.length&&todos.length?' done':''}">${done}/${todos.length}</span>
+      <button class="cat-add-btn" onclick="addGeneralTodoForm(event)" title="Neues ToDo">➕</button>
+    </div><div class="cat-body" id="generalTodoBody">`;
+
+  todos.forEach(todo => h += generalTodoRow(todo));
+
+  h += `</div></div><div class="spacer"></div>`;
+  document.getElementById('generalTodosList').innerHTML = h;
+}
+
+function generalTodoRow(todo) {
+  const chk = todo.decision === 'ja';
+  return `<div class="item-row${chk?' faded':''}" id="gtodo_${todo.id}">
+    <div class="ichk${chk?' on':''}" onclick="toggleGeneralTodoCheck('${todo.id}',${!chk})">${chk?'✓':''}</div>
+    <span class="iname${chk?' packed':''}">${todo.name}</span>
+    <div class="irow-actions">
+      <button class="irow-btn" onclick="editGeneralTodoRow('${todo.id}')" title="Bearbeiten">✏️</button>
+      <button class="irow-btn del" onclick="deleteGeneralTodoRow('${todo.id}')" title="Löschen">🗑️</button>
+    </div>
+  </div>`;
+}
+
+async function toggleGeneralTodoCheck(id, checked) {
+  const todo = allGeneralTodosCache.find(t => t.id === id);
+  const decision = checked ? 'ja' : 'pending';
+  if (todo) todo.decision = decision;
+  await sbPatch('general_todos', { id: `eq.${id}` }, { decision });
+  renderGeneralTodos();
+  refreshGeneralTodosCount();
+}
+
+function editGeneralTodoRow(id) {
+  const todo = allGeneralTodosCache.find(t => t.id === id);
+  const row = document.getElementById('gtodo_' + id);
+  row.innerHTML = `
+    <div class="item-edit-form">
+      <input class="add-inp" id="editGeneralTodoName_${id}" value="${todo.name}" placeholder="Name">
+      <div class="item-edit-row" style="justify-content:flex-end">
+        <button class="irow-btn" onclick="renderGeneralTodos()" title="Abbrechen">✕</button>
+        <button class="irow-btn save" onclick="saveGeneralTodoRow('${id}')" title="Speichern">✓</button>
+      </div>
+    </div>`;
+}
+
+async function saveGeneralTodoRow(id) {
+  const name = document.getElementById('editGeneralTodoName_'+id).value.trim();
+  if (!name) return;
+  await sbPatch('general_todos', { id: `eq.${id}` }, { name });
+  const todo = allGeneralTodosCache.find(t => t.id === id);
+  todo.name = name;
+  renderGeneralTodos();
+}
+
+async function deleteGeneralTodoRow(id) {
+  const todo = allGeneralTodosCache.find(t => t.id === id);
+  if (!confirm(`"${todo.name}" wirklich löschen?`)) return;
+  await sbDelete('general_todos', { id: `eq.${id}` });
+  allGeneralTodosCache = allGeneralTodosCache.filter(t => t.id !== id);
+  renderGeneralTodos();
+  refreshGeneralTodosCount();
+}
+
+function addGeneralTodoForm(e) {
+  e.stopPropagation();
+  renderGeneralTodos(); // ggf. offenes Formular schließen
+
+  const body = document.getElementById('generalTodoBody');
+  const form = document.createElement('div');
+  form.className = 'item-row';
+  form.id = 'newGeneralTodoForm';
+  form.innerHTML = `
+    <div class="item-edit-form">
+      <input class="add-inp" id="newGeneralTodoName" placeholder="Neues ToDo">
+      <div class="item-edit-row" style="justify-content:flex-end">
+        <button class="irow-btn" onclick="renderGeneralTodos()" title="Abbrechen">✕</button>
+        <button class="irow-btn save" onclick="saveNewGeneralTodoRow()" title="Speichern">✓</button>
+      </div>
+    </div>`;
+  body.appendChild(form);
+  document.getElementById('newGeneralTodoName').focus();
+}
+
+async function saveNewGeneralTodoRow() {
+  const name = document.getElementById('newGeneralTodoName').value.trim();
+  if (!name) return;
+  const maxOrder = (allGeneralTodosCache||[]).reduce((m,t) => Math.max(m, t.sort_order||0), 0);
+  const [newTodo] = await sbPost('general_todos', { name, decision: 'pending', sort_order: maxOrder + 1 });
+  if (!allGeneralTodosCache) allGeneralTodosCache = [];
+  allGeneralTodosCache.push(newTodo);
+  renderGeneralTodos();
+  refreshGeneralTodosCount();
+}
+
+// Schnell-Anlage direkt von der Startseite (eigenes Modal, analog zu openItemModal)
+function openGeneralTodoForm() {
+  document.getElementById('mTodoFeedback').style.display = 'none';
+  document.getElementById('mTodoName').value = '';
+  document.getElementById('mNewTodo').classList.add('open');
+}
+
+async function saveNewGeneralTodoFromHome() {
+  const name = document.getElementById('mTodoName').value.trim();
+  if (!name) return;
+
+  const maxOrder = (allGeneralTodosCache||[]).reduce((m,t) => Math.max(m, t.sort_order||0), 0);
+  const [newTodo] = await sbPost('general_todos', { name, decision: 'pending', sort_order: maxOrder + 1 });
+  if (allGeneralTodosCache) allGeneralTodosCache.push(newTodo);
+
+  document.getElementById('mTodoName').value = '';
+  const fb = document.getElementById('mTodoFeedback');
+  fb.style.display = 'block';
+  setTimeout(() => { fb.style.display = 'none'; }, 1500);
+
+  refreshGeneralTodosCount();
 }
 
 // ══════════════════════════════════════════
