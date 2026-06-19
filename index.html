@@ -765,6 +765,19 @@ body {
   </div>
 </div>
 
+<div class="modal-ov" id="mLogout">
+  <div class="modal-sh" style="text-align:center">
+    <div class="modal-bar"></div>
+    <div style="font-size:40px;margin:8px 0 12px">👋</div>
+    <div class="modal-title" style="margin-bottom:6px">Abmelden?</div>
+    <p style="font-size:14px;color:var(--muted);margin:0 0 20px">Bis bald, <span id="mLogoutName"></span>!</p>
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModal('mLogout')">Abbrechen</button>
+      <button class="btn-main" style="flex:1;background:var(--red);border-color:var(--red)" onclick="confirmLogout()">Abmelden</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // SUPABASE CONFIG
@@ -892,12 +905,17 @@ async function doRegister() {
 
 // ── Logout ──
 async function doLogout() {
-  if (!confirm('Wirklich abmelden?')) return;
+  const firstName = (currentUser?.user_metadata?.first_name || currentProfile?.display_name || '').split(' ')[0];
+  document.getElementById('mLogoutName').textContent = firstName || 'du';
+  document.getElementById('mLogout').classList.add('open');
+}
+
+async function confirmLogout() {
+  closeModal('mLogout');
   try { await authFetch('logout', {}); } catch(e) {}
   saveSession(null);
   currentProfile = null;
   allItemsCache = null; allSubsCache = null; allTripsCache = null; allGeneralTodosCache = null;
-  document.getElementById('logoutBtn').style.display = 'none';
   show('sLogin');
   setHeader(null, false);
 }
