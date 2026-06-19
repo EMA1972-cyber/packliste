@@ -916,6 +916,10 @@ async function confirmLogout() {
   saveSession(null);
   currentProfile = null;
   allItemsCache = null; allSubsCache = null; allTripsCache = null; allGeneralTodosCache = null;
+  // Login-Felder leeren
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').style.display = 'none';
   show('sLogin');
   setHeader(null, false);
 }
