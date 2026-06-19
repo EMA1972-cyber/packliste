@@ -395,7 +395,7 @@ body {
 </head>
 <body>
 
-<div class="app-header">
+<div class="app-header" style="display:none">
   <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
   <h1 id="hTitle">🧳 Reiseplaner</h1>
   <div class="home-header-bar" id="homeHeaderBar" style="display:none">
@@ -2468,10 +2468,20 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 function setHeader(title, back) {
-  const header = document.querySelector('.app-header');
+  const header  = document.querySelector('.app-header');
   const homeBar = document.getElementById('homeHeaderBar');
   const hTitle  = document.getElementById('hTitle');
   const backBtn = document.getElementById('backBtn');
+
+  // Aktiven Screen prüfen
+  const activeScreen = document.querySelector('.screen.active')?.id || '';
+  const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
+
+  if (isAuthScreen) {
+    // Login/Register/Onboarding: Header komplett ausblenden
+    header.style.display = 'none';
+    return;
+  }
 
   if (title === null) {
     // Home: User-Leiste anzeigen, Titel ausblenden
@@ -2481,6 +2491,7 @@ function setHeader(title, back) {
     homeBar.style.display = currentUser ? 'flex' : 'none';
     return;
   }
+
   // Andere Screens: Titel anzeigen, User-Leiste ausblenden
   header.style.display  = 'flex';
   hTitle.style.display  = 'block';
