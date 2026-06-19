@@ -92,7 +92,24 @@ body {
   color: white;
   padding: 36px 20px 48px;
   text-align: center;
+  position: relative;
 }
+.hero-user-bar {
+  position: absolute; top: 12px; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 16px; pointer-events: none;
+}
+.hero-user-name {
+  font-size: 11px; font-weight: 600; opacity: .75;
+  letter-spacing: .02em; white-space: nowrap;
+}
+.hero-logout-btn {
+  font-size: 11px; font-weight: 600; opacity: .75;
+  background: none; border: none; color: white; cursor: pointer;
+  text-decoration: underline; padding: 0; pointer-events: all;
+  letter-spacing: .02em;
+}
+.hero-logout-btn:hover { opacity: 1; }
 .hero-icon { font-size: 64px; margin-bottom: 12px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
 .home-hero h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; font-weight: 400; margin-bottom: 6px; }
 .home-hero p { opacity: .7; font-size: 14px; }
@@ -385,7 +402,7 @@ body {
 <div class="app-header">
   <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
   <h1 id="hTitle">🧳 Reiseplaner</h1>
-  <button id="logoutBtn" onclick="doLogout()" style="display:none;background:none;border:none;color:rgba(255,255,255,0.8);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;white-space:nowrap" title="Abmelden">↩ Abmelden</button>
+  <button id="logoutBtn" onclick="doLogout()" style="display:none" title="Abmelden"></button>
 </div>
 
 <!-- HOME -->
@@ -478,6 +495,10 @@ body {
 
 <div class="screen" id="sHome">
   <div class="home-hero">
+    <div class="hero-user-bar">
+      <span class="hero-user-name" id="heroUserName"></span>
+      <button class="hero-logout-btn" onclick="doLogout()">Abmelden</button>
+    </div>
     <span class="hero-icon">🧳</span>
     <h2 id="homeTitle">Reiseplaner</h2>
     <p>Nie wieder etwas vergessen</p>
@@ -897,12 +918,15 @@ async function afterLogin() {
     currentProfile = { is_admin: false, onboarded: false, display_name: displayName };
   }
 
-  // Vorname im Home-Titel setzen (z.B. "Edvins Reiseplaner")
+  // Vorname im Home-Titel + voller Name in der User-Bar
   const firstName = (currentUser.user_metadata?.first_name || currentProfile.display_name || '').split(' ')[0];
+  const fullName  = currentUser.user_metadata?.display_name || currentProfile.display_name || '';
   if (firstName) {
     const titleEl = document.getElementById('homeTitle');
     if (titleEl) titleEl.textContent = `${firstName}s Reiseplaner`;
   }
+  const nameEl = document.getElementById('heroUserName');
+  if (nameEl) nameEl.textContent = fullName;
 
   if (!currentProfile.onboarded) {
     await showOnboarding();
