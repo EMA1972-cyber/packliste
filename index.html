@@ -479,16 +479,30 @@ body {
   </div>
 </div>
 
-<!-- ONBOARDING: Standard-Items übernehmen? -->
+<!-- ONBOARDING STEP 1: Items übernehmen? -->
 <div class="screen" id="sOnboarding">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
     <div style="font-size:64px;margin-bottom:16px">📦</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px">Standard-Items übernehmen?</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px">Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit <strong id="onboardItemCount"></strong> Items und <strong id="onboardTodoCount"></strong> ToDos.</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px">Items übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px">Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit <strong id="onboardItemCount"></strong>.</p>
     <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
     <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
-      <button class="manage-btn primary" onclick="doOnboard(true)" style="padding:15px;font-size:15px">✅ Ja, übernehmen</button>
-      <button class="manage-btn" onclick="doOnboard(false)" style="padding:15px;font-size:15px">Nein danke, ich starte leer</button>
+      <button class="manage-btn primary" onclick="doOnboardItems(true)" style="padding:15px;font-size:15px">✅ Ja, Items übernehmen</button>
+      <button class="manage-btn" onclick="doOnboardItems(false)" style="padding:15px;font-size:15px">❌ Nein danke, ohne Items starten</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING STEP 2: ToDos übernehmen? -->
+<div class="screen" id="sOnboarding2">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
+    <div style="font-size:64px;margin-bottom:16px">✅</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px">ToDos übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px">Es gibt auch eine ToDo-Liste mit <strong id="onboardTodoCount"></strong> vorbereiteten Aufgaben für vor der Abreise.</p>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
+      <button class="manage-btn primary" onclick="doOnboardTodos(true)" style="padding:15px;font-size:15px">✅ Ja, ToDos übernehmen</button>
+      <button class="manage-btn" onclick="doOnboardTodos(false)" style="padding:15px;font-size:15px">❌ Nein danke, ohne ToDos starten</button>
     </div>
   </div>
 </div>
@@ -959,37 +973,55 @@ async function afterLogin() {
   }
 }
 
-// ── Onboarding: Standard-Bibliothek anbieten ──
+// showOnboarding ist oben bei doOnboardItems definiert
+
+// ── Onboarding Step 1: Items ──
 async function showOnboarding() {
   show('sOnboarding');
   setHeader(null, false);
   try {
-    // Items aus Admin-Bibliothek zählen (items des Admin-Users dienen als Vorlage)
     const adminItems = await sbGet('items', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
-    const adminTodos = await sbGet('general_todos', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
     document.getElementById('onboardItemCount').textContent = `${(adminItems||[]).length} Items`;
-    document.getElementById('onboardTodoCount').textContent = `${(adminTodos||[]).length} ToDos`;
   } catch(e) {}
 }
 
-async function doOnboard(copyItems) {
-  const btn1 = document.querySelector('#sOnboarding .manage-btn.primary');
-  const btn2 = document.querySelector('#sOnboarding .manage-btn:not(.primary)');
-  if (btn1) { btn1.disabled = true; btn1.textContent = 'Wird kopiert…'; }
-  if (btn2) btn2.disabled = true;
-
-  if (copyItems) {
+async function doOnboardItems(copy) {
+  if (copy) {
+    const btn1 = document.querySelector('#sOnboarding .manage-btn.primary');
+    const btn2 = document.querySelector('#sOnboarding .manage-btn:not(.primary)');
+    if (btn1) { btn1.disabled = true; btn1.textContent = 'Wird kopiert…'; }
+    if (btn2) btn2.disabled = true;
     try {
-      // Items kopieren
       const adminItems = await sbGet('items', { filter: { user_id: `eq.${ADMIN_UID}` } });
       if (adminItems?.length) {
         const myItems = adminItems.map(({ id, created_at, ...rest }) => ({ ...rest, user_id: currentUser.id }));
-        // In Batches von 50 einfügen
         for (let i = 0; i < myItems.length; i += 50) {
           await sbPost('items', myItems.slice(i, i+50));
         }
       }
-      // General ToDos kopieren
+    } catch(e) { console.error('Items-Onboarding-Fehler:', e); }
+  }
+  // Weiter zu Schritt 2: ToDos
+  await showOnboarding2();
+}
+
+// ── Onboarding Step 2: ToDos ──
+async function showOnboarding2() {
+  show('sOnboarding2');
+  setHeader(null, false);
+  try {
+    const adminTodos = await sbGet('general_todos', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
+    document.getElementById('onboardTodoCount').textContent = `${(adminTodos||[]).length} ToDos`;
+  } catch(e) {}
+}
+
+async function doOnboardTodos(copy) {
+  if (copy) {
+    const btn1 = document.querySelector('#sOnboarding2 .manage-btn.primary');
+    const btn2 = document.querySelector('#sOnboarding2 .manage-btn:not(.primary)');
+    if (btn1) { btn1.disabled = true; btn1.textContent = 'Wird kopiert…'; }
+    if (btn2) btn2.disabled = true;
+    try {
       const adminTodos = await sbGet('general_todos', { filter: { user_id: `eq.${ADMIN_UID}` } });
       if (adminTodos?.length) {
         const myTodos = adminTodos.map(({ id, created_at, ...rest }) => ({ ...rest, user_id: currentUser.id, decision: 'pending' }));
@@ -997,16 +1029,17 @@ async function doOnboard(copyItems) {
           await sbPost('general_todos', myTodos.slice(i, i+50));
         }
       }
-    } catch(e) { console.error('Onboarding-Fehler:', e); }
+    } catch(e) { console.error('ToDos-Onboarding-Fehler:', e); }
   }
-
-  // Profil als onboarded markieren
+  // Onboarding abgeschlossen
   await sbPatch('user_profiles', { id: `eq.${currentUser.id}` }, { onboarded: true });
   currentProfile.onboarded = true;
-
   await loadCategories();
   await goHome();
 }
+
+// Legacy-Funktion (Fallback, nicht mehr genutzt)
+async function doOnboard(copy) { await doOnboardItems(copy); }
 
 function showRegister() { show('sRegister'); setHeader(null, false); }
 
