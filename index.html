@@ -908,8 +908,17 @@ async function doRegister() {
       saveSession(data);
       await afterLogin();
     } else {
-      sucEl.textContent = '✅ Bestätigungs-E-Mail gesendet! Bitte prüfe dein Postfach.';
-      sucEl.style.display = 'block';
+      // Formular durch Bestätigungsansicht ersetzen
+      document.querySelector('#sRegister > div').innerHTML = `
+        <div style="font-size:72px;margin-bottom:16px">📬</div>
+        <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 12px">Fast geschafft!</h1>
+        <p style="color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 8px">Wir haben eine Bestätigungs-E-Mail an</p>
+        <p style="color:var(--ink);font-size:15px;font-weight:600;margin:0 0 16px">${email}</p>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 40px">Bitte klicke auf den Link in der E-Mail, um deine Anmeldung abzuschließen.</p>
+        <button class="manage-btn primary" onclick="show('sLogin');document.getElementById('loginEmail').value='';document.getElementById('loginPassword').value='';" style="width:100%;max-width:320px;padding:15px;font-size:15px">
+          ← Zurück zur Anmeldung
+        </button>
+      `;
     }
   } catch(e) {
     errEl.textContent = e.message;
@@ -1041,7 +1050,33 @@ async function doOnboardTodos(copy) {
 // Legacy-Funktion (Fallback, nicht mehr genutzt)
 async function doOnboard(copy) { await doOnboardItems(copy); }
 
-function showRegister() { show('sRegister'); setHeader(null, false); }
+function showRegister() {
+  // Original-HTML wiederherstellen falls es durch Bestätigungsansicht ersetzt wurde
+  const screen = document.querySelector('#sRegister > div');
+  if (!document.getElementById('regFirstName')) {
+    screen.innerHTML = _registerFormHTML;
+  }
+  // Alle Felder leeren und Meldungen zurücksetzen
+  ['regFirstName','regLastName','regEmail','regPassword'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('registerError').style.display = 'none';
+  document.getElementById('registerSuccess').style.display = 'none';
+  const pw = document.getElementById('regPassword');
+  if (pw) pw.type = 'password';
+  const eye = document.getElementById('regEye');
+  if (eye) eye.textContent = '👁';
+  show('sRegister');
+  setHeader(null, false);
+}
+
+// Original Register-Formular HTML speichern (nach DOM-Ready)
+let _registerFormHTML = '';
+document.addEventListener('DOMContentLoaded', () => {
+  const screen = document.querySelector('#sRegister > div');
+  if (screen) _registerFormHTML = screen.innerHTML;
+}, { once: true });
 
 // Passwort-Sichtbarkeit umschalten
 function togglePw(inputId, btnId) {
