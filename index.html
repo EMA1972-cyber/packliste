@@ -90,29 +90,25 @@ body {
 .home-hero {
   background: linear-gradient(155deg, #E8821A 0%, #D4700A 60%, #C85A00 100%);
   color: white;
-  padding: 36px 20px 48px;
+  padding: 20px 20px 40px;
   text-align: center;
-  position: relative;
 }
-.hero-user-bar {
-  position: absolute; top: 10px; left: 0; right: 0;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 14px; pointer-events: none;
-}
-.hero-user-name {
-  font-size: 10px; font-weight: 600; opacity: .70;
-  letter-spacing: .02em; white-space: nowrap;
-}
-.hero-logout-btn {
-  font-size: 10px; font-weight: 600; opacity: .70;
-  background: none; border: none; color: white; cursor: pointer;
-  text-decoration: underline; padding: 0; pointer-events: all;
-  letter-spacing: .02em;
-}
-.hero-logout-btn:hover { opacity: 1; }
-.hero-icon { font-size: 64px; margin-bottom: 12px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+.hero-icon { font-size: 56px; margin-bottom: 8px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
 .home-hero h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; font-weight: 400; margin-bottom: 6px; }
-.home-hero p { opacity: .7; font-size: 14px; }
+.home-hero p { opacity: .7; font-size: 14px; margin: 0; }
+
+/* User-Leiste im app-header (nur auf Home sichtbar) */
+.home-header-bar {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+}
+.home-header-name {
+  font-size: 11px; font-weight: 600; opacity: .85; letter-spacing: .02em;
+}
+.home-header-logout {
+  font-size: 11px; font-weight: 600; opacity: .85;
+  background: none; border: none; color: white; cursor: pointer;
+  text-decoration: underline; padding: 0; letter-spacing: .02em;
+}
 
 .new-btn-row {
   display: flex; gap: 10px;
@@ -402,6 +398,10 @@ body {
 <div class="app-header">
   <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
   <h1 id="hTitle">🧳 Reiseplaner</h1>
+  <div class="home-header-bar" id="homeHeaderBar" style="display:none">
+    <span class="home-header-name" id="heroUserName"></span>
+    <button class="home-header-logout" onclick="doLogout()">Abmelden</button>
+  </div>
   <button id="logoutBtn" onclick="doLogout()" style="display:none" title="Abmelden"></button>
 </div>
 
@@ -495,10 +495,6 @@ body {
 
 <div class="screen" id="sHome">
   <div class="home-hero">
-    <div class="hero-user-bar">
-      <span class="hero-user-name" id="heroUserName"></span>
-      <button class="hero-logout-btn" onclick="doLogout()">Abmelden</button>
-    </div>
     <span class="hero-icon">🧳</span>
     <h2 id="homeTitle">Reiseplaner</h2>
     <p>Nie wieder etwas vergessen</p>
@@ -869,7 +865,11 @@ async function doLogin() {
     saveSession(data);
     await afterLogin();
   } catch(e) {
-    errEl.textContent = 'Anmeldung fehlgeschlagen: ' + e.message;
+    let msg = e.message;
+    if (msg.includes('Invalid login credentials') || msg.includes('invalid_grant')) msg = 'E-Mail oder Passwort falsch.';
+    else if (msg.includes('Email not confirmed')) msg = 'Bitte zuerst die E-Mail-Adresse bestätigen.';
+    else if (msg.includes('Too many requests')) msg = 'Zu viele Versuche — bitte kurz warten.';
+    errEl.textContent = msg;
     errEl.style.display = 'block';
   } finally { btn.disabled = false; btn.textContent = 'Anmelden →'; }
 }
@@ -926,7 +926,6 @@ async function confirmLogout() {
 
 // ── Nach erfolgreichem Login ──
 async function afterLogin() {
-  document.getElementById('logoutBtn').style.display = 'block';
 
   // Profil laden oder neu anlegen
   try {
@@ -1062,8 +1061,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('wFrom').min = today;
   document.getElementById('wTo').min   = today;
 
+  // Supabase Bestätigungslink verarbeiten (#access_token=... in der URL)
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken  = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const tokenType    = params.get('token_type');
+    if (accessToken) {
+      // Token in Session speichern
+      try {
+        // User-Info vom Token holen
+        const res = await fetch(`${SUPA_URL}/auth/v1/user`, {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${accessToken}` }
+        });
+        const user = await res.json();
+        saveSession({ access_token: accessToken, refresh_token: refreshToken, token_type: tokenType, user });
+        // Hash aus URL entfernen (sieht sauberer aus)
+        history.replaceState(null, '', window.location.pathname);
+        await afterLogin();
+        return;
+      } catch(e) { console.error('Token-Verarbeitung fehlgeschlagen:', e); }
+    }
+  }
+
   if (currentSession?.access_token) {
-    // Session vorhanden: Token auffrischen und einloggen
     const ok = await refreshSession();
     if (ok) {
       await afterLogin();
@@ -2414,13 +2436,24 @@ function show(id) {
 }
 function setHeader(title, back) {
   const header = document.querySelector('.app-header');
+  const homeBar = document.getElementById('homeHeaderBar');
+  const hTitle  = document.getElementById('hTitle');
+  const backBtn = document.getElementById('backBtn');
+
   if (title === null) {
-    header.style.display = 'none';
+    // Home: User-Leiste anzeigen, Titel ausblenden
+    header.style.display = 'flex';
+    hTitle.style.display  = 'none';
+    backBtn.style.display = 'none';
+    homeBar.style.display = currentUser ? 'flex' : 'none';
     return;
   }
-  header.style.display = 'flex';
-  document.getElementById('hTitle').textContent = title;
-  document.getElementById('backBtn').style.display = back ? 'block' : 'none';
+  // Andere Screens: Titel anzeigen, User-Leiste ausblenden
+  header.style.display  = 'flex';
+  hTitle.style.display  = 'block';
+  homeBar.style.display = 'none';
+  hTitle.textContent    = title;
+  backBtn.style.display = back ? 'block' : 'none';
 }
 function showTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
