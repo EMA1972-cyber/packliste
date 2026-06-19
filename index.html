@@ -95,16 +95,16 @@ body {
   position: relative;
 }
 .hero-user-bar {
-  position: absolute; top: 12px; left: 0; right: 0;
+  position: absolute; top: 10px; left: 0; right: 0;
   display: flex; justify-content: space-between; align-items: center;
-  padding: 0 16px; pointer-events: none;
+  padding: 0 14px; pointer-events: none;
 }
 .hero-user-name {
-  font-size: 11px; font-weight: 600; opacity: .75;
+  font-size: 10px; font-weight: 600; opacity: .70;
   letter-spacing: .02em; white-space: nowrap;
 }
 .hero-logout-btn {
-  font-size: 11px; font-weight: 600; opacity: .75;
+  font-size: 10px; font-weight: 600; opacity: .70;
   background: none; border: none; color: white; cursor: pointer;
   text-decoration: underline; padding: 0; pointer-events: all;
   letter-spacing: .02em;
@@ -919,8 +919,10 @@ async function afterLogin() {
   }
 
   // Vorname im Home-Titel + voller Name in der User-Bar
-  const firstName = (currentUser.user_metadata?.first_name || currentProfile.display_name || '').split(' ')[0];
-  const fullName  = currentUser.user_metadata?.display_name || currentProfile.display_name || '';
+  const meta      = currentUser.user_metadata || {};
+  const firstName = meta.first_name || (currentProfile.display_name || '').split(' ')[0] || '';
+  const lastName  = meta.last_name  || (currentProfile.display_name || '').split(' ').slice(1).join(' ') || '';
+  const fullName  = lastName ? `${firstName} ${lastName}` : firstName;
   if (firstName) {
     const titleEl = document.getElementById('homeTitle');
     if (titleEl) titleEl.textContent = `${firstName}s Reiseplaner`;
