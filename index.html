@@ -385,10 +385,84 @@ body {
 <div class="app-header">
   <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
   <h1 id="hTitle">🧳 Reiseplaner</h1>
+  <button id="logoutBtn" onclick="doLogout()" style="display:none;background:none;border:none;color:rgba(255,255,255,0.8);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;white-space:nowrap" title="Abmelden">↩ Abmelden</button>
 </div>
 
 <!-- HOME -->
-<div class="screen active" id="sHome">
+<!-- LOGIN SCREEN -->
+<div class="screen active" id="sLogin">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
+    <div style="font-size:72px;margin-bottom:16px">🧳</div>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px">Reiseplaner</h1>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 40px">Nie wieder etwas vergessen</p>
+
+    <div style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px">
+      <div id="loginError" style="display:none;background:var(--red-bg);color:var(--red);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
+
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">E-Mail</label>
+      <input class="inp-field" id="loginEmail" type="email" placeholder="deine@email.de" autocomplete="email" style="margin-bottom:4px">
+
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Passwort</label>
+      <input class="inp-field" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" style="margin-bottom:8px">
+
+      <button class="manage-btn primary" id="loginBtn" onclick="doLogin()" style="padding:15px;font-size:15px">
+        Anmelden →
+      </button>
+
+      <div style="text-align:center;margin-top:8px">
+        <span style="font-size:13px;color:var(--muted)">Noch kein Konto? </span>
+        <button onclick="showRegister()" style="background:none;border:none;color:var(--blue-500);font-size:13px;font-weight:600;cursor:pointer;padding:0">Registrieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER SCREEN -->
+<div class="screen" id="sRegister">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
+    <div style="font-size:72px;margin-bottom:16px">🧳</div>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px">Konto erstellen</h1>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 40px">Erstelle deinen persönlichen Reiseplaner</p>
+
+    <div style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px">
+      <div id="registerError" style="display:none;background:var(--red-bg);color:var(--red);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
+      <div id="registerSuccess" style="display:none;background:var(--green-bg);color:var(--green);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
+
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Name</label>
+      <input class="inp-field" id="regName" type="text" placeholder="Dein Name" style="margin-bottom:4px">
+
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">E-Mail</label>
+      <input class="inp-field" id="regEmail" type="email" placeholder="deine@email.de" autocomplete="email" style="margin-bottom:4px">
+
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Passwort</label>
+      <input class="inp-field" id="regPassword" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" style="margin-bottom:8px">
+
+      <button class="manage-btn primary" id="registerBtn" onclick="doRegister()" style="padding:15px;font-size:15px">
+        Konto erstellen →
+      </button>
+
+      <div style="text-align:center;margin-top:8px">
+        <button onclick="show('sLogin')" style="background:none;border:none;color:var(--blue-500);font-size:13px;font-weight:600;cursor:pointer;padding:0">← Zurück zur Anmeldung</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING: Standard-Items übernehmen? -->
+<div class="screen" id="sOnboarding">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
+    <div style="font-size:64px;margin-bottom:16px">📦</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px">Standard-Items übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px">Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit <strong id="onboardItemCount"></strong> Items und <strong id="onboardTodoCount"></strong> ToDos.</p>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
+      <button class="manage-btn primary" onclick="doOnboard(true)" style="padding:15px;font-size:15px">✅ Ja, übernehmen</button>
+      <button class="manage-btn" onclick="doOnboard(false)" style="padding:15px;font-size:15px">Nein danke, ich starte leer</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sHome">
   <div class="home-hero">
     <span class="hero-icon">🧳</span>
     <h2>Reiseplaner</h2>
@@ -662,8 +736,14 @@ body {
 // ══════════════════════════════════════════
 const SUPA_URL = 'https://dzignltxlpymglikyyox.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTI0NTIsImV4cCI6MjA5NjkyODQ1Mn0.a6VhC2QFLw9KRmtNam3fXvX4KX0mfdEn7NoPCqpqYYk';
+const ADMIN_UID = '695c0a56-8e46-4e18-a0f0-5b1f87d154cf';
 
-// ── Supabase API Helper ──
+// ── Auth State ──
+let currentSession = null;   // { access_token, refresh_token, user }
+let currentUser    = null;   // { id, email }
+let currentProfile = null;   // { is_admin, onboarded, display_name }
+
+// ── Supabase API Helper (nutzt JWT wenn eingeloggt, sonst anon key) ──
 async function sb(method, table, params = {}, body = null) {
   let url = `${SUPA_URL}/rest/v1/${table}`;
   const qs = [];
@@ -673,9 +753,10 @@ async function sb(method, table, params = {}, body = null) {
   if (params.limit)   qs.push(`limit=${params.limit}`);
   if (qs.length)      url += '?' + qs.join('&');
 
+  const token = currentSession?.access_token || SUPA_KEY;
   const headers = {
     'apikey': SUPA_KEY,
-    'Authorization': `Bearer ${SUPA_KEY}`,
+    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
     'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
   };
@@ -691,6 +772,191 @@ async function sbGet(table, params = {})       { return sb('GET',    table, para
 async function sbPost(table, body)             { return sb('POST',   table, {}, body); }
 async function sbPatch(table, filter, body)    { return sb('PATCH',  table, { filter }, body); }
 async function sbDelete(table, filter)         { return sb('DELETE', table, { filter }); }
+
+// ── Auth API Helper ──
+async function authFetch(endpoint, body) {
+  const res = await fetch(`${SUPA_URL}/auth/v1/${endpoint}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error_description || data.msg || 'Fehler');
+  return data;
+}
+
+// ── Session lokal speichern/laden ──
+function saveSession(session) {
+  currentSession = session;
+  currentUser    = session?.user || null;
+  try { localStorage.setItem('rp_session', JSON.stringify(session)); } catch(e) {}
+}
+
+function loadSession() {
+  try {
+    const s = localStorage.getItem('rp_session');
+    if (s) { currentSession = JSON.parse(s); currentUser = currentSession?.user || null; }
+  } catch(e) {}
+}
+
+async function refreshSession() {
+  if (!currentSession?.refresh_token) return false;
+  try {
+    const data = await authFetch('token?grant_type=refresh_token', { refresh_token: currentSession.refresh_token });
+    saveSession(data);
+    return true;
+  } catch(e) { saveSession(null); return false; }
+}
+
+// ── Login ──
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Anmelden…';
+  try {
+    const data = await authFetch('token?grant_type=password', { email, password });
+    saveSession(data);
+    await afterLogin();
+  } catch(e) {
+    errEl.textContent = 'Anmeldung fehlgeschlagen: ' + e.message;
+    errEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Anmelden →'; }
+}
+
+// ── Registrierung ──
+async function doRegister() {
+  const name     = document.getElementById('regName').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const errEl    = document.getElementById('registerError');
+  const sucEl    = document.getElementById('registerSuccess');
+  const btn      = document.getElementById('registerBtn');
+  errEl.style.display = 'none'; sucEl.style.display = 'none';
+  if (!name || !email || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Erstelle Konto…';
+  try {
+    const data = await authFetch('signup', { email, password, data: { display_name: name } });
+    if (data.access_token) {
+      // Auto-confirmed (wie in Supabase Dashboard angelegt)
+      saveSession(data);
+      await afterLogin();
+    } else {
+      // E-Mail-Bestätigung nötig
+      sucEl.textContent = '✅ Bestätigungs-E-Mail gesendet! Bitte prüfe dein Postfach.';
+      sucEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Konto erstellen →'; }
+}
+
+// ── Logout ──
+async function doLogout() {
+  if (!confirm('Wirklich abmelden?')) return;
+  try { await authFetch('logout', {}); } catch(e) {}
+  saveSession(null);
+  currentProfile = null;
+  allItemsCache = null; allSubsCache = null; allTripsCache = null; allGeneralTodosCache = null;
+  document.getElementById('logoutBtn').style.display = 'none';
+  show('sLogin');
+  setHeader(null, false);
+}
+
+// ── Nach erfolgreichem Login ──
+async function afterLogin() {
+  document.getElementById('logoutBtn').style.display = 'block';
+
+  // Profil laden oder neu anlegen
+  try {
+    const profiles = await sbGet('user_profiles', { filter: { id: `eq.${currentUser.id}` } });
+    currentProfile = profiles?.[0] || null;
+  } catch(e) { currentProfile = null; }
+
+  if (!currentProfile) {
+    // Neuer User: Profil anlegen
+    const displayName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+    await sbPost('user_profiles', { id: currentUser.id, is_admin: false, onboarded: false, display_name: displayName });
+    currentProfile = { is_admin: false, onboarded: false, display_name: displayName };
+  }
+
+  if (!currentProfile.onboarded) {
+    // Onboarding: Standard-Items/ToDos anbieten
+    await showOnboarding();
+  } else {
+    await loadCategories();
+    await goHome();
+  }
+}
+
+// ── Onboarding: Standard-Bibliothek anbieten ──
+async function showOnboarding() {
+  show('sOnboarding');
+  setHeader(null, false);
+  try {
+    // Items aus Admin-Bibliothek zählen (items des Admin-Users dienen als Vorlage)
+    const adminItems = await sbGet('items', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
+    const adminTodos = await sbGet('general_todos', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
+    document.getElementById('onboardItemCount').textContent = `${(adminItems||[]).length} Items`;
+    document.getElementById('onboardTodoCount').textContent = `${(adminTodos||[]).length} ToDos`;
+  } catch(e) {}
+}
+
+async function doOnboard(copyItems) {
+  const btn1 = document.querySelector('#sOnboarding .manage-btn.primary');
+  const btn2 = document.querySelector('#sOnboarding .manage-btn:not(.primary)');
+  if (btn1) { btn1.disabled = true; btn1.textContent = 'Wird kopiert…'; }
+  if (btn2) btn2.disabled = true;
+
+  if (copyItems) {
+    try {
+      // Items kopieren
+      const adminItems = await sbGet('items', { filter: { user_id: `eq.${ADMIN_UID}` } });
+      if (adminItems?.length) {
+        const myItems = adminItems.map(({ id, created_at, ...rest }) => ({ ...rest, user_id: currentUser.id }));
+        // In Batches von 50 einfügen
+        for (let i = 0; i < myItems.length; i += 50) {
+          await sbPost('items', myItems.slice(i, i+50));
+        }
+      }
+      // General ToDos kopieren
+      const adminTodos = await sbGet('general_todos', { filter: { user_id: `eq.${ADMIN_UID}` } });
+      if (adminTodos?.length) {
+        const myTodos = adminTodos.map(({ id, created_at, ...rest }) => ({ ...rest, user_id: currentUser.id, decision: 'pending' }));
+        for (let i = 0; i < myTodos.length; i += 50) {
+          await sbPost('general_todos', myTodos.slice(i, i+50));
+        }
+      }
+    } catch(e) { console.error('Onboarding-Fehler:', e); }
+  }
+
+  // Profil als onboarded markieren
+  await sbPatch('user_profiles', { id: `eq.${currentUser.id}` }, { onboarded: true });
+  currentProfile.onboarded = true;
+
+  await loadCategories();
+  await goHome();
+}
+
+function showRegister() { show('sRegister'); setHeader(null, false); }
+
+// ── sbPost für user_id automatisch setzen ──
+const _origSbPost = sbPost;
+async function sbPost(table, body) {
+  // user_id automatisch hinzufügen für User-Tabellen, falls noch nicht gesetzt
+  const userTables = ['trips','items','trip_items','trip_todos','general_todos','undo_log'];
+  if (currentUser && userTables.includes(table) && !Array.isArray(body) && !body.user_id) {
+    body = { ...body, user_id: currentUser.id };
+  }
+  if (currentUser && userTables.includes(table) && Array.isArray(body)) {
+    body = body.map(b => b.user_id ? b : { ...b, user_id: currentUser.id });
+  }
+  return sb('POST', table, {}, body);
+}
 
 // ══════════════════════════════════════════
 // STATE
@@ -709,13 +975,26 @@ let subcategories = [];
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadCategories();
-  await goHome();
+  // Session aus localStorage laden
+  loadSession();
+
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('wFrom').min = today;
   document.getElementById('wTo').min   = today;
 
-  // PWA: Service Worker registrieren (Grundgerüst-Caching, Supabase bleibt live)
+  if (currentSession?.access_token) {
+    // Session vorhanden: Token auffrischen und einloggen
+    const ok = await refreshSession();
+    if (ok) {
+      await afterLogin();
+    } else {
+      show('sLogin'); setHeader(null, false);
+    }
+  } else {
+    show('sLogin'); setHeader(null, false);
+  }
+
+  // PWA: Service Worker registrieren
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW-Registrierung fehlgeschlagen:', err));
   }
@@ -747,7 +1026,7 @@ async function refreshTripsList() {
   document.getElementById('homeTrips').innerHTML =
     '<div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>';
   try {
-    const trips = await sbGet('trips', { order: 'created_at.desc' });
+    const trips = await sbGet('trips', { order: 'name' });
     allTripsCache = trips || [];
     document.getElementById('tripsCount').textContent = `${allTripsCache.length} Reise${allTripsCache.length===1?'':'n'}`;
     await renderHome(allTripsCache);
@@ -1223,7 +1502,7 @@ async function openTrip(id) {
     curItems = rawItems || [];
 
     // Todos laden
-    curTodos = await sbGet('trip_todos', { filter: { trip_id: `eq.${id}` }, order: 'sort_order' }) || [];
+    curTodos = await sbGet('trip_todos', { filter: { trip_id: `eq.${id}` }, order: 'name' }) || [];
 
     // Kategorien + Subkats
     const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
@@ -1500,6 +1779,7 @@ async function saveTodoRow(id) {
   await sbPatch('trip_todos', { id: `eq.${id}` }, { name });
   const todo = curTodos.find(t => t.id === id);
   todo.name = name;
+  curTodos.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderTodos();
 }
 
@@ -1537,6 +1817,7 @@ async function saveNewTodoRow() {
   const maxOrder = curTodos.reduce((m,t) => Math.max(m, t.sort_order||0), 0);
   const [newTodo] = await sbPost('trip_todos', { trip_id: curTripId, name, decision: 'pending', sort_order: maxOrder + 1 });
   curTodos.push(newTodo);
+  curTodos.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderTodos();
 }
 
@@ -1551,7 +1832,7 @@ async function openGeneralTodos() {
 
   document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade ToDos…</span></div>';
   try {
-    allGeneralTodosCache = await sbGet('general_todos', { order: 'sort_order' }) || [];
+    allGeneralTodosCache = await sbGet('general_todos', { order: 'name' }) || [];
   } catch(e) {
     document.getElementById('generalTodosList').innerHTML = `<div class="error-box">⚠️ Fehler: ${e.message}</div>`;
     return;
@@ -1637,6 +1918,7 @@ async function saveGeneralTodoRow(id) {
   await sbPatch('general_todos', { id: `eq.${id}` }, { name });
   const todo = allGeneralTodosCache.find(t => t.id === id);
   todo.name = name;
+  allGeneralTodosCache.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderGeneralTodos();
 }
 
@@ -1676,6 +1958,7 @@ async function saveNewGeneralTodoRow() {
   const [newTodo] = await sbPost('general_todos', { name, decision: 'pending', sort_order: maxOrder + 1 });
   if (!allGeneralTodosCache) allGeneralTodosCache = [];
   allGeneralTodosCache.push(newTodo);
+  allGeneralTodosCache.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderGeneralTodos();
   refreshGeneralTodosCount();
 }
@@ -1693,7 +1976,10 @@ async function saveNewGeneralTodoFromHome() {
 
   const maxOrder = (allGeneralTodosCache||[]).reduce((m,t) => Math.max(m, t.sort_order||0), 0);
   const [newTodo] = await sbPost('general_todos', { name, decision: 'pending', sort_order: maxOrder + 1 });
-  if (allGeneralTodosCache) allGeneralTodosCache.push(newTodo);
+  if (allGeneralTodosCache) {
+    allGeneralTodosCache.push(newTodo);
+    allGeneralTodosCache.sort((a,b) => a.name.localeCompare(b.name, 'de'));
+  }
 
   document.getElementById('mTodoName').value = '';
   const fb = document.getElementById('mTodoFeedback');
@@ -1847,7 +2133,9 @@ function renderItemsManager() {
   const q = document.getElementById('itemSearch').value.trim().toLowerCase();
   let h = '';
 
-  categories.forEach(cat => {
+  const sortedCats = [...categories].sort((a,b) => a.name.localeCompare(b.name, 'de'));
+
+  sortedCats.forEach(cat => {
     const items = allItemsCache.filter(it => it.category_id === cat.id &&
       (!q || it.name.toLowerCase().includes(q)));
     if (!items.length) return;
