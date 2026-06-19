@@ -403,7 +403,10 @@ body {
       <input class="inp-field" id="loginEmail" type="email" placeholder="deine@email.de" autocomplete="email" style="margin-bottom:4px">
 
       <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Passwort</label>
-      <input class="inp-field" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" style="margin-bottom:8px">
+      <div style="position:relative;margin-bottom:8px">
+        <input class="inp-field" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding-right:48px">
+        <button type="button" onclick="togglePw('loginPassword','loginEye')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:0;color:var(--muted)" id="loginEye">👁</button>
+      </div>
 
       <button class="manage-btn primary" id="loginBtn" onclick="doLogin()" style="padding:15px;font-size:15px">
         Anmelden →
@@ -428,14 +431,25 @@ body {
       <div id="registerError" style="display:none;background:var(--red-bg);color:var(--red);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
       <div id="registerSuccess" style="display:none;background:var(--green-bg);color:var(--green);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
 
-      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Name</label>
-      <input class="inp-field" id="regName" type="text" placeholder="Dein Name" style="margin-bottom:4px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Vorname</label>
+          <input class="inp-field" id="regFirstName" type="text" placeholder="Vorname" autocomplete="given-name">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Nachname</label>
+          <input class="inp-field" id="regLastName" type="text" placeholder="Nachname" autocomplete="family-name">
+        </div>
+      </div>
 
       <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">E-Mail</label>
       <input class="inp-field" id="regEmail" type="email" placeholder="deine@email.de" autocomplete="email" style="margin-bottom:4px">
 
       <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Passwort</label>
-      <input class="inp-field" id="regPassword" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" style="margin-bottom:8px">
+      <div style="position:relative;margin-bottom:8px">
+        <input class="inp-field" id="regPassword" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding-right:48px">
+        <button type="button" onclick="togglePw('regPassword','regEye')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:0;color:var(--muted)" id="regEye">👁</button>
+      </div>
 
       <button class="manage-btn primary" id="registerBtn" onclick="doRegister()" style="padding:15px;font-size:15px">
         Konto erstellen →
@@ -465,7 +479,7 @@ body {
 <div class="screen" id="sHome">
   <div class="home-hero">
     <span class="hero-icon">🧳</span>
-    <h2>Reiseplaner</h2>
+    <h2 id="homeTitle">Reiseplaner</h2>
     <p>Nie wieder etwas vergessen</p>
   </div>
   <div class="manage-grid">
@@ -828,24 +842,24 @@ async function doLogin() {
 
 // ── Registrierung ──
 async function doRegister() {
-  const name     = document.getElementById('regName').value.trim();
-  const email    = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  const errEl    = document.getElementById('registerError');
-  const sucEl    = document.getElementById('registerSuccess');
-  const btn      = document.getElementById('registerBtn');
+  const firstName = document.getElementById('regFirstName').value.trim();
+  const lastName  = document.getElementById('regLastName').value.trim();
+  const email     = document.getElementById('regEmail').value.trim();
+  const password  = document.getElementById('regPassword').value;
+  const errEl     = document.getElementById('registerError');
+  const sucEl     = document.getElementById('registerSuccess');
+  const btn       = document.getElementById('registerBtn');
   errEl.style.display = 'none'; sucEl.style.display = 'none';
-  if (!name || !email || !password) { errEl.textContent = 'Bitte alle Felder ausfüllen.'; errEl.style.display = 'block'; return; }
+  if (!firstName || !email || !password) { errEl.textContent = 'Bitte Vorname, E-Mail und Passwort ausfüllen.'; errEl.style.display = 'block'; return; }
   if (password.length < 6) { errEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; errEl.style.display = 'block'; return; }
+  const displayName = lastName ? `${firstName} ${lastName}` : firstName;
   btn.disabled = true; btn.textContent = 'Erstelle Konto…';
   try {
-    const data = await authFetch('signup', { email, password, data: { display_name: name } });
+    const data = await authFetch('signup', { email, password, data: { display_name: displayName, first_name: firstName, last_name: lastName } });
     if (data.access_token) {
-      // Auto-confirmed (wie in Supabase Dashboard angelegt)
       saveSession(data);
       await afterLogin();
     } else {
-      // E-Mail-Bestätigung nötig
       sucEl.textContent = '✅ Bestätigungs-E-Mail gesendet! Bitte prüfe dein Postfach.';
       sucEl.style.display = 'block';
     }
@@ -878,14 +892,19 @@ async function afterLogin() {
   } catch(e) { currentProfile = null; }
 
   if (!currentProfile) {
-    // Neuer User: Profil anlegen
     const displayName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
     await sbPost('user_profiles', { id: currentUser.id, is_admin: false, onboarded: false, display_name: displayName });
     currentProfile = { is_admin: false, onboarded: false, display_name: displayName };
   }
 
+  // Vorname im Home-Titel setzen (z.B. "Edvins Reiseplaner")
+  const firstName = (currentUser.user_metadata?.first_name || currentProfile.display_name || '').split(' ')[0];
+  if (firstName) {
+    const titleEl = document.getElementById('homeTitle');
+    if (titleEl) titleEl.textContent = `${firstName}s Reiseplaner`;
+  }
+
   if (!currentProfile.onboarded) {
-    // Onboarding: Standard-Items/ToDos anbieten
     await showOnboarding();
   } else {
     await loadCategories();
@@ -943,6 +962,19 @@ async function doOnboard(copyItems) {
 }
 
 function showRegister() { show('sRegister'); setHeader(null, false); }
+
+// Passwort-Sichtbarkeit umschalten
+function togglePw(inputId, btnId) {
+  const input = document.getElementById(inputId);
+  const btn   = document.getElementById(btnId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
 
 // ── sbPost für user_id automatisch setzen ──
 const _origSbPost = sbPost;
