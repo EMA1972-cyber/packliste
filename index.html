@@ -1129,23 +1129,47 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('wFrom').min = today;
   document.getElementById('wTo').min   = today;
 
-  // Supabase Bestätigungslink verarbeiten (#access_token=... in der URL)
+  // Supabase Bestätigungslink verarbeiten
+  // Altes Format: #access_token=... (Hash)
+  // Neues Format: ?token_hash=...&type=signup (Query-Parameter)
   const hash = window.location.hash;
-  if (hash && hash.includes('access_token')) {
+  const searchParams = new URLSearchParams(window.location.search);
+  const tokenHash = searchParams.get('token_hash');
+  const tokenType = searchParams.get('type');
+
+  if (tokenHash && tokenType) {
+    // Neues Supabase-Format: token_hash + type in Query-Parametern
+    try {
+      const res = await fetch(`${SUPA_URL}/auth/v1/verify`, {
+        method: 'POST',
+        headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token_hash: tokenHash, type: tokenType })
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        const userRes = await fetch(`${SUPA_URL}/auth/v1/user`, {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${data.access_token}` }
+        });
+        const user = await userRes.json();
+        saveSession({ ...data, user });
+        history.replaceState(null, '', window.location.pathname);
+        await afterLogin();
+        return;
+      }
+    } catch(e) { console.error('token_hash-Verarbeitung fehlgeschlagen:', e); }
+  } else if (hash && hash.includes('access_token')) {
+    // Altes Format: #access_token=... im Hash
     const params = new URLSearchParams(hash.substring(1));
     const accessToken  = params.get('access_token');
     const refreshToken = params.get('refresh_token');
-    const tokenType    = params.get('token_type');
+    const hashType     = params.get('token_type');
     if (accessToken) {
-      // Token in Session speichern
       try {
-        // User-Info vom Token holen
         const res = await fetch(`${SUPA_URL}/auth/v1/user`, {
           headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${accessToken}` }
         });
         const user = await res.json();
-        saveSession({ access_token: accessToken, refresh_token: refreshToken, token_type: tokenType, user });
-        // Hash aus URL entfernen (sieht sauberer aus)
+        saveSession({ access_token: accessToken, refresh_token: refreshToken, token_type: hashType, user });
         history.replaceState(null, '', window.location.pathname);
         await afterLogin();
         return;
