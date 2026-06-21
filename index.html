@@ -939,7 +939,7 @@ async function doRegister() {
   const displayName = lastName ? `${firstName} ${lastName}` : firstName;
   btn.disabled = true; btn.textContent = 'Erstelle Konto…';
   try {
-    const data = await authFetch('signup', { email, password, data: { display_name: displayName, first_name: firstName, last_name: lastName } });
+    const data = await authFetch('signup', { email, password, data: { display_name: displayName, first_name: firstName, last_name: lastName }, email_redirect_to: 'https://ema1972-cyber.github.io/packliste/' });
     if (data.access_token) {
       saveSession(data);
       await afterLogin();
