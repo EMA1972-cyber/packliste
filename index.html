@@ -1549,7 +1549,10 @@ async function fetchWeather() {
       if (wData.daily?.temperature_2m_max?.length) {
         const max = wData.daily.temperature_2m_max;
         const min = wData.daily.temperature_2m_min;
-        avgTemp = Math.round((max.reduce((a,b)=>a+b,0)/max.length + min.reduce((a,b)=>a+b,0)/min.length) / 2);
+        const avgMax = max.reduce((a,b)=>a+b,0)/max.length;
+        const avgMin = min.reduce((a,b)=>a+b,0)/min.length;
+        // Tageshöchst stark gewichten (80/20) — entspricht dem gefühlten Klima
+        avgTemp = Math.round(avgMax * 0.8 + avgMin * 0.2);
       }
     } else {
       // Historische Klimadaten für weiter entfernte Daten
@@ -1563,7 +1566,10 @@ async function fetchWeather() {
         const max = hData.daily.temperature_2m_max.filter(v => v !== null);
         const min = hData.daily.temperature_2m_min.filter(v => v !== null);
         if (max.length && min.length) {
-          avgTemp = Math.round((max.reduce((a,b)=>a+b,0)/max.length + min.reduce((a,b)=>a+b,0)/min.length) / 2);
+          const avgMax = max.reduce((a,b)=>a+b,0)/max.length;
+          const avgMin = min.reduce((a,b)=>a+b,0)/min.length;
+          // Tageshöchst stark gewichten (80/20)
+          avgTemp = Math.round(avgMax * 0.8 + avgMin * 0.2);
         }
       }
     }
@@ -1697,11 +1703,21 @@ async function generateTripItems(tripId) {
     if (qty === 'n=nights')   qty = `${nights}x`;
     if (qty === 'n+1=nights') qty = `${nights+1}x`;
 
+    // Hilfsfunktion: Klimagruppen-Match (warm ≈ tropisch)
+    const climateMatch = (a, b) => {
+      if (a === b) return true;
+      const warmGroup = ['warm','tropisch'];
+      const kaltGroup = ['kalt','kühl'];
+      if (warmGroup.includes(a) && warmGroup.includes(b)) return true;
+      if (kaltGroup.includes(a) && kaltGroup.includes(b)) return true;
+      return false;
+    };
+
     // Exakter Match (trip_type + climate)
     let pref = userPrefs.find(p =>
       p.item_id === item.id &&
       p.trip_type === wiz.type &&
-      p.climate === wiz.climate
+      climateMatch(p.climate, wiz.climate)
     );
     // Fallback: nur trip_type
     if (!pref) pref = userPrefs.find(p =>
@@ -1990,19 +2006,18 @@ function editQty(id, currentQty) {
     climate:   curTrip?.climate   || null,
     days:      Math.max(1, nights)
   };
-  _qtyRemember = false;
-  _qtyScales   = false;
+  // Default: merken = AN, skaliert = JA
+  _qtyRemember = true;
+  _qtyScales   = true;
 
   document.getElementById('mQtyTitle').textContent = `Menge: ${name}`;
-  document.getElementById('mQtyInput').value = (currentQty || '').replace('x','');
-  document.getElementById('mQtyRemember').checked = false;
-  document.getElementById('mQtyRememberSlider').style.background = 'var(--border)';
-  document.getElementById('mQtyScaleSection').style.display = 'none';
-  document.getElementById('mQtyScaleYes').className = 'manage-btn';
+  document.getElementById('mQtyInput').value = (currentQty || '').replace('x','').trim() || '1';
+  document.getElementById('mQtyRememberSlider').style.background = 'var(--blue-500)';
+  document.getElementById('mQtyScaleSection').style.display = 'block';
+  document.getElementById('mQtyScaleYes').className = 'manage-btn primary';
   document.getElementById('mQtyScaleNo').className  = 'manage-btn';
-  document.getElementById('mQtyPreview').textContent = '';
-
-  document.getElementById('mQtyInput').addEventListener('input', updateQtyPreview, { once: false });
+  document.getElementById('mQtyInput').oninput = updateQtyPreview;
+  updateQtyPreview();
   document.getElementById('mQty').classList.add('open');
 }
 
