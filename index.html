@@ -789,6 +789,41 @@ body {
   </div>
 </div>
 
+<!-- MENGEN-MODAL -->
+<div class="modal-ov" id="mQty">
+  <div class="modal-sh">
+    <div class="modal-bar"></div>
+    <div class="modal-title" id="mQtyTitle">Menge ändern</div>
+
+    <label class="ml">Anzahl</label>
+    <input class="mi" id="mQtyInput" type="number" min="1" max="99" placeholder="z.B. 3">
+
+    <div id="mQtyRememberSection" style="margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--ink);font-weight:500">Für ähnliche Reisen merken?</span>
+        <label style="position:relative;display:inline-block;width:44px;height:24px">
+          <input type="checkbox" id="mQtyRemember" style="opacity:0;width:0;height:0">
+          <span onclick="toggleQtyRemember()" id="mQtyRememberSlider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:24px;transition:.3s"></span>
+        </label>
+      </div>
+
+      <div id="mQtyScaleSection" style="display:none;background:var(--blue-50);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+        <p style="font-size:12px;color:var(--muted);margin:0 0 8px">Skaliert mit Reisedauer?</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button id="mQtyScaleYes" onclick="setScale(true)" class="manage-btn" style="padding:8px;font-size:12px">✅ Ja<br><span style="font-weight:400;font-size:10px">Socken, T-Shirts...</span></button>
+          <button id="mQtyScaleNo"  onclick="setScale(false)" class="manage-btn" style="padding:8px;font-size:12px">❌ Nein<br><span style="font-weight:400;font-size:10px">Reisepass, Kabel...</span></button>
+        </div>
+        <div id="mQtyPreview" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center"></div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModal('mQty')">Abbrechen</button>
+      <button class="btn-main" style="flex:1" onclick="confirmQtyModal()">Übernehmen ✓</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // SUPABASE CONFIG
@@ -1902,9 +1937,10 @@ function renderPacken(subs) {
 }
 
 function packRow(ti) {
-  const chk = ti.is_checked;
-  const qtyVal = ti.qty || '';
-  const qty = `<span class="iqty" style="cursor:pointer" onclick="editQty('${ti.id}','${qtyVal}')" title="Menge ändern">${qtyVal || '+'}</span>`;
+  const chk    = ti.is_checked;
+  const qtyRaw = (ti.qty || '').replace('x','').trim();
+  const qtyDisplay = qtyRaw ? `${qtyRaw}x` : '+';
+  const qty    = `<span class="iqty" onclick="editQty('${ti.id}','${ti.qty||''}')" title="Menge ändern">${qtyDisplay}</span>`;
   return `<div class="item-row${chk?' faded':''}" id="pr_${ti.id}">
     <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
     <span class="iname${chk?' packed':''}">${ti.items?.name||'?'}</span>
@@ -1912,76 +1948,104 @@ function packRow(ti) {
   </div>`;
 }
 
-function editQty(id, currentQty) {
-  const newQty = prompt(`Menge für diese Reise:`, currentQty || '1');
-  if (newQty === null) return;
-  const trimmed = newQty.trim();
-  if (!trimmed) return;
-  saveQty(id, trimmed);
+// ── Mengen-Modal ──
+let _qtyModalState = {}; // { id, itemName, tripType, climate, days }
+let _qtyScales = false;
+let _qtyRemember = false;
+
+function toggleQtyRemember() {
+  _qtyRemember = !_qtyRemember;
+  const slider = document.getElementById('mQtyRememberSlider');
+  slider.style.background = _qtyRemember ? 'var(--blue-500)' : 'var(--border)';
+  document.getElementById('mQtyScaleSection').style.display = _qtyRemember ? 'block' : 'none';
+  updateQtyPreview();
 }
 
-async function saveQty(id, qty) {
+function setScale(val) {
+  _qtyScales = val;
+  document.getElementById('mQtyScaleYes').className = 'manage-btn' + (val ? ' primary' : '');
+  document.getElementById('mQtyScaleNo').className  = 'manage-btn' + (!val ? ' primary' : '');
+  updateQtyPreview();
+}
+
+function updateQtyPreview() {
+  const preview = document.getElementById('mQtyPreview');
+  if (!_qtyRemember || !_qtyScales) { preview.textContent = ''; return; }
+  const qty  = parseInt(document.getElementById('mQtyInput').value) || 1;
+  const days = _qtyModalState.days || 7;
+  const at14 = calcScaled(qty, days, 14);
+  const at21 = calcScaled(qty, days, 21);
+  preview.textContent = `📐 ${days}T→${qty} · 14T→${at14} · 21T→${at21}`;
+}
+
+function editQty(id, currentQty) {
+  const ti   = curItems.find(i => i.id === id);
+  const name = ti?.items?.name || 'Item';
+  const nights = calcNights(curTrip?.date_from, curTrip?.date_to);
+
+  _qtyModalState = {
+    id,
+    itemName:  name,
+    tripType:  curTrip?.trip_type || 'urlaub',
+    climate:   curTrip?.climate   || null,
+    days:      Math.max(1, nights)
+  };
+  _qtyRemember = false;
+  _qtyScales   = false;
+
+  document.getElementById('mQtyTitle').textContent = `Menge: ${name}`;
+  document.getElementById('mQtyInput').value = (currentQty || '').replace('x','');
+  document.getElementById('mQtyRemember').checked = false;
+  document.getElementById('mQtyRememberSlider').style.background = 'var(--border)';
+  document.getElementById('mQtyScaleSection').style.display = 'none';
+  document.getElementById('mQtyScaleYes').className = 'manage-btn';
+  document.getElementById('mQtyScaleNo').className  = 'manage-btn';
+  document.getElementById('mQtyPreview').textContent = '';
+
+  document.getElementById('mQtyInput').addEventListener('input', updateQtyPreview, { once: false });
+  document.getElementById('mQty').classList.add('open');
+}
+
+async function confirmQtyModal() {
+  const qtyNum = parseInt(document.getElementById('mQtyInput').value);
+  if (!qtyNum || qtyNum < 1) return;
+  const qty = `${qtyNum}x`;
+  closeModal('mQty');
+
+  const { id, itemName, tripType, climate, days } = _qtyModalState;
+  await saveQty(id, qty, itemName, tripType, climate, days, _qtyRemember, _qtyScales);
+}
+
+async function saveQty(id, qty, itemName, tripType, climate, days, remember, scales) {
   await sbPatch('trip_items', { id: `eq.${id}` }, { qty });
   const ti = curItems.find(i => i.id === id);
   if (ti) ti.qty = qty;
 
-  // Lernfrage: Soll diese Menge für ähnliche Reisen gemerkt werden?
-  const item = ti?.items;
-  if (item && currentUser) {
-    const tripType = curTrip?.trip_type || 'urlaub';
-    const climate  = curTrip?.climate  || null;
-    const contextLabel = [
-      tripType === 'business' ? 'Business' : tripType === 'bikepacking' ? 'Bikepacking' : 'Urlaub',
-      climate ? `· ${climate}` : ''
-    ].filter(Boolean).join(' ');
-
-    // Kurz warten damit der User die Änderung sieht, dann fragen
-    setTimeout(async () => {
-      const nights  = calcNights(curTrip.date_from, curTrip.date_to);
-      const days    = Math.max(1, nights);
-      const qtyNum  = parseFloat(qty);
-      const isNum   = !isNaN(qtyNum) && qtyNum > 0;
-
-      // Frage 1: Merken?
-      const remember = confirm(`"${item.name}": Menge ${qty} für ${contextLabel}-Reisen merken?\n\nDann passe ich den Vorschlag beim nächsten ähnlichen Trip an.`);
-      if (!remember) return;
-
-      // Frage 2: Skaliert es mit der Reisedauer?
-      let scales = false;
-      if (isNum && days > 1) {
-        scales = confirm(`Skaliert "${item.name}" mit der Reisedauer?\n\n✅ JA  → z.B. Socken, T-Shirts, Unterwäsche\n   (Menge wächst mit Reisetagen, flacht aber ab)\n\n❌ NEIN → z.B. Reisepass, Ladekabel, Zahnbürste\n   (immer gleiche Menge, egal wie lang die Reise)`);
-      }
-
-      // Vorschau berechnen
-      if (isNum && scales) {
-        const at14 = calcScaled(qtyNum, days, 14);
-        const at21 = calcScaled(qtyNum, days, 21);
-        alert(`📐 Vorschau für "${item.name}":\n\n• ${days} Tage → ${qty} (deine Eingabe)\n• 14 Tage → ${at14}\n• 21 Tage → ${at21}\n\nPasst das so?`);
-      }
-
-      try {
-        await fetch(`${SUPA_URL}/rest/v1/user_item_preferences`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPA_KEY,
-            'Authorization': `Bearer ${currentSession.access_token}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-          },
-          body: JSON.stringify({
-            user_id:     currentUser.id,
-            item_id:     item.id,
-            trip_type:   tripType,
-            climate:     climate,
-            qty_per_day: isNum && scales ? qtyNum / days : null,
-            scales:      scales,
-            sample_days: days,
-            sample_qty:  qty,
-            updated_at:  new Date().toISOString()
-          })
-        });
-      } catch(e) { console.error('Präferenz speichern fehlgeschlagen:', e); }
-    }, 300);
+  if (remember && currentUser) {
+    const qtyNum    = parseInt(qty);
+    const qtyPerDay = scales ? qtyNum / days : null;
+    try {
+      await fetch(`${SUPA_URL}/rest/v1/user_item_preferences`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify({
+          user_id:     currentUser.id,
+          item_id:     ti?.items?.id,
+          trip_type:   tripType,
+          climate:     climate,
+          qty_per_day: qtyPerDay,
+          scales:      scales,
+          sample_days: days,
+          sample_qty:  String(qtyNum),
+          updated_at:  new Date().toISOString()
+        })
+      });
+    } catch(e) { console.error('Präferenz speichern:', e); }
   }
 
   const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
