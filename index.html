@@ -1703,27 +1703,18 @@ async function generateTripItems(tripId) {
     if (qty === 'n=nights')   qty = `${nights}x`;
     if (qty === 'n+1=nights') qty = `${nights+1}x`;
 
-    // Hilfsfunktion: Klimagruppen-Match (warm ≈ tropisch)
-    const climateMatch = (a, b) => {
-      if (a === b) return true;
-      const warmGroup = ['warm','tropisch'];
-      const kaltGroup = ['kalt','kühl'];
-      if (warmGroup.includes(a) && warmGroup.includes(b)) return true;
-      if (kaltGroup.includes(a) && kaltGroup.includes(b)) return true;
-      return false;
-    };
-
-    // Exakter Match (trip_type + climate)
+    // Temperaturbasiertes Matching: Präferenz gilt wenn aktuelle Reisetemp >= gespeichertem Schwellenwert
+    const tripTemp = wiz.temp || 20;
     let pref = userPrefs.find(p =>
-      p.item_id === item.id &&
+      parseInt(p.item_id) === parseInt(item.id) &&
       p.trip_type === wiz.type &&
-      climateMatch(p.climate, wiz.climate)
+      p.min_temp !== null && tripTemp >= p.min_temp
     );
-    // Fallback: nur trip_type
+    // Fallback: ohne Temperaturbedingung (z.B. alte Einträge ohne min_temp)
     if (!pref) pref = userPrefs.find(p =>
-      p.item_id === item.id &&
+      parseInt(p.item_id) === parseInt(item.id) &&
       p.trip_type === wiz.type &&
-      !p.climate
+      !p.min_temp
     );
 
     if (pref) {
@@ -2039,6 +2030,8 @@ async function saveQty(id, qty, itemName, tripType, climate, days, remember, sca
   if (remember && currentUser) {
     const qtyNum    = parseInt(qty);
     const qtyPerDay = scales ? qtyNum / days : null;
+    // Fester Temperaturschwellenwert: 25°C als Grenze für "warm/tropisch"
+    const minTemp   = (tripTemp !== null && tripTemp >= 25) ? 25 : null;
     try {
       await fetch(`${SUPA_URL}/rest/v1/user_item_preferences`, {
         method: 'POST',
@@ -2053,6 +2046,7 @@ async function saveQty(id, qty, itemName, tripType, climate, days, remember, sca
           item_id:     ti?.items?.id,
           trip_type:   tripType,
           climate:     climate,
+          min_temp:    minTemp,
           qty_per_day: qtyPerDay,
           scales:      scales,
           sample_days: days,
