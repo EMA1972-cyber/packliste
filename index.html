@@ -342,7 +342,8 @@ body {
 .item-row.faded { background: var(--sand); opacity: .6; }
 .iname { flex: 1; font-size: 14px; }
 .iname.packed { text-decoration: line-through; color: var(--muted); }
-.iqty { font-size: 11px; background: var(--blue-50); color: var(--blue-500); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+.iqty { font-size: 11px; background: var(--blue-50); color: var(--blue-500); border-radius: 6px; padding: 2px 7px; white-space: nowrap; cursor: pointer; border: 1px solid var(--blue-100); }
+.iqty:hover { background: var(--blue-100); }
 .ipool { font-size: 10px; background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
 
 .ja-nein { display: flex; gap: 6px; flex-shrink: 0; }
@@ -1636,6 +1637,16 @@ async function generateTripItems(tripId) {
   const nights = calcNights(wiz.from, wiz.to);
   const toInsert = [];
 
+  // User-Präferenzen laden (gelernte Mengen)
+  let userPrefs = [];
+  if (currentUser) {
+    try {
+      userPrefs = await sbGet('user_item_preferences', {
+        filter: { user_id: `eq.${currentUser.id}` }
+      }) || [];
+    } catch(e) { /* ignorieren falls Tabelle noch nicht existiert */ }
+  }
+
   for (const item of allItems) {
     if (wiz.type === 'urlaub'   && !item.show_urlaub)   continue;
     if (wiz.type === 'business' && !item.show_business)  continue;
@@ -1646,13 +1657,37 @@ async function generateTripItems(tripId) {
     if (item.activity_key && !wiz.acts.includes(item.activity_key)) continue;
     if (item.is_bikepacking && !wiz.bike) continue;
 
+    // Bevorzugte Menge ermitteln: User-Präferenz > default_qty
     let qty = item.default_qty;
     if (qty === 'n=nights')   qty = `${nights}x`;
     if (qty === 'n+1=nights') qty = `${nights+1}x`;
 
-    // Mandatory Items direkt als JA vorausfüllen
-    const decision = item.is_mandatory ? 'ja' : 'pending';
+    // Exakter Match (trip_type + climate)
+    let pref = userPrefs.find(p =>
+      p.item_id === item.id &&
+      p.trip_type === wiz.type &&
+      p.climate === wiz.climate
+    );
+    // Fallback: nur trip_type
+    if (!pref) pref = userPrefs.find(p =>
+      p.item_id === item.id &&
+      p.trip_type === wiz.type &&
+      !p.climate
+    );
 
+    if (pref) {
+      if (pref.scales && pref.qty_per_day !== null && pref.sample_days > 0) {
+        // Skalierend (Klamotten etc.): logarithmische Sättigung
+        const baseQty  = parseFloat(pref.sample_qty);
+        const baseDays = pref.sample_days;
+        qty = `${calcScaled(baseQty, baseDays, Math.max(1, nights))}x`;
+      } else {
+        // Fixe Menge (Reisepass, Ladekabel etc.)
+        qty = pref.sample_qty;
+      }
+    }
+
+    const decision = item.is_mandatory ? 'ja' : 'pending';
     toInsert.push({ trip_id: tripId, item_id: item.id, qty, decision });
   }
 
@@ -1868,12 +1903,89 @@ function renderPacken(subs) {
 
 function packRow(ti) {
   const chk = ti.is_checked;
-  const qty = ti.qty ? `<span class="iqty">${ti.qty}</span>` : '';
+  const qtyVal = ti.qty || '';
+  const qty = `<span class="iqty" style="cursor:pointer" onclick="editQty('${ti.id}','${qtyVal}')" title="Menge ändern">${qtyVal || '+'}</span>`;
   return `<div class="item-row${chk?' faded':''}" id="pr_${ti.id}">
     <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
     <span class="iname${chk?' packed':''}">${ti.items?.name||'?'}</span>
     ${qty}
   </div>`;
+}
+
+function editQty(id, currentQty) {
+  const newQty = prompt(`Menge für diese Reise:`, currentQty || '1');
+  if (newQty === null) return;
+  const trimmed = newQty.trim();
+  if (!trimmed) return;
+  saveQty(id, trimmed);
+}
+
+async function saveQty(id, qty) {
+  await sbPatch('trip_items', { id: `eq.${id}` }, { qty });
+  const ti = curItems.find(i => i.id === id);
+  if (ti) ti.qty = qty;
+
+  // Lernfrage: Soll diese Menge für ähnliche Reisen gemerkt werden?
+  const item = ti?.items;
+  if (item && currentUser) {
+    const tripType = curTrip?.trip_type || 'urlaub';
+    const climate  = curTrip?.climate  || null;
+    const contextLabel = [
+      tripType === 'business' ? 'Business' : tripType === 'bikepacking' ? 'Bikepacking' : 'Urlaub',
+      climate ? `· ${climate}` : ''
+    ].filter(Boolean).join(' ');
+
+    // Kurz warten damit der User die Änderung sieht, dann fragen
+    setTimeout(async () => {
+      const nights  = calcNights(curTrip.date_from, curTrip.date_to);
+      const days    = Math.max(1, nights);
+      const qtyNum  = parseFloat(qty);
+      const isNum   = !isNaN(qtyNum) && qtyNum > 0;
+
+      // Frage 1: Merken?
+      const remember = confirm(`"${item.name}": Menge ${qty} für ${contextLabel}-Reisen merken?\n\nDann passe ich den Vorschlag beim nächsten ähnlichen Trip an.`);
+      if (!remember) return;
+
+      // Frage 2: Skaliert es mit der Reisedauer?
+      let scales = false;
+      if (isNum && days > 1) {
+        scales = confirm(`Skaliert "${item.name}" mit der Reisedauer?\n\n✅ JA  → z.B. Socken, T-Shirts, Unterwäsche\n   (Menge wächst mit Reisetagen, flacht aber ab)\n\n❌ NEIN → z.B. Reisepass, Ladekabel, Zahnbürste\n   (immer gleiche Menge, egal wie lang die Reise)`);
+      }
+
+      // Vorschau berechnen
+      if (isNum && scales) {
+        const at14 = calcScaled(qtyNum, days, 14);
+        const at21 = calcScaled(qtyNum, days, 21);
+        alert(`📐 Vorschau für "${item.name}":\n\n• ${days} Tage → ${qty} (deine Eingabe)\n• 14 Tage → ${at14}\n• 21 Tage → ${at21}\n\nPasst das so?`);
+      }
+
+      try {
+        await fetch(`${SUPA_URL}/rest/v1/user_item_preferences`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPA_KEY,
+            'Authorization': `Bearer ${currentSession.access_token}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify({
+            user_id:     currentUser.id,
+            item_id:     item.id,
+            trip_type:   tripType,
+            climate:     climate,
+            qty_per_day: isNum && scales ? qtyNum / days : null,
+            scales:      scales,
+            sample_days: days,
+            sample_qty:  qty,
+            updated_at:  new Date().toISOString()
+          })
+        });
+      } catch(e) { console.error('Präferenz speichern fehlgeschlagen:', e); }
+    }, 300);
+  }
+
+  const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
+  renderPacken(subs);
 }
 
 // ── TASCHEN (nur Bikepacking) ──
@@ -2428,6 +2540,10 @@ function editItemRow(id) {
         <select class="add-inp" id="editSub_${id}"></select>
       </div>
       <div class="item-edit-row" style="align-items:center">
+        <span style="font-size:12px;color:var(--muted);flex-shrink:0">📦 Menge:</span>
+        <input class="add-inp" id="editQty_${id}" value="${item.default_qty||''}" placeholder="z.B. 1, 7, n=nights">
+      </div>
+      <div class="item-edit-row" style="align-items:center">
         <span style="font-size:12px;color:var(--muted);flex-shrink:0">🚲 Tasche:</span>
         <select class="add-inp" id="editBag_${id}">${bagOpts}</select>
       </div>
@@ -2460,12 +2576,14 @@ async function saveItemRow(id) {
   const subId  = subVal ? parseInt(subVal) : null;
   const bagVal = document.getElementById('editBag_'+id).value;
   const bagId  = bagVal ? parseInt(bagVal) : null;
+  const qtyVal = document.getElementById('editQty_'+id).value.trim();
+  const defaultQty = qtyVal || null;
   if (!name) return;
 
   const item = allItemsCache.find(i => i.id === id);
-  await sbPatch('items', { id: `eq.${id}` }, { name, category_id: catId, subcategory_id: subId, bike_bag_id: bagId });
+  await sbPatch('items', { id: `eq.${id}` }, { name, category_id: catId, subcategory_id: subId, bike_bag_id: bagId, default_qty: defaultQty });
 
-  item.name = name; item.category_id = catId; item.subcategory_id = subId; item.bike_bag_id = bagId;
+  item.name = name; item.category_id = catId; item.subcategory_id = subId; item.bike_bag_id = bagId; item.default_qty = defaultQty;
   renderItemsManager();
 }
 
@@ -2573,6 +2691,15 @@ function togCat(hd) {
 }
 function fmtDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}.${m}.${y}`; }
 function calcNights(a,b) { if(!a||!b) return 0; return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000)); }
+
+// Sättigungskurve für skalierende Items (Klamotten etc.)
+// Bei doppelter Reisedauer ~50% mehr statt 100% (logarithmisch)
+function calcScaled(baseQty, baseDays, targetDays) {
+  if (baseDays === targetDays) return Math.round(baseQty);
+  const ratio = targetDays / baseDays;
+  const scaled = baseQty * (1 + Math.log(ratio) * 0.6);
+  return Math.max(1, Math.round(scaled));
+}
 
 document.querySelectorAll('.modal-ov').forEach(el => {
   el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
