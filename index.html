@@ -2477,13 +2477,14 @@ async function saveNewItem() {
 
   document.getElementById('mItemName').value = '';
   updateItemSubOptions();
-  const fb = document.getElementById('mItemFeedback');
-  fb.style.display = 'block';
-  setTimeout(() => { fb.style.display = 'none'; }, 1500);
 
-  // Item-Manager Cache invalidieren, falls offen
+  // Cache invalidieren, Liste neu laden falls offen, Modal schließen
   allItemsCache = null;
   allSubsCache = null;
+  if (document.getElementById('sItems')?.classList.contains('active')) {
+    await openItemsManager();
+  }
+  closeModal('mNewItem');
 }
 
 // ══════════════════════════════════════════
