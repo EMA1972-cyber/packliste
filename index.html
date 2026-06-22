@@ -2047,7 +2047,11 @@ function renderPacken(subs) {
       sj.forEach(ti => h += packRow(ti));
     });
 
-    h += `</div></div>`;
+    h += `<div class="add-row">
+      <input class="add-inp" type="text" placeholder="Item direkt hinzufügen …" id="ap_${cat.id}"
+        onkeydown="if(event.key==='Enter')addItemPacken(${cat.id})">
+      <button class="add-go" onclick="addItemPacken(${cat.id})">+</button>
+    </div></div></div>`;
   });
 
   document.getElementById('tpPacken').innerHTML = h + '<div class="spacer"></div>';
@@ -2513,9 +2517,23 @@ async function addItem(catId) {
   if (!name) return;
 
   // Nur für DIESE Reise - taucht bei künftigen Reisen NICHT mehr auf
-  // (im Gegensatz zu "Für nächstes Mal merken")
   const [newItem] = await sbPost('items', { category_id: catId, name, show_urlaub: false, show_business: false });
   const [ti] = await sbPost('trip_items', { trip_id: curTripId, item_id: newItem.id, decision: 'pending' });
+  ti.items = newItem;
+  curItems.push(ti);
+
+  if (inp) inp.value = '';
+  renderAll();
+}
+
+async function addItemPacken(catId) {
+  const inp = document.getElementById('ap_' + catId);
+  const name = inp?.value?.trim();
+  if (!name) return;
+
+  // Direkt als 'ja' anlegen — erscheint sofort im Packen-Tab zum Abhaken
+  const [newItem] = await sbPost('items', { category_id: catId, name, show_urlaub: false, show_business: false });
+  const [ti] = await sbPost('trip_items', { trip_id: curTripId, item_id: newItem.id, decision: 'ja' });
   ti.items = newItem;
   curItems.push(ti);
 
