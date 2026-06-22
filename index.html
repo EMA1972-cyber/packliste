@@ -14,6 +14,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("gVPEv9I7dFI_xSiKR");</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -942,6 +944,12 @@ async function doRegister() {
     const data = await authFetch('signup', { email, password, data: { display_name: displayName, first_name: firstName, last_name: lastName }, email_redirect_to: 'https://ema1972-cyber.github.io/packliste/' });
     if (data.access_token) {
       saveSession(data);
+      // Notification an Admin
+      emailjs.send('service_mohv83l', 'template_g45gwbj', {
+        name: displayName,
+        email: email,
+        time: new Date().toLocaleString('de-DE')
+      }).catch(e => console.warn('EmailJS:', e));
       await afterLogin();
     } else {
       // Formular durch Bestätigungsansicht ersetzen
