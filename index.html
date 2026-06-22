@@ -1255,6 +1255,11 @@ async function loadCategories() {
 // HOME
 // ══════════════════════════════════════════
 async function goHome() {
+  // Cache des zuletzt geöffneten Trips invalidieren, damit die Karte fresh berechnet wird
+  if (curTripId && allTripsCache) {
+    const t = allTripsCache.find(x => x.id === curTripId);
+    if (t) { delete t._ja; delete t._packed; delete t._vsTotal; delete t._vsDone; delete t._todoTotal; delete t._todoDone; }
+  }
   show('sHome'); setHeader(null, false);
   await refreshTripsList();
   refreshItemsCount();
@@ -1316,8 +1321,8 @@ async function renderHome(trips) {
       t._ja     = jaItems.length;
       t._packed = jaItems.filter(i => i.is_checked).length;
 
-      // Vorschläge: non-pool, non-mandatory
-      const vsAll  = (tiAll || []).filter(i => !i.items?.is_pool && !i.items?.is_mandatory);
+      // Vorschläge: non-pool, non-mandatory, mit gültigem items-Join
+      const vsAll  = (tiAll || []).filter(i => i.items && !i.items.is_pool && !i.items.is_mandatory);
       t._vsTotal   = vsAll.length;
       t._vsDone    = vsAll.filter(i => i.decision !== 'pending').length;
 
@@ -1833,8 +1838,8 @@ function updateProgress() {
   const pctPacken = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
 
   // Vorschläge % — Pool-Items UND mandatory-Items ignorieren
-  // (mandatory werden automatisch auf 'ja' gesetzt, sollen nicht als offene Vorschläge zählen)
-  const vorschlaegeAll2  = curItems.filter(i => !i.items?.is_pool && !i.items?.is_mandatory);
+  // WICHTIG: i.items muss existieren (kein verwaister trip_item ohne FK-Eintrag)
+  const vorschlaegeAll2  = curItems.filter(i => i.items && !i.items.is_pool && !i.items.is_mandatory);
   const vorschlaegeTotal = vorschlaegeAll2.length;
   const vorschlaegeDone  = vorschlaegeAll2.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
@@ -1930,11 +1935,21 @@ function renderVorschlaege(subs) {
 function updateTabProgress() {
   if (!curItems) return;
 
-  // Vorschläge: alle Items ohne Pool-Items und ohne mandatory — mandatory zählen als automatisch erledigt
-  const vorschlaegeAll  = curItems.filter(i => !i.items?.is_pool && !i.items?.is_mandatory);
+  // Vorschläge: alle Items ohne Pool-Items und ohne mandatory
+  // WICHTIG: i.items muss existieren (kein verwaister trip_item ohne FK-Eintrag)
+  const vorschlaegeAll  = curItems.filter(i => i.items && !i.items.is_pool && !i.items.is_mandatory);
   const vorschlaegeTotal = vorschlaegeAll.length;
   const vorschlaegeDone  = vorschlaegeAll.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
+
+  // DEBUG — zeigt in der Browser-Konsole welche Items noch pending sind
+  const stillPending = vorschlaegeAll.filter(i => i.decision === 'pending');
+  if (stillPending.length > 0) {
+    console.log(`🔍 DEBUG Vorschläge: ${vorschlaegeDone}/${vorschlaegeTotal} = ${pctV}% — noch ${stillPending.length} pending:`);
+    stillPending.forEach(i => console.log(`  → id:${i.id} | name:"${i.items?.name}" | is_pool:${i.items?.is_pool} | is_mandatory:${i.items?.is_mandatory} | decision:"${i.decision}"`));
+  } else {
+    console.log(`✅ DEBUG Vorschläge: alle ${vorschlaegeTotal} erledigt = 100%`);
+  }
 
   // Packen: wie viele ja-Items sind eingepackt?
   const packenTotal = curItems.filter(i => i.decision === 'ja').length;
