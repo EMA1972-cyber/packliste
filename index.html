@@ -1797,7 +1797,7 @@ async function openTrip(id) {
 
     // Items mit Item-Details laden
     const rawItems = await sbGet('trip_items', {
-      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id)',
+      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id,show_urlaub,show_business)',
       filter: { trip_id: `eq.${id}` }
     });
     curItems = rawItems || [];
@@ -1837,9 +1837,16 @@ function updateProgress() {
   const packed = ja.filter(i => i.is_checked).length;
   const pctPacken = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
 
-  // Vorschläge % — Pool-Items UND mandatory-Items ignorieren
+  // Vorschläge % — Pool, mandatory UND nicht zum trip_type passende Items ignorieren
   // WICHTIG: i.items muss existieren (kein verwaister trip_item ohne FK-Eintrag)
-  const vorschlaegeAll2  = curItems.filter(i => i.items && !i.items.is_pool && !i.items.is_mandatory);
+  const tripType = curTrip?.trip_type || 'urlaub';
+  const vorschlaegeAll2  = curItems.filter(i => {
+    if (!i.items) return false;
+    if (i.items.is_pool || i.items.is_mandatory) return false;
+    if (tripType === 'urlaub'   && !i.items.show_urlaub)   return false;
+    if (tripType === 'business' && !i.items.show_business)  return false;
+    return true;
+  });
   const vorschlaegeTotal = vorschlaegeAll2.length;
   const vorschlaegeDone  = vorschlaegeAll2.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
@@ -1935,9 +1942,15 @@ function renderVorschlaege(subs) {
 function updateTabProgress() {
   if (!curItems) return;
 
-  // Vorschläge: alle Items ohne Pool-Items und ohne mandatory
-  // WICHTIG: i.items muss existieren (kein verwaister trip_item ohne FK-Eintrag)
-  const vorschlaegeAll  = curItems.filter(i => i.items && !i.items.is_pool && !i.items.is_mandatory);
+  // Vorschläge: Pool, mandatory UND nicht zum trip_type passende Items ignorieren
+  const tripType = curTrip?.trip_type || 'urlaub';
+  const vorschlaegeAll  = curItems.filter(i => {
+    if (!i.items) return false;
+    if (i.items.is_pool || i.items.is_mandatory) return false;
+    if (tripType === 'urlaub'   && !i.items.show_urlaub)   return false;
+    if (tripType === 'business' && !i.items.show_business)  return false;
+    return true;
+  });
   const vorschlaegeTotal = vorschlaegeAll.length;
   const vorschlaegeDone  = vorschlaegeAll.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
