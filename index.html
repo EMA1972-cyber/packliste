@@ -1898,9 +1898,9 @@ function renderVorschlaege(subs) {
 function updateTabProgress() {
   if (!curItems) return;
 
-  // Vorschläge: wie viele non-mandatory pending wurden bewertet?
-  const vorschlaegeTotal = curItems.filter(i => !i.items?.is_mandatory).length;
-  const vorschlaegeDone  = curItems.filter(i => !i.items?.is_mandatory && i.decision !== 'pending').length;
+  // Vorschläge: alle Items (inkl. mandatory) — mandatory zählen als "erledigt"
+  const vorschlaegeTotal = curItems.length;
+  const vorschlaegeDone  = curItems.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
 
   // Packen: wie viele ja-Items sind eingepackt?
@@ -1908,12 +1908,10 @@ function updateTabProgress() {
   const packenDone  = curItems.filter(i => i.decision === 'ja' && i.is_checked).length;
   const pctP = packenTotal ? Math.round(packenDone / packenTotal * 100) : 0;
 
-  // ToDos: wie viele sind erledigt?
-  const todosEl = document.getElementById('tpTodos');
-  const todoRows = todosEl ? todosEl.querySelectorAll('.todo-row') : [];
-  const todoChecked = todosEl ? todosEl.querySelectorAll('.todo-row input:checked').length : 0;
-  const todoTotal = todoRows.length;
-  const pctT = todoTotal ? Math.round(todoChecked / todoTotal * 100) : 0;
+  // ToDos: aus curTodos Array (nicht DOM)
+  const todoTotal   = curTodos.length;
+  const todoDone    = curTodos.filter(t => t.decision === 'ja').length;
+  const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 0;
 
   // Gesamt: gewichtet 20/60/20
   const pctGesamt = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
@@ -1932,7 +1930,7 @@ function updateTabProgress() {
   const progLbl = document.querySelector('.prog-label');
   if (progEl) progEl.textContent = pctGesamt + '%';
   if (progBar) progBar.style.width = pctGesamt + '%';
-  if (progLbl) progLbl.textContent = `Gesamt-Fortschritt`;
+  if (progLbl) progLbl.textContent = 'Gesamt-Fortschritt';
 }
 
 function vorschlagRow(ti) {
