@@ -2369,11 +2369,9 @@ async function saveNewGeneralTodoFromHome() {
   }
 
   document.getElementById('mTodoName').value = '';
-  const fb = document.getElementById('mTodoFeedback');
-  fb.style.display = 'block';
-  setTimeout(() => { fb.style.display = 'none'; }, 1500);
-
+  renderGeneralTodos();
   refreshGeneralTodosCount();
+  closeModal('mNewTodo');
 }
 
 // ══════════════════════════════════════════
