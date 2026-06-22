@@ -1868,7 +1868,10 @@ function updateProgress() {
   document.getElementById('tBar').style.width = pctGesamt+'%';
 }
 
-function getItemsByCat(catId, subId, pendingOnly, jaOnly) {
+function getItemsByCat(catId, subId, pendingOnly, jaOnly, applyTripFilter = false) {
+  const tt = curTrip?.trip_type || 'urlaub';
+  const ab = curTrip?.is_abroad || false;
+  const ac = curTrip?.activities || [];
   return curItems.filter(ti => {
     const item = ti.items;
     if (!item) return false;
@@ -1877,6 +1880,14 @@ function getItemsByCat(catId, subId, pendingOnly, jaOnly) {
     else { if (item.subcategory_id !== null) return false; }
     if (pendingOnly && ti.decision !== 'pending') return false;
     if (jaOnly && ti.decision !== 'ja') return false;
+    if (applyTripFilter) {
+      if (item.is_mandatory || item.is_pool) return false;
+      if (tt === 'urlaub'   && !item.show_urlaub)   return false;
+      if (tt === 'business' && !item.show_business)  return false;
+      if (item.show_abroad === 2 && !ab) return false;
+      if (item.show_abroad === 0 &&  ab) return false;
+      if (item.activity_key && !ac.includes(item.activity_key)) return false;
+    }
     return true;
   });
 }
@@ -1921,8 +1932,18 @@ function renderVorschlaege(subs) {
     if (curTrip.trip_type === 'urlaub'   && !cat.show_urlaub)   return;
     if (curTrip.trip_type === 'business' && !cat.show_business)  return;
 
-    // Nur pending Items (mandatory sind schon ja)
-    const catPending = curItems.filter(ti => ti.items?.category_id === cat.id && ti.decision === 'pending');
+    // Pending Items mit allen Filtern (trip_type, abroad, activity_key)
+    const catPending = curItems.filter(ti => {
+      if (ti.items?.category_id !== cat.id) return false;
+      if (ti.decision !== 'pending') return false;
+      if (!ti.items || ti.items.is_mandatory || ti.items.is_pool) return false;
+      if (_tt === 'urlaub'   && !ti.items.show_urlaub)   return false;
+      if (_tt === 'business' && !ti.items.show_business)  return false;
+      if (ti.items.show_abroad === 2 && !_ab) return false;
+      if (ti.items.show_abroad === 0 &&  _ab) return false;
+      if (ti.items.activity_key && !_ac.includes(ti.items.activity_key)) return false;
+      return true;
+    });
     if (!catPending.length) return;
 
     h += `<div class="cat-block">
@@ -1934,11 +1955,11 @@ function renderVorschlaege(subs) {
       </div><div class="cat-body">`;
 
     // Direkte Items (keine Subkat)
-    getItemsByCat(cat.id, null, true, false).forEach(ti => h += vorschlagRow(ti));
+    getItemsByCat(cat.id, null, true, false, true).forEach(ti => h += vorschlagRow(ti));
 
     // Subkategorien
     subs.filter(s => s.category_id === cat.id).forEach(sub => {
-      const subPending = getItemsByCat(cat.id, sub.id, true, false);
+      const subPending = getItemsByCat(cat.id, sub.id, true, false, true);
       if (!subPending.length) return;
       h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
       subPending.forEach(ti => h += vorschlagRow(ti));
