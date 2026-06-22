@@ -303,6 +303,7 @@ body {
 .tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 57px; z-index: 50; }
 .tab-btn { flex: 1; padding: 13px 6px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent; transition: all .15s; font-family: 'DM Sans', sans-serif; }
 .tab-btn.active { color: var(--blue-800); border-bottom-color: #E8821A; }
+.tab-pct { display: block; font-size: 10px; font-weight: 700; margin-top: 2px; opacity: .75; }
 
 .tab-pane { display: none; padding-bottom: 100px; }
 .tab-pane.active { display: block; }
@@ -713,10 +714,10 @@ body {
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('Vorschlaege',this)">📋 Vorschläge</button>
-    <button class="tab-btn" onclick="showTab('Packen',this)">🧳 Packen</button>
+    <button class="tab-btn active" onclick="showTab('Vorschlaege',this)">📋 Vorschläge<br><span class="tab-pct" id="pctVorschlaege">–</span></button>
+    <button class="tab-btn" onclick="showTab('Packen',this)">🧳 Packen<br><span class="tab-pct" id="pctPacken">–</span></button>
     <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none">🚲 Taschen</button>
-    <button class="tab-btn" onclick="showTab('Todos',this)">✅ ToDos</button>
+    <button class="tab-btn" onclick="showTab('Todos',this)">✅ ToDos<br><span class="tab-pct" id="pctTodos">–</span></button>
   </div>
 
   <div class="tab-pane active" id="tpVorschlaege"></div>
@@ -1852,8 +1853,9 @@ function renderVorschlaege(subs) {
     </div>`;
   }
 
-  const pending = curItems.filter(i => i.decision === 'pending');
-  if (!pending.length) h += `<div class="done-bnr"><h3>✅ Alle Vorschläge bewertet!</h3><p>Jetzt zum Packen wechseln →</p></div>`;
+  // Pending ohne mandatory (die sind bereits automatisch vorgemerkt)
+  const pendingVisible = curItems.filter(i => i.decision === 'pending' && !i.items?.is_mandatory);
+  if (!pendingVisible.length) h += `<div class="done-bnr"><h3>✅ Alle Vorschläge abgearbeitet!</h3><p>Wechsle zu "Packen" um deinen Koffer zu befüllen 🧳</p></div>`;
 
   categories.forEach(cat => {
     if (curTrip.trip_type === 'urlaub'   && !cat.show_urlaub)   return;
@@ -1890,6 +1892,47 @@ function renderVorschlaege(subs) {
   });
 
   document.getElementById('tpVorschlaege').innerHTML = h + '<div class="spacer"></div>';
+  updateTabProgress();
+}
+
+function updateTabProgress() {
+  if (!curItems) return;
+
+  // Vorschläge: wie viele non-mandatory pending wurden bewertet?
+  const vorschlaegeTotal = curItems.filter(i => !i.items?.is_mandatory).length;
+  const vorschlaegeDone  = curItems.filter(i => !i.items?.is_mandatory && i.decision !== 'pending').length;
+  const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
+
+  // Packen: wie viele ja-Items sind eingepackt?
+  const packenTotal = curItems.filter(i => i.decision === 'ja').length;
+  const packenDone  = curItems.filter(i => i.decision === 'ja' && i.is_checked).length;
+  const pctP = packenTotal ? Math.round(packenDone / packenTotal * 100) : 0;
+
+  // ToDos: wie viele sind erledigt?
+  const todosEl = document.getElementById('tpTodos');
+  const todoRows = todosEl ? todosEl.querySelectorAll('.todo-row') : [];
+  const todoChecked = todosEl ? todosEl.querySelectorAll('.todo-row input:checked').length : 0;
+  const todoTotal = todoRows.length;
+  const pctT = todoTotal ? Math.round(todoChecked / todoTotal * 100) : 0;
+
+  // Gesamt: gewichtet 20/60/20
+  const pctGesamt = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
+
+  // Tab-Labels aktualisieren
+  const elV = document.getElementById('pctVorschlaege');
+  const elP = document.getElementById('pctPacken');
+  const elT = document.getElementById('pctTodos');
+  if (elV) elV.textContent = pctV + '%';
+  if (elP) elP.textContent = pctP + '%';
+  if (elT) elT.textContent = pctT + '%';
+
+  // Gesamtfortschritt oben aktualisieren
+  const progEl = document.querySelector('.prog-pct');
+  const progBar = document.querySelector('.prog-bar-fill');
+  const progLbl = document.querySelector('.prog-label');
+  if (progEl) progEl.textContent = pctGesamt + '%';
+  if (progBar) progBar.style.width = pctGesamt + '%';
+  if (progLbl) progLbl.textContent = `Gesamt-Fortschritt`;
 }
 
 function vorschlagRow(ti) {
@@ -1949,6 +1992,7 @@ function renderPacken(subs) {
   });
 
   document.getElementById('tpPacken').innerHTML = h + '<div class="spacer"></div>';
+  updateTabProgress();
 }
 
 function packRow(ti) {
@@ -2125,6 +2169,7 @@ function renderTodos() {
 
   h += `</div></div><div class="spacer"></div>`;
   document.getElementById('tpTodos').innerHTML = h;
+  updateTabProgress();
 }
 
 function todoRow(todo) {
