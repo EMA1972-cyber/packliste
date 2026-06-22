@@ -2536,7 +2536,20 @@ function renderItemsManager() {
         <span class="cat-chev open">▼</span>
       </div><div class="cat-body">`;
 
-    items.forEach(it => h += itemMgrRow(it));
+    // Gruppierung nach Unterkategorie
+    const catSubs = allSubsCache.filter(s => s.category_id === cat.id);
+    const itemsNoSub = items.filter(it => !it.subcategory_id);
+    
+    // Items ohne Unterkategorie zuerst
+    itemsNoSub.forEach(it => h += itemMgrRow(it));
+    
+    // Dann je Unterkategorie ein Header + Items
+    catSubs.forEach(sub => {
+      const subItems = items.filter(it => it.subcategory_id === sub.id);
+      if (!subItems.length) return;
+      h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
+      subItems.forEach(it => h += itemMgrRow(it));
+    });
 
     h += `</div></div>`;
   });
@@ -2551,7 +2564,7 @@ function renderItemsManager() {
 
 function itemMgrRow(it) {
   const sub = it.subcategory_id ? allSubsCache.find(s => s.id === it.subcategory_id) : null;
-  const subLabel = sub ? ` <small style="color:var(--muted);font-weight:400">· ${sub.name}</small>` : '';
+  const subLabel = ''; // Subkategorie wird als Gruppen-Header angezeigt
   const bag = it.bike_bag_id ? allSubsCache.find(s => s.id === it.bike_bag_id) : null;
   const bagLabel = bag ? ` <small style="color:var(--muted);font-weight:600">${bag.name}</small>` : '';
   const mand = !!it.is_mandatory;
