@@ -1797,7 +1797,7 @@ async function openTrip(id) {
 
     // Items mit Item-Details laden
     const rawItems = await sbGet('trip_items', {
-      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id,show_urlaub,show_business)',
+      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id,show_urlaub,show_business,show_abroad)',
       filter: { trip_id: `eq.${id}` }
     });
     curItems = rawItems || [];
@@ -1837,14 +1837,18 @@ function updateProgress() {
   const packed = ja.filter(i => i.is_checked).length;
   const pctPacken = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
 
-  // Vorschläge % — Pool, mandatory UND nicht zum trip_type passende Items ignorieren
-  // WICHTIG: i.items muss existieren (kein verwaister trip_item ohne FK-Eintrag)
+  // Vorschläge % — Pool, mandatory, falscher trip_type, abroad UND Aktivität wird ignoriert
   const tripType = curTrip?.trip_type || 'urlaub';
+  const isAbroad = curTrip?.is_abroad || false;
+  const tripActs = curTrip?.activities || [];
   const vorschlaegeAll2  = curItems.filter(i => {
     if (!i.items) return false;
     if (i.items.is_pool || i.items.is_mandatory) return false;
     if (tripType === 'urlaub'   && !i.items.show_urlaub)   return false;
     if (tripType === 'business' && !i.items.show_business)  return false;
+    if (i.items.show_abroad === 2 && !isAbroad) return false;
+    if (i.items.show_abroad === 0 &&  isAbroad) return false;
+    if (i.items.activity_key && !tripActs.includes(i.items.activity_key)) return false;
     return true;
   });
   const vorschlaegeTotal = vorschlaegeAll2.length;
@@ -1898,7 +1902,19 @@ function renderVorschlaege(subs) {
   }
 
   // Pending ohne mandatory UND ohne Pool-Items (die zählen als Zusatz, nicht als Pflicht-Vorschlag)
-  const pendingVisible = curItems.filter(i => i.decision === 'pending' && !i.items?.is_mandatory && !i.items?.is_pool);
+  const _tt = curTrip?.trip_type || 'urlaub';
+  const _ab = curTrip?.is_abroad || false;
+  const _ac = curTrip?.activities || [];
+  const pendingVisible = curItems.filter(i => {
+    if (i.decision !== 'pending') return false;
+    if (!i.items || i.items.is_mandatory || i.items.is_pool) return false;
+    if (_tt === 'urlaub'   && !i.items.show_urlaub)   return false;
+    if (_tt === 'business' && !i.items.show_business)  return false;
+    if (i.items.show_abroad === 2 && !_ab) return false;
+    if (i.items.show_abroad === 0 &&  _ab) return false;
+    if (i.items.activity_key && !_ac.includes(i.items.activity_key)) return false;
+    return true;
+  });
   if (!pendingVisible.length) h += `<div class="done-bnr"><h3>✅ Alle Vorschläge abgearbeitet!</h3><p>Wechsle zu "Packen" um deinen Koffer zu befüllen 🧳</p></div>`;
 
   categories.forEach(cat => {
@@ -1942,13 +1958,18 @@ function renderVorschlaege(subs) {
 function updateTabProgress() {
   if (!curItems) return;
 
-  // Vorschläge: Pool, mandatory UND nicht zum trip_type passende Items ignorieren
+  // Vorschläge: Pool, mandatory, falscher trip_type, abroad UND Aktivität wird ignoriert
   const tripType = curTrip?.trip_type || 'urlaub';
+  const isAbroad = curTrip?.is_abroad || false;
+  const tripActs = curTrip?.activities || [];
   const vorschlaegeAll  = curItems.filter(i => {
     if (!i.items) return false;
     if (i.items.is_pool || i.items.is_mandatory) return false;
     if (tripType === 'urlaub'   && !i.items.show_urlaub)   return false;
     if (tripType === 'business' && !i.items.show_business)  return false;
+    if (i.items.show_abroad === 2 && !isAbroad) return false;
+    if (i.items.show_abroad === 0 &&  isAbroad) return false;
+    if (i.items.activity_key && !tripActs.includes(i.items.activity_key)) return false;
     return true;
   });
   const vorschlaegeTotal = vorschlaegeAll.length;
