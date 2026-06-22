@@ -2174,7 +2174,7 @@ async function deleteTodoRow(id) {
   const todo = curTodos.find(t => t.id == id);
   if (!confirm(`"${todo.name}" wirklich löschen?`)) return;
   await sbDelete('trip_todos', { id: `eq.${id}` });
-  curTodos = curTodos.filter(t => t.id !== id);
+  curTodos = curTodos.filter(t => t.id != id);
   renderTodos();
 }
 
@@ -2313,7 +2313,7 @@ async function deleteGeneralTodoRow(id) {
   const todo = allGeneralTodosCache.find(t => t.id == id);
   if (!confirm(`"${todo.name}" wirklich löschen?`)) return;
   await sbDelete('general_todos', { id: `eq.${id}` });
-  allGeneralTodosCache = allGeneralTodosCache.filter(t => t.id !== id);
+  allGeneralTodosCache = allGeneralTodosCache.filter(t => t.id != id);
   renderGeneralTodos();
   refreshGeneralTodosCount();
 }
