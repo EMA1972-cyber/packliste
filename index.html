@@ -705,9 +705,9 @@ body {
     <h2 id="tName">–</h2>
     <div class="th-meta" id="tMeta">–</div>
     <div class="pack-prog">
-      <div class="pp-row">
+      <div style="text-align:center;margin-bottom:8px">
         <div class="pp-pct" id="tPct">0%</div>
-        <div class="pp-label" id="tSub">0 von 0 eingepackt</div>
+        <div class="pp-label" id="tSub" style="justify-content:center">0% der Reiseplanung</div>
       </div>
       <div class="pp-bar"><div class="pp-fill" id="tBar" style="width:0%"></div></div>
     </div>
@@ -1357,7 +1357,7 @@ function tripCard(t) {
         ${t.notes ? `<div class="tc-meta" style="font-style:italic;margin-top:2px">📝 ${t.notes}</div>` : ''}
         ${!isDone ? `<div class="tc-prog">
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
-          <div class="prog-label"><span>${t._packed} von ${t._ja} eingepackt</span><span>${pct}%</span></div>
+          <div class="prog-label" style="justify-content:center">${pct}% der Reiseplanung</div>
         </div>` : ''}
       </div>
       <div class="tc-arrow">›</div>
@@ -1816,9 +1816,10 @@ function updateProgress() {
   const packed = ja.filter(i => i.is_checked).length;
   const pctPacken = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
 
-  // Vorschläge %
-  const vorschlaegeTotal = curItems.length;
-  const vorschlaegeDone  = curItems.filter(i => i.decision !== 'pending').length;
+  // Vorschläge % — Pool-Items ignorieren
+  const vorschlaegeAll2  = curItems.filter(i => !i.items?.is_pool);
+  const vorschlaegeTotal = vorschlaegeAll2.length;
+  const vorschlaegeDone  = vorschlaegeAll2.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
 
   // ToDos %
@@ -1830,7 +1831,7 @@ function updateProgress() {
   const pctGesamt = Math.round(pctV * 0.2 + pctPacken * 0.6 + pctT * 0.2);
 
   document.getElementById('tPct').textContent = pctGesamt === 100 ? '🎉 100%' : pctGesamt+'%';
-  document.getElementById('tSub').textContent = `${pctGesamt}% der Reiseplanung`;
+  document.getElementById('tSub').textContent = `der Reiseplanung`;
   document.getElementById('tBar').style.width = pctGesamt+'%';
 }
 
@@ -1912,9 +1913,10 @@ function renderVorschlaege(subs) {
 function updateTabProgress() {
   if (!curItems) return;
 
-  // Vorschläge: alle Items (inkl. mandatory) — mandatory zählen als "erledigt"
-  const vorschlaegeTotal = curItems.length;
-  const vorschlaegeDone  = curItems.filter(i => i.decision !== 'pending').length;
+  // Vorschläge: alle Items ohne Pool-Items — mandatory zählen als "erledigt"
+  const vorschlaegeAll  = curItems.filter(i => !i.items?.is_pool);
+  const vorschlaegeTotal = vorschlaegeAll.length;
+  const vorschlaegeDone  = vorschlaegeAll.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
 
   // Packen: wie viele ja-Items sind eingepackt?
