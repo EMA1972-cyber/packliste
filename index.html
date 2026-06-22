@@ -1814,10 +1814,24 @@ function renderAll(subs) {
 function updateProgress() {
   const ja = curItems.filter(i => i.decision === 'ja');
   const packed = ja.filter(i => i.is_checked).length;
-  const pct = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
-  document.getElementById('tPct').textContent = pct === 100 && ja.length > 0 ? '🎉 100%' : pct+'%';
-  document.getElementById('tSub').textContent = `${packed} von ${ja.length} eingepackt`;
-  document.getElementById('tBar').style.width = pct+'%';
+  const pctPacken = ja.length > 0 ? Math.round(packed/ja.length*100) : 0;
+
+  // Vorschläge %
+  const vorschlaegeTotal = curItems.length;
+  const vorschlaegeDone  = curItems.filter(i => i.decision !== 'pending').length;
+  const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
+
+  // ToDos %
+  const todoTotal = curTodos.length;
+  const todoDone  = curTodos.filter(t => t.decision === 'ja').length;
+  const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 0;
+
+  // Gewichteter Gesamt-% (20/60/20)
+  const pctGesamt = Math.round(pctV * 0.2 + pctPacken * 0.6 + pctT * 0.2);
+
+  document.getElementById('tPct').textContent = pctGesamt === 100 ? '🎉 100%' : pctGesamt+'%';
+  document.getElementById('tSub').textContent = `${pctGesamt}% der Reiseplanung`;
+  document.getElementById('tBar').style.width = pctGesamt+'%';
 }
 
 function getItemsByCat(catId, subId, pendingOnly, jaOnly) {
