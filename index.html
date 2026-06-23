@@ -2331,8 +2331,25 @@ async function saveQty(id, qty, itemName, tripType, climate, days, remember, sca
     } catch(e) { console.error('Präferenz speichern:', e); }
   }
 
-  const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
-  renderAll(subs);
+  // Row direkt im DOM aktualisieren — kein kompletter Re-render nötig
+  // Vorschläge-Tab: vr_{id}
+  const vrEl = document.getElementById('vr_' + id);
+  if (vrEl) {
+    const qtyEl = vrEl.querySelector('.iqty');
+    if (qtyEl) {
+      qtyEl.textContent = qty;
+      qtyEl.onclick = () => editQty(id, qty);
+    }
+  }
+  // Packen-Tab: pr_{id}
+  const prEl = document.getElementById('pr_' + id);
+  if (prEl) {
+    const qtyEl = prEl.querySelector('.iqty');
+    if (qtyEl) {
+      qtyEl.textContent = qty;
+      qtyEl.onclick = () => editQty(id, qty);
+    }
+  }
 }
 
 // ── TASCHEN (nur Bikepacking) ──
