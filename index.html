@@ -400,42 +400,48 @@ body {
 <body>
 
 <div class="app-header" style="display:none">
-  <button class="back-btn" id="backBtn" onclick="goHome()">← Zurück</button>
+  <button class="back-btn" id="backBtn" onclick="goHome()" data-i18n="back">← Zurück</button>
   <h1 id="hTitle">🧳 Reiseplaner</h1>
-  <div class="home-header-bar" id="homeHeaderBar" style="display:none">
-    <span class="home-header-name" id="heroUserName"></span>
-    <button class="home-header-logout" onclick="doLogout()">Abmelden</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div id="homeHeaderBar" style="display:none;align-items:center;gap:8px">
+      <span class="home-header-name" id="heroUserName"></span>
+      <button class="home-header-logout" onclick="doLogout()" data-i18n="logout">Abmelden</button>
+    </div>
   </div>
   <button id="logoutBtn" onclick="doLogout()" style="display:none" title="Abmelden"></button>
 </div>
 
-<!-- HOME -->
-<!-- LOGIN SCREEN -->
 <div class="screen active" id="sLogin">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
-    <div style="font-size:72px;margin-bottom:16px">🧳</div>
-    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px">Reiseplaner</h1>
-    <p style="color:var(--muted);font-size:14px;margin:0 0 40px">Nie wieder etwas vergessen</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
+      <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
+        style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s">🇩🇪</button>
+      <span style="font-size:72px">🧳</span>
+      <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
+        style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+    </div>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px" data-i18n="appName">Reiseplaner</h1>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 40px" data-i18n="appTagline">Nie wieder etwas vergessen</p>
 
     <div style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px">
       <div id="loginError" style="display:none;background:var(--red-bg);color:var(--red);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
 
-      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">E-Mail</label>
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)" data-i18n="email">E-Mail</label>
       <input class="inp-field" id="loginEmail" type="email" placeholder="deine@email.de" autocomplete="email" style="margin-bottom:4px">
 
-      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Passwort</label>
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)" data-i18n="password">Passwort</label>
       <div style="position:relative;margin-bottom:8px">
         <input class="inp-field" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding-right:48px">
         <button type="button" onclick="togglePw('loginPassword','loginEye')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:0;color:var(--muted)" id="loginEye">👁</button>
       </div>
 
-      <button class="manage-btn primary" id="loginBtn" onclick="doLogin()" style="padding:15px;font-size:15px">
+      <button class="manage-btn primary" id="loginBtn" onclick="doLogin()" style="padding:15px;font-size:15px" data-i18n="loginBtn">
         Anmelden →
       </button>
 
       <div style="text-align:center;margin-top:8px">
-        <span style="font-size:13px;color:var(--muted)">Noch kein Konto? </span>
-        <button onclick="showRegister()" style="background:none;border:none;color:var(--blue-500);font-size:13px;font-weight:600;cursor:pointer;padding:0">Registrieren</button>
+        <span style="font-size:13px;color:var(--muted)" data-i18n="noAccount">Noch kein Konto? </span>
+        <button onclick="showRegister()" style="background:none;border:none;color:var(--blue-500);font-size:13px;font-weight:600;cursor:pointer;padding:0" data-i18n="register">Registrieren</button>
       </div>
     </div>
   </div>
@@ -445,8 +451,8 @@ body {
 <div class="screen" id="sRegister">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
     <div style="font-size:72px;margin-bottom:16px">🧳</div>
-    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px">Konto erstellen</h1>
-    <p style="color:var(--muted);font-size:14px;margin:0 0 40px">Erstelle deinen persönlichen Reiseplaner</p>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px" data-i18n="createAccount">Konto erstellen</h1>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 40px" data-i18n="createAccountTagline">Erstelle deinen persönlichen Reiseplaner</p>
 
     <div style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px">
       <div id="registerError" style="display:none;background:var(--red-bg);color:var(--red);padding:12px 16px;border-radius:10px;font-size:14px;text-align:center"></div>
@@ -454,30 +460,30 @@ body {
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Vorname</label>
-          <input class="inp-field" id="regFirstName" type="text" placeholder="Vorname" autocomplete="given-name">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px" data-i18n="firstName">Vorname</label>
+          <input class="inp-field" id="regFirstName" type="text" data-i18n="firstName" placeholder="Vorname" autocomplete="given-name">
         </div>
         <div>
-          <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Nachname</label>
-          <input class="inp-field" id="regLastName" type="text" placeholder="Nachname" autocomplete="family-name">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px" data-i18n="lastName">Nachname</label>
+          <input class="inp-field" id="regLastName" type="text" data-i18n="lastName" placeholder="Nachname" autocomplete="family-name">
         </div>
       </div>
 
-      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">E-Mail</label>
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)" data-i18n="email">E-Mail</label>
       <input class="inp-field" id="regEmail" type="email" placeholder="deine@email.de" autocomplete="email" style="margin-bottom:4px">
 
-      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Passwort</label>
+      <label style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)" data-i18n="password">Passwort</label>
       <div style="position:relative;margin-bottom:8px">
-        <input class="inp-field" id="regPassword" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding-right:48px">
+        <input class="inp-field" id="regPassword" type="password" data-i18n="pwMin" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding-right:48px">
         <button type="button" onclick="togglePw('regPassword','regEye')" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:0;color:var(--muted)" id="regEye">👁</button>
       </div>
 
-      <button class="manage-btn primary" id="registerBtn" onclick="doRegister()" style="padding:15px;font-size:15px">
+      <button class="manage-btn primary" id="registerBtn" onclick="doRegister()" style="padding:15px;font-size:15px" data-i18n="createAccountBtn">
         Konto erstellen →
       </button>
 
       <div style="text-align:center;margin-top:8px">
-        <button onclick="show('sLogin')" style="background:none;border:none;color:var(--blue-500);font-size:13px;font-weight:600;cursor:pointer;padding:0">← Zurück zur Anmeldung</button>
+        <button onclick="show('sLogin')" style="background:none;border:none;color:var(--blue-500);font-size:13px;font-weight:600;cursor:pointer;padding:0" data-i18n="backToLogin">← Zurück zur Anmeldung</button>
       </div>
     </div>
   </div>
@@ -487,12 +493,12 @@ body {
 <div class="screen" id="sOnboarding">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
     <div style="font-size:64px;margin-bottom:16px">📦</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px">Items übernehmen?</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px">Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit <strong id="onboardItemCount"></strong>.</p>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px" data-i18n="onboardItemsTitle">Items übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px"><span data-i18n="onboardItemsText1">Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit</span> <strong id="onboardItemCount"></strong>.</p>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px" data-i18n="onboardItemsText2">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
     <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
-      <button class="manage-btn primary" onclick="doOnboardItems(true)" style="padding:15px;font-size:15px">✅ Ja, Items übernehmen</button>
-      <button class="manage-btn" onclick="doOnboardItems(false)" style="padding:15px;font-size:15px">❌ Nein danke, ohne Items starten</button>
+      <button class="manage-btn primary" onclick="doOnboardItems(true)" style="padding:15px;font-size:15px" data-i18n="onboardItemsYes">✅ Ja, Items übernehmen</button>
+      <button class="manage-btn" onclick="doOnboardItems(false)" style="padding:15px;font-size:15px" data-i18n="onboardItemsNo">❌ Nein danke, ohne Items starten</button>
     </div>
   </div>
 </div>
@@ -501,51 +507,57 @@ body {
 <div class="screen" id="sOnboarding2">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
     <div style="font-size:64px;margin-bottom:16px">✅</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px">ToDos übernehmen?</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px">Es gibt auch eine ToDo-Liste mit <strong id="onboardTodoCount"></strong> vorbereiteten Aufgaben für vor der Abreise.</p>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px" data-i18n="onboardTodosTitle">ToDos übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px"><span data-i18n="onboardTodosText1">Es gibt auch eine ToDo-Liste mit</span> <strong id="onboardTodoCount"></strong> <span data-i18n="onboardTodosText2">vorbereiteten Aufgaben für vor der Abreise.</span></p>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px" data-i18n="onboardTodosText3">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
     <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
-      <button class="manage-btn primary" onclick="doOnboardTodos(true)" style="padding:15px;font-size:15px">✅ Ja, ToDos übernehmen</button>
-      <button class="manage-btn" onclick="doOnboardTodos(false)" style="padding:15px;font-size:15px">❌ Nein danke, ohne ToDos starten</button>
+      <button class="manage-btn primary" onclick="doOnboardTodos(true)" style="padding:15px;font-size:15px" data-i18n="onboardTodosYes">✅ Ja, ToDos übernehmen</button>
+      <button class="manage-btn" onclick="doOnboardTodos(false)" style="padding:15px;font-size:15px" data-i18n="onboardTodosNo">❌ Nein danke, ohne ToDos starten</button>
     </div>
   </div>
 </div>
 
 <div class="screen" id="sHome">
   <div class="home-hero">
-    <span class="hero-icon">🧳</span>
-    <h2 id="homeTitle">Reiseplaner</h2>
-    <p>Nie wieder etwas vergessen</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px">
+      <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
+        style="background:none;border:none;cursor:pointer;font-size:24px;padding:4px;transition:all 0.2s">🇩🇪</button>
+      <span class="hero-icon" style="margin-bottom:0">🧳</span>
+      <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
+        style="background:none;border:none;cursor:pointer;font-size:24px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+    </div>
+    <h2 id="homeTitle" data-i18n="appName">Reiseplaner</h2>
+    <p data-i18n="neverForget">Nie wieder etwas vergessen</p>
   </div>
   <div class="manage-grid">
     <div class="manage-col">
       <div class="manage-row-top">
-        <div class="manage-label">🧳 Reisen</div>
+        <div class="manage-label" data-i18n="trips">🧳 Reisen</div>
         <div class="manage-count" id="tripsCount"></div>
       </div>
       <div class="manage-btns-row">
-        <button class="manage-btn primary" onclick="startWizard()">✏️ NEU</button>
-        <button class="manage-btn" onclick="openTripsList()">📋 AKTUELL</button>
+        <button class="manage-btn primary" onclick="startWizard()" data-i18n="newBtn">✏️ NEU</button>
+        <button class="manage-btn" onclick="openTripsList()" data-i18n="currentBtn">📋 AKTUELL</button>
       </div>
     </div>
     <div class="manage-col">
       <div class="manage-row-top">
-        <div class="manage-label">📦 Items</div>
+        <div class="manage-label" data-i18n="items">📦 Items</div>
         <div class="manage-count" id="itemsCount"></div>
       </div>
       <div class="manage-btns-row">
-        <button class="manage-btn primary" onclick="openItemModal()">✏️ NEU</button>
-        <button class="manage-btn" onclick="openItemsManager()">📋 AKTUELL</button>
+        <button class="manage-btn primary" onclick="openItemModal()" data-i18n="newBtn">✏️ NEU</button>
+        <button class="manage-btn" onclick="openItemsManager()" data-i18n="currentBtn">📋 AKTUELL</button>
       </div>
     </div>
     <div class="manage-col">
       <div class="manage-row-top">
-        <div class="manage-label">✅ ToDos</div>
+        <div class="manage-label" data-i18n="todos">✅ ToDos</div>
         <div class="manage-count" id="generalTodosCount"></div>
       </div>
       <div class="manage-btns-row">
-        <button class="manage-btn primary" onclick="openGeneralTodoForm()">✏️ NEU</button>
-        <button class="manage-btn" onclick="openGeneralTodos()">📋 AKTUELL</button>
+        <button class="manage-btn primary" onclick="openGeneralTodoForm()" data-i18n="newBtn">✏️ NEU</button>
+        <button class="manage-btn" onclick="openGeneralTodos()" data-i18n="currentBtn">📋 AKTUELL</button>
       </div>
     </div>
   </div>
@@ -554,23 +566,23 @@ body {
 <!-- AKTUELLE REISEN -->
 <div class="screen" id="sTripsList">
   <div style="padding:16px 20px 0">
-    <button class="manage-btn primary" onclick="startWizard()" style="width:100%;padding:13px">✏️ NEUE REISE</button>
+    <button class="manage-btn primary" onclick="startWizard()" style="width:100%;padding:13px" data-i18n="newTrip">✏️ NEUE REISE</button>
   </div>
   <div style="padding:12px 20px 0">
-    <input class="inp-field" id="tripSearch" type="text" placeholder="🔍 Reise suchen…" oninput="renderHome(allTripsCache || [])">
+    <input class="inp-field" id="tripSearch" type="text" data-i18n="searchTrip" placeholder="🔍 Reise suchen…" oninput="renderHome(allTripsCache || [])">
   </div>
   <div class="trips-section" id="homeTrips">
-    <div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>
+    <div class="loading"><div class="spinner"></div><span data-i18n="loadingTrips">Lade Reisen…</span></div>
   </div>
 </div>
 
 <!-- ITEMS VERWALTEN -->
 <div class="screen" id="sItems">
   <div style="padding:16px 20px 0">
-    <button class="manage-btn primary" onclick="openItemModal()" style="width:100%;padding:13px">✏️ NEUES ITEM</button>
+    <button class="manage-btn primary" onclick="openItemModal()" style="width:100%;padding:13px" data-i18n="newItem">✏️ NEUES ITEM</button>
   </div>
   <div style="padding:12px 20px 0">
-    <input class="inp-field" id="itemSearch" type="text" placeholder="🔍 Item suchen…" oninput="renderItemsManager()">
+    <input class="inp-field" id="itemSearch" type="text" data-i18n="searchItem" placeholder="🔍 Item suchen…" oninput="renderItemsManager()">
   </div>
   <div id="itemsMgrList"></div>
 </div>
@@ -578,10 +590,10 @@ body {
 <!-- ALLGEMEINE TODOS (nicht reisegebunden) -->
 <div class="screen" id="sGeneralTodos">
   <div style="padding:16px 20px 0">
-    <button class="manage-btn primary" onclick="openGeneralTodoForm()" style="width:100%;padding:13px">✏️ NEUES TODO</button>
+    <button class="manage-btn primary" onclick="openGeneralTodoForm()" style="width:100%;padding:13px" data-i18n="newTodo">✏️ NEUES TODO</button>
   </div>
   <div style="padding:12px 20px 0">
-    <input class="inp-field" id="generalTodoSearch" type="text" placeholder="🔍 ToDo suchen…" oninput="renderGeneralTodos()">
+    <input class="inp-field" id="generalTodoSearch" type="text" data-i18n="searchTodo" placeholder="🔍 ToDo suchen…" oninput="renderGeneralTodos()">
   </div>
   <div id="generalTodosList"></div>
 </div>
@@ -591,21 +603,21 @@ body {
   <div class="wiz-prog" id="wizProg"></div>
 
   <div class="wiz-step active" id="ws1">
-    <div class="step-eyebrow">Schritt 1 von 5</div>
-    <div class="step-q">Wann und wohin geht die Reise?</div>
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 1 <span data-i18n="of">von</span> 5</div>
+    <div class="step-q" data-i18n="wizQ1">Wann und wohin geht die Reise?</div>
     <div class="date-row">
       <div class="inp-group">
-        <label class="inp-label">Abreise</label>
+        <label class="inp-label" data-i18n="departure">Abreise</label>
         <input class="inp-field" id="wFrom" type="date" onchange="onDateChg()">
       </div>
       <div class="inp-group">
-        <label class="inp-label">Rückreise</label>
+        <label class="inp-label" data-i18n="return">Rückreise</label>
         <input class="inp-field" id="wTo" type="date" onchange="onDateChg()">
       </div>
     </div>
     <div class="inp-group">
-      <label class="inp-label">Reiseziel</label>
-      <input class="inp-field" id="wDest" type="text" placeholder="z.B. Hurghada, Berlin, Kapstadt …" oninput="onDestInput()" autocomplete="off">
+      <label class="inp-label" data-i18n="destination">Reiseziel</label>
+      <input class="inp-field" id="wDest" type="text" data-i18n="destPlaceholder" placeholder="z.B. Hurghada, Berlin, Kapstadt …" oninput="onDestInput()" autocomplete="off">
       <div class="dest-alts" id="destAlts" style="display:none"></div>
     </div>
     <div class="climate-card" id="climCard" style="display:none">
@@ -615,87 +627,87 @@ body {
   </div>
 
   <div class="wiz-step" id="ws2">
-    <div class="step-eyebrow">Schritt 2 von 5</div>
-    <div class="step-q">Was für eine Reise ist das?</div>
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 2 <span data-i18n="of">von</span> 5</div>
+    <div class="step-q" data-i18n="wizQ2">Was für eine Reise ist das?</div>
     <div class="choices">
       <button class="choice" onclick="setType('urlaub',this)">
         <span class="choice-ico">🏖️</span>
-        <div class="choice-txt"><strong>Urlaub</strong><small>Erholung, Sport, Abenteuer</small></div>
+        <div class="choice-txt"><strong data-i18n="vacation">Urlaub</strong><small data-i18n="vacationSub">Erholung, Sport, Abenteuer</small></div>
       </button>
       <button class="choice" onclick="setType('business',this)">
         <span class="choice-ico">💼</span>
-        <div class="choice-txt"><strong>Business Trip</strong><small>Meetings, Konferenzen, Arbeit</small></div>
+        <div class="choice-txt"><strong data-i18n="business">Business Trip</strong><small data-i18n="businessSub">Meetings, Konferenzen, Arbeit</small></div>
       </button>
     </div>
   </div>
 
   <div class="wiz-step" id="ws3">
-    <div class="step-eyebrow">Schritt 3 von 5</div>
-    <div class="step-q">Ist Bikepacking dabei?</div>
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 3 <span data-i18n="of">von</span> 5</div>
+    <div class="step-q" data-i18n="wizQ3">Ist Bikepacking dabei?</div>
     <div class="choices">
       <button class="choice" onclick="setBike(true,this)">
         <span class="choice-ico">🚴</span>
-        <div class="choice-txt"><strong>Ja, Bikepacking!</strong><small>Packliste nach Taschen</small></div>
+        <div class="choice-txt"><strong data-i18n="bikeYes">Ja, Bikepacking!</strong><small data-i18n="bikeYesSub">Packliste nach Taschen</small></div>
       </button>
       <button class="choice" onclick="setBike(false,this)">
         <span class="choice-ico">🏖️</span>
-        <div class="choice-txt"><strong>Nein, normaler Urlaub</strong><small>Standard Packliste</small></div>
+        <div class="choice-txt"><strong data-i18n="bikeNo">Nein, normaler Urlaub</strong><small data-i18n="bikeNoSub">Standard Packliste</small></div>
       </button>
     </div>
   </div>
 
   <div class="wiz-step" id="ws3b">
-    <div class="step-eyebrow">Schritt 3 von 5</div>
-    <div class="step-q">Solo oder zu zweit?</div>
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 3 <span data-i18n="of">von</span> 5</div>
+    <div class="step-q" data-i18n="wizQ3b">Solo oder zu zweit?</div>
     <div class="choices">
       <button class="choice" onclick="setMode('solo',this)">
         <span class="choice-ico">🚴</span>
-        <div class="choice-txt"><strong>Solo</strong><small>Ich fahre alleine</small></div>
+        <div class="choice-txt"><strong data-i18n="solo">Solo</strong><small data-i18n="soloSub">Ich fahre alleine</small></div>
       </button>
       <button class="choice" onclick="setMode('duo',this)">
         <span class="choice-ico">👫</span>
-        <div class="choice-txt"><strong>Duo</strong><small>Ich packe für uns beide</small></div>
+        <div class="choice-txt"><strong data-i18n="duo">Duo</strong><small data-i18n="duoSub">Ich packe für uns beide</small></div>
       </button>
     </div>
   </div>
 
   <div class="wiz-step" id="ws4">
-    <div class="step-eyebrow">Schritt 4 von 5</div>
-    <div class="step-q">Welche Aktivitäten sind dabei?</div>
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 4 <span data-i18n="of">von</span> 5</div>
+    <div class="step-q" data-i18n="wizQ4">Welche Aktivitäten sind dabei?</div>
     <div class="acts-grid">
-      <button class="act-btn" onclick="togAct('tauchen',this)"><span class="ai">🤿</span><span class="al">Tauchen</span></button>
-      <button class="act-btn" onclick="togAct('golf',this)"><span class="ai">⛳</span><span class="al">Golf</span></button>
-      <button class="act-btn" onclick="togAct('ski',this)"><span class="ai">⛷️</span><span class="al">Ski / Snowboard</span></button>
-      <button class="act-btn" onclick="togAct('wandern',this)"><span class="ai">🥾</span><span class="al">Wandern</span></button>
-      <button class="act-btn" onclick="togAct('yoga',this)"><span class="ai">🧘</span><span class="al">Yoga</span></button>
-      <button class="act-btn" onclick="togAct('sonstiger_sport',this)"><span class="ai">🏓</span><span class="al">Sonstiger Sport</span></button>
+      <button class="act-btn" onclick="togAct('tauchen',this)"><span class="ai">🤿</span><span class="al" data-i18n="actDiving">Tauchen</span></button>
+      <button class="act-btn" onclick="togAct('golf',this)"><span class="ai">⛳</span><span class="al" data-i18n="actGolf">Golf</span></button>
+      <button class="act-btn" onclick="togAct('ski',this)"><span class="ai">⛷️</span><span class="al" data-i18n="actSki">Ski / Snowboard</span></button>
+      <button class="act-btn" onclick="togAct('wandern',this)"><span class="ai">🥾</span><span class="al" data-i18n="actHiking">Wandern</span></button>
+      <button class="act-btn" onclick="togAct('yoga',this)"><span class="ai">🧘</span><span class="al" data-i18n="actYoga">Yoga</span></button>
+      <button class="act-btn" onclick="togAct('sonstiger_sport',this)"><span class="ai">🏓</span><span class="al" data-i18n="actSport">Sonstiger Sport</span></button>
     </div>
-    <p style="font-size:13px;color:var(--muted);margin-top:14px;text-align:center">Mehrfachauswahl möglich</p>
+    <p style="font-size:13px;color:var(--muted);margin-top:14px;text-align:center" data-i18n="multiSelect">Mehrfachauswahl möglich</p>
   </div>
 
   <div class="wiz-step" id="ws5">
-    <div class="step-eyebrow">Schritt 5 von 5</div>
-    <div class="step-q">Fast fertig!</div>
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 5 <span data-i18n="of">von</span> 5</div>
+    <div class="step-q" data-i18n="wizQ5">Fast fertig!</div>
     <div class="inp-group">
-      <label class="inp-label">Name der Reise</label>
-      <input class="inp-field" id="wName" type="text" placeholder="z.B. Hurghada Sommer 2026">
+      <label class="inp-label" data-i18n="tripName">Name der Reise</label>
+      <input class="inp-field" id="wName" type="text" data-i18n="tripNamePlaceholder" placeholder="z.B. Hurghada Sommer 2026">
     </div>
     <div class="inp-group">
-      <label class="inp-label">Zusatzinfo (optional)</label>
-      <input class="inp-field" id="wNotes" type="text" placeholder="z.B. Euromed Conference">
+      <label class="inp-label" data-i18n="tripNotes">Zusatzinfo (optional)</label>
+      <input class="inp-field" id="wNotes" type="text" data-i18n="tripNotesPlaceholder" placeholder="z.B. Euromed Conference">
     </div>
     <div class="summary-box" id="wSummary">
       <div class="si">📋</div>
-      <div><strong>Zusammenfassung</strong><span id="wSumText">–</span></div>
+      <div><strong data-i18n="summary">Zusammenfassung</strong><span id="wSumText">–</span></div>
     </div>
   </div>
 
   <div class="wiz-cta">
     <div style="display:flex;gap:10px">
-      <button class="btn-back" id="wizBack" onclick="wizPrev()">← Zurück</button>
-      <button class="btn-main" id="wizNext" onclick="wizNext()" style="flex:1">Weiter →</button>
+      <button class="btn-back" id="wizBack" onclick="wizPrev()" data-i18n="wizBack">← Zurück</button>
+      <button class="btn-main" id="wizNext" onclick="wizNext()" style="flex:1" data-i18n="wizNext">Weiter →</button>
     </div>
-    <button class="btn-skip" id="wizSkip" onclick="wizNext()">Überspringen</button>
+    <button class="btn-skip" id="wizSkip" onclick="wizNext()" data-i18n="wizSkip">Überspringen</button>
   </div>
 </div>
 
@@ -712,17 +724,17 @@ body {
       <div class="pp-bar"><div class="pp-fill" id="tBar" style="width:0%"></div></div>
     </div>
     <div id="tripDoneBanner" style="display:none;margin-top:12px;text-align:center">
-      <button onclick="markTripDone()" style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.6);color:#fff;border-radius:20px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.3px">
+      <button onclick="markTripDone()" style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.6);color:#fff;border-radius:20px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.3px" data-i18n="finishTrip">
         ✅ Reise abschließen
       </button>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('Vorschlaege',this)">📋 Vorschläge<br><span class="tab-pct" id="pctVorschlaege">–</span></button>
-    <button class="tab-btn" onclick="showTab('Packen',this)">🧳 Packen<br><span class="tab-pct" id="pctPacken">–</span></button>
-    <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none">🚲 Taschen</button>
-    <button class="tab-btn" onclick="showTab('Todos',this)">✅ ToDos<br><span class="tab-pct" id="pctTodos">–</span></button>
+    <button class="tab-btn active" onclick="showTab('Vorschlaege',this)"><span data-i18n="tabSuggestions">📋 Vorschläge</span><br><span class="tab-pct" id="pctVorschlaege">–</span></button>
+    <button class="tab-btn" onclick="showTab('Packen',this)"><span data-i18n="tabPack">🧳 Packen</span><br><span class="tab-pct" id="pctPacken">–</span></button>
+    <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none" data-i18n="tabBags">🚲 Taschen</button>
+    <button class="tab-btn" onclick="showTab('Todos',this)"><span data-i18n="tabTodos">✅ ToDos</span><br><span class="tab-pct" id="pctTodos">–</span></button>
   </div>
 
   <div class="tab-pane active" id="tpVorschlaege"></div>
@@ -730,7 +742,7 @@ body {
   <div class="tab-pane" id="tpTaschen"></div>
   <div class="tab-pane" id="tpTodos"></div>
 
-  <button class="fab" onclick="openPool()">💡 Für nächstes Mal merken</button>
+  <button class="fab" onclick="openPool()" id="fabRemember">💡 Für nächstes Mal merken</button>
 </div>
 
 <!-- Modal: Pool -->
@@ -834,7 +846,314 @@ body {
 
 <script>
 // ══════════════════════════════════════════
-// SUPABASE CONFIG
+// i18n — Übersetzungen DE / EN
+// ══════════════════════════════════════════
+let lang = localStorage.getItem('lang') || 'de';
+
+const TRANSLATIONS = {
+  de: {
+    // App
+    appName: 'Reiseplaner',
+    appTagline: 'Nie wieder etwas vergessen',
+    // Header
+    back: '← Zurück',
+    logout: 'Abmelden',
+    // Login
+    email: 'E-Mail',
+    password: 'Passwort',
+    loginBtn: 'Anmelden →',
+    noAccount: 'Noch kein Konto?',
+    register: 'Registrieren',
+    // Register
+    createAccount: 'Konto erstellen',
+    createAccountTagline: 'Erstelle deinen persönlichen Reiseplaner',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    createAccountBtn: 'Konto erstellen →',
+    backToLogin: '← Zurück zur Anmeldung',
+    pwMin: 'Mindestens 6 Zeichen',
+    // Onboarding
+    onboardItemsTitle: 'Items übernehmen?',
+    onboardItemsText1: 'Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit',
+    onboardItemsText2: 'Du kannst alles jederzeit anpassen, löschen oder ergänzen.',
+    onboardItemsYes: '✅ Ja, Items übernehmen',
+    onboardItemsNo: '❌ Nein danke, ohne Items starten',
+    onboardTodosTitle: 'ToDos übernehmen?',
+    onboardTodosText1: 'Es gibt auch eine ToDo-Liste mit',
+    onboardTodosText2: 'vorbereiteten Aufgaben für vor der Abreise.',
+    onboardTodosText3: 'Du kannst alles jederzeit anpassen, löschen oder ergänzen.',
+    onboardTodosYes: '✅ Ja, ToDos übernehmen',
+    onboardTodosNo: '❌ Nein danke, ohne ToDos starten',
+    // Home
+    trips: '🧳 Reisen',
+    items: '📦 Items',
+    todos: '✅ ToDos',
+    newBtn: '✏️ NEU',
+    currentBtn: '📋 AKTUELL',
+    neverForget: 'Nie wieder etwas vergessen',
+    // Trips List
+    newTrip: '✏️ NEUE REISE',
+    searchTrip: '🔍 Reise suchen…',
+    activeTrips: '🌍 Aktuelle Reisen',
+    doneTrips: '✅ Abgeschlossene Reisen',
+    tripDone: '✅ Abgeschlossen',
+    tripProgress: 'der Reiseplanung',
+    loadingTrips: 'Lade Reisen…',
+    // Items Manager
+    newItem: '✏️ NEUES ITEM',
+    searchItem: '🔍 Item suchen…',
+    // Todos Manager
+    newTodo: '✏️ NEUES TODO',
+    searchTodo: '🔍 ToDo suchen…',
+    // Wizard
+    step: 'Schritt',
+    of: 'von',
+    wizQ1: 'Wann und wohin geht die Reise?',
+    departure: 'Abreise',
+    return: 'Rückreise',
+    destination: 'Reiseziel',
+    destPlaceholder: 'z.B. Hurghada, Berlin, Kapstadt …',
+    wizQ2: 'Was für eine Reise ist das?',
+    vacation: 'Urlaub',
+    vacationSub: 'Erholung, Sport, Abenteuer',
+    business: 'Business Trip',
+    businessSub: 'Meetings, Konferenzen, Arbeit',
+    wizQ3: 'Ist Bikepacking dabei?',
+    bikeYes: 'Ja, Bikepacking!',
+    bikeYesSub: 'Packliste nach Taschen',
+    bikeNo: 'Nein, normaler Urlaub',
+    bikeNoSub: 'Standard Packliste',
+    wizQ3b: 'Solo oder zu zweit?',
+    solo: 'Solo',
+    soloSub: 'Ich fahre alleine',
+    duo: 'Duo',
+    duoSub: 'Ich packe für uns beide',
+    wizQ4: 'Welche Aktivitäten sind dabei?',
+    multiSelect: 'Mehrfachauswahl möglich',
+    actDiving: 'Tauchen',
+    actGolf: 'Golf',
+    actSki: 'Ski / Snowboard',
+    actHiking: 'Wandern',
+    actYoga: 'Yoga',
+    actSport: 'Sonstiger Sport',
+    wizQ5: 'Fast fertig!',
+    tripName: 'Name der Reise',
+    tripNamePlaceholder: 'z.B. Hurghada Sommer 2026',
+    tripNotes: 'Zusatzinfo (optional)',
+    tripNotesPlaceholder: 'z.B. Euromed Conference',
+    summary: 'Zusammenfassung',
+    wizBack: '← Zurück',
+    wizNext: 'Weiter →',
+    wizSkip: 'Überspringen',
+    wizFinish: 'Reise erstellen 🚀',
+    // Trip View
+    tabSuggestions: '📋 Vorschläge',
+    tabPack: '🧳 Packen',
+    tabBags: '🚲 Taschen',
+    tabTodos: '✅ ToDos',
+    finishTrip: '✅ Reise abschließen',
+    // Suggestions
+    mandatoryInfo: 'Pflicht-Items bereits vorgemerkt',
+    allDone: '✅ Alle Vorschläge abgearbeitet!',
+    allDoneSub: 'Wechsle zu "Packen" um deinen Koffer zu befüllen 🧳',
+    addItemPlaceholder: 'Eigenes Item …',
+    addItemPackPlaceholder: 'Item direkt hinzufügen …',
+    rememberNext: '💡 Für nächstes Mal merken',
+    // Pack
+    nothingToPack: 'Noch keine Items zum Einpacken.',
+    noSuggestions: 'Gehe zu Vorschläge um Items hinzuzufügen.',
+    // Todos
+    noTodos: 'Noch keine ToDos.',
+    // General
+    save: 'Speichern',
+    cancel: 'Abbrechen',
+    delete: 'Löschen',
+    edit: 'Bearbeiten',
+    close: 'Schließen',
+    yes: 'JA',
+    no: 'NEIN',
+    nights: 'Nächte',
+    night: 'Nacht',
+    // Edit Trip Modal
+    editTripTitle: '✏️ Reise bearbeiten',
+    editTripName: 'Name',
+    editTripDest: 'Ziel',
+    editTripFrom: 'Von',
+    editTripTo: 'Bis',
+    editTripNotes: 'Notiz',
+    saveTripBtn: 'Speichern',
+    // Qty Modal
+    quantity: 'Menge',
+    rememberQty: 'Für ähnliche Reisen merken?',
+    scalesQ: 'Skaliert mit Reisedauer?',
+    apply: 'Übernehmen ✓',
+  },
+  en: {
+    // App
+    appName: 'Travel Planner',
+    appTagline: 'Never forget anything again',
+    // Header
+    back: '← Back',
+    logout: 'Sign out',
+    // Login
+    email: 'E-Mail',
+    password: 'Password',
+    loginBtn: 'Sign in →',
+    noAccount: "Don't have an account?",
+    register: 'Sign up',
+    // Register
+    createAccount: 'Create account',
+    createAccountTagline: 'Set up your personal travel planner',
+    firstName: 'First name',
+    lastName: 'Last name',
+    createAccountBtn: 'Create account →',
+    backToLogin: '← Back to sign in',
+    pwMin: 'At least 6 characters',
+    // Onboarding
+    onboardItemsTitle: 'Import items?',
+    onboardItemsText1: 'The travel planner already includes an extensive item library with',
+    onboardItemsText2: 'You can customize, delete or add items at any time.',
+    onboardItemsYes: '✅ Yes, import items',
+    onboardItemsNo: '❌ No thanks, start without items',
+    onboardTodosTitle: 'Import to-dos?',
+    onboardTodosText1: 'There is also a to-do list with',
+    onboardTodosText2: 'pre-made tasks for before departure.',
+    onboardTodosText3: 'You can customize, delete or add items at any time.',
+    onboardTodosYes: '✅ Yes, import to-dos',
+    onboardTodosNo: '❌ No thanks, start without to-dos',
+    // Home
+    trips: '🧳 Trips',
+    items: '📦 Items',
+    todos: '✅ To-Dos',
+    newBtn: '✏️ NEW',
+    currentBtn: '📋 CURRENT',
+    neverForget: 'Never forget anything again',
+    // Trips List
+    newTrip: '✏️ NEW TRIP',
+    searchTrip: '🔍 Search trips…',
+    activeTrips: '🌍 Current Trips',
+    doneTrips: '✅ Completed Trips',
+    tripDone: '✅ Completed',
+    tripProgress: 'of trip planning',
+    loadingTrips: 'Loading trips…',
+    // Items Manager
+    newItem: '✏️ NEW ITEM',
+    searchItem: '🔍 Search items…',
+    // Todos Manager
+    newTodo: '✏️ NEW TO-DO',
+    searchTodo: '🔍 Search to-dos…',
+    // Wizard
+    step: 'Step',
+    of: 'of',
+    wizQ1: 'When and where are you travelling?',
+    departure: 'Departure',
+    return: 'Return',
+    destination: 'Destination',
+    destPlaceholder: 'e.g. Hurghada, Berlin, Cape Town …',
+    wizQ2: 'What kind of trip is this?',
+    vacation: 'Vacation',
+    vacationSub: 'Relaxation, sports, adventure',
+    business: 'Business Trip',
+    businessSub: 'Meetings, conferences, work',
+    wizQ3: 'Is bikepacking involved?',
+    bikeYes: 'Yes, bikepacking!',
+    bikeYesSub: 'Packing list by bags',
+    bikeNo: 'No, regular trip',
+    bikeNoSub: 'Standard packing list',
+    wizQ3b: 'Solo or as a couple?',
+    solo: 'Solo',
+    soloSub: "I'm travelling alone",
+    duo: 'Duo',
+    duoSub: "I'm packing for both of us",
+    wizQ4: 'Which activities are included?',
+    multiSelect: 'Multiple selection possible',
+    actDiving: 'Diving',
+    actGolf: 'Golf',
+    actSki: 'Ski / Snowboard',
+    actHiking: 'Hiking',
+    actYoga: 'Yoga',
+    actSport: 'Other sports',
+    wizQ5: 'Almost done!',
+    tripName: 'Trip name',
+    tripNamePlaceholder: 'e.g. Hurghada Summer 2026',
+    tripNotes: 'Additional info (optional)',
+    tripNotesPlaceholder: 'e.g. Euromed Conference',
+    summary: 'Summary',
+    wizBack: '← Back',
+    wizNext: 'Next →',
+    wizSkip: 'Skip',
+    wizFinish: 'Create trip 🚀',
+    // Trip View
+    tabSuggestions: '📋 Suggestions',
+    tabPack: '🧳 Pack',
+    tabBags: '🚲 Bags',
+    tabTodos: '✅ To-Dos',
+    finishTrip: '✅ Complete trip',
+    // Suggestions
+    mandatoryInfo: 'Mandatory items already added',
+    allDone: '✅ All suggestions reviewed!',
+    allDoneSub: 'Switch to "Pack" to fill your suitcase 🧳',
+    addItemPlaceholder: 'Custom item …',
+    addItemPackPlaceholder: 'Add item directly …',
+    rememberNext: '💡 Remember for next time',
+    // Pack
+    nothingToPack: 'No items to pack yet.',
+    noSuggestions: 'Go to Suggestions to add items.',
+    // Todos
+    noTodos: 'No to-dos yet.',
+    // General
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    edit: 'Edit',
+    close: 'Close',
+    yes: 'YES',
+    no: 'NO',
+    nights: 'nights',
+    night: 'night',
+    // Edit Trip Modal
+    editTripTitle: '✏️ Edit trip',
+    editTripName: 'Name',
+    editTripDest: 'Destination',
+    editTripFrom: 'From',
+    editTripTo: 'To',
+    editTripNotes: 'Note',
+    saveTripBtn: 'Save',
+    // Qty Modal
+    quantity: 'Quantity',
+    rememberQty: 'Remember for similar trips?',
+    scalesQ: 'Scales with trip duration?',
+    apply: 'Apply ✓',
+  }
+};
+
+function t(key) { return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de'][key] || key; }
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('lang', l);
+  applyLang();
+}
+
+function applyLang() {
+  // Flags aktualisieren
+  document.querySelectorAll('.lang-flag').forEach(el => {
+    el.style.opacity = el.dataset.lang === lang ? '1' : '0.4';
+    el.style.transform = el.dataset.lang === lang ? 'scale(1.2)' : 'scale(1)';
+  });
+  // Alle data-i18n Elemente aktualisieren
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (el.tagName === 'INPUT') el.placeholder = t(key);
+    else el.textContent = t(key);
+  });
+  // Alle data-i18n-html Elemente (mit HTML-Inhalt)
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  // HTML lang Attribut
+  document.documentElement.lang = lang;
+}
 // ══════════════════════════════════════════
 const SUPA_URL = 'https://dzignltxlpymglikyyox.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTI0NTIsImV4cCI6MjA5NjkyODQ1Mn0.a6VhC2QFLw9KRmtNam3fXvX4KX0mfdEn7NoPCqpqYYk';
@@ -1172,6 +1491,9 @@ let subcategories = [];
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
+  // Sprache sofort anwenden
+  applyLang();
+
   // Session aus localStorage laden
   loadSession();
 
@@ -1273,7 +1595,7 @@ async function goHome() {
 
 async function refreshTripsList() {
   document.getElementById('homeTrips').innerHTML =
-    '<div class="loading"><div class="spinner"></div><span>Lade Reisen…</span></div>';
+    `<div class="loading"><div class="spinner"></div><span>${t('loadingTrips')}</span></div>`;
   try {
     const trips = await sbGet('trips', { order: 'name' });
     allTripsCache = trips || [];
@@ -1362,8 +1684,8 @@ async function renderHome(trips) {
     .sort((a,b) => (b.date_from||'').localeCompare(a.date_from||'')); // neueste zuerst
   let h = '';
 
-  if (active.length) { h += `<div class="section-label">🌍 Aktuelle Reisen</div>`; active.forEach(t => h += tripCard(t)); }
-  if (done.length)   { h += `<div class="section-label" style="margin-top:24px;color:var(--muted)">✅ Abgeschlossene Reisen</div>`; done.forEach(t => h += tripCard(t)); }
+  if (active.length) { h += `<div class="section-label">${t('activeTrips')}</div>`; active.forEach(t2 => h += tripCard(t2)); }
+  if (done.length)   { h += `<div class="section-label" style="margin-top:24px;color:var(--muted)">${t('doneTrips')}</div>`; done.forEach(t2 => h += tripCard(t2)); }
 
   document.getElementById('homeTrips').innerHTML = h + '<div class="spacer"></div>';
 }
@@ -1386,8 +1708,8 @@ function tripCard(t) {
         ${t.notes ? `<div class="tc-meta" style="font-style:italic;margin-top:2px">📝 ${t.notes}</div>` : ''}
         ${!isDone ? `<div class="tc-prog">
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
-          <div class="prog-label" style="justify-content:center">${pct}% der Reiseplanung</div>
-        </div>` : `<div style="font-size:12px;color:var(--muted);margin-top:4px">✅ Abgeschlossen</div>`}
+          <div class="prog-label" style="justify-content:center">${pct}% ${t('tripProgress')}</div>
+        </div>` : `<div style="font-size:12px;color:var(--muted);margin-top:4px">${t('tripDone')}</div>`}
       </div>
       <div class="tc-arrow">›</div>
     </div>
@@ -1523,7 +1845,7 @@ function showStep(s) {
   document.querySelectorAll('.step-eyebrow').forEach(e =>
     e.textContent = `Schritt ${s} von ${steps.length}`);
 
-  document.getElementById('wizNext').textContent = s===steps.length ? '🧳 Packliste erstellen' : 'Weiter →';
+  document.getElementById('wizNext').textContent = s===steps.length ? t('wizFinish') : t('wizNext');
   document.getElementById('wizSkip').style.display = steps[s-1]==='ws4' ? 'block' : 'none';
   document.getElementById('wizBack').style.display = s===1 ? 'none' : 'block';
 
@@ -1966,7 +2288,7 @@ function updateProgress() {
   const pctGesamt = Math.round(pctV * 0.2 + pctPacken * 0.6 + pctT * 0.2);
 
   document.getElementById('tPct').textContent = pctGesamt === 100 ? '🎉 100%' : pctGesamt+'%';
-  document.getElementById('tSub').textContent = `der Reiseplanung`;
+  document.getElementById('tSub').textContent = t('tripProgress');
   document.getElementById('tBar').style.width = pctGesamt+'%';
 
   // "Reise abschließen" Button: ab 80% anzeigen (außer Reise ist schon done)
@@ -2018,7 +2340,7 @@ function renderVorschlaege(subs) {
   if (mandatoryCount > 0) {
     h += `<div style="display:flex;align-items:center;gap:10px;padding:10px 15px;background:#E4F5ED;border-bottom:1px solid #a8dfc0;font-size:13px">
       <span style="font-size:16px">✅</span>
-      <span style="color:#1A7A4A;font-weight:500">${mandatoryCount} Pflicht-Items bereits vorgemerkt</span>
+      <span style="color:#1A7A4A;font-weight:500">${mandatoryCount} ${t('mandatoryInfo')}</span>
     </div>`;
   }
 
@@ -2043,7 +2365,7 @@ function renderVorschlaege(subs) {
     if (i.items.activity_key && !_ac.includes(i.items.activity_key)) return false;
     return true;
   });
-  if (!pendingVisible.length) h += `<div class="done-bnr"><h3>✅ Alle Vorschläge abgearbeitet!</h3><p>Wechsle zu "Packen" um deinen Koffer zu befüllen 🧳</p></div>`;
+  if (!pendingVisible.length) h += `<div class="done-bnr"><h3>${t('allDone')}</h3><p>${t('allDoneSub')}</p></div>`;
 
   categories.forEach(cat => {
     if (curTrip.trip_type === 'urlaub'   && !cat.show_urlaub)   return;
@@ -2083,7 +2405,7 @@ function renderVorschlaege(subs) {
     });
 
     h += `<div class="add-row">
-      <input class="add-inp" type="text" placeholder="Eigenes Item …" id="ai_${cat.id}"
+      <input class="add-inp" type="text" placeholder="${t('addItemPlaceholder')}" id="ai_${cat.id}"
         onkeydown="if(event.key==='Enter')addItem(${cat.id})">
       <button class="add-go" onclick="addItem(${cat.id})">+</button>
     </div></div></div>`;
@@ -2207,7 +2529,7 @@ function renderPacken(subs) {
     });
 
     h += `<div class="add-row">
-      <input class="add-inp" type="text" placeholder="Item direkt hinzufügen …" id="ap_${cat.id}"
+      <input class="add-inp" type="text" placeholder="${t('addItemPackPlaceholder')}" id="ap_${cat.id}"
         onkeydown="if(event.key==='Enter')addItemPacken(${cat.id})">
       <button class="add-go" onclick="addItemPacken(${cat.id})">+</button>
     </div></div></div>`;
