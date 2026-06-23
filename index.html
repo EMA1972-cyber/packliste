@@ -2155,7 +2155,7 @@ function updateTabProgress() {
 
 function vorschlagRow(ti) {
   const item = ti.items;
-  const qty  = ti.qty ? `<span class="iqty">${ti.qty}</span>` : '';
+  const qty  = ti.qty ? `<span class="iqty" onclick="editQty('${ti.id}','${ti.qty}')" title="Menge ändern">${ti.qty}</span>` : '';
   const pool = item?.is_pool ? `<span class="ipool">⭐ neu</span>` : '';
   return `<div class="item-row" id="vr_${ti.id}">
     <span class="iname">${item?.name || '?'}</span>
