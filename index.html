@@ -2226,10 +2226,24 @@ function packRow(ti) {
     <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
     <span class="iname${chk?' packed':''}">${ti.items?.name||'?'}</span>
     ${qty}
+    <button onclick="removeFromPack('${ti.id}')" title="Aus Packliste entfernen"
+      style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 6px;opacity:0.5;line-height:1">✕</button>
   </div>`;
 }
 
 // ── Mengen-Modal ──
+async function removeFromPack(id) {
+  // Sofort aus DOM entfernen
+  document.getElementById('pr_' + id)?.remove();
+  // State aktualisieren
+  const ti = curItems.find(i => i.id === id);
+  if (ti) ti.decision = 'nein';
+  // DB aktualisieren
+  await sbPatch('trip_items', { id: `eq.${id}` }, { decision: 'nein', is_checked: false });
+  // Fortschritt aktualisieren
+  updateProgress();
+  updateTabProgress();
+}
 let _qtyModalState = {}; // { id, itemName, tripType, climate, days }
 let _qtyScales = false;
 let _qtyRemember = false;
