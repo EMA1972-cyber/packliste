@@ -1362,7 +1362,7 @@ async function renderHome(trips) {
     .sort((a,b) => (b.date_from||'').localeCompare(a.date_from||'')); // neueste zuerst
   let h = '';
 
-  if (active.length) { h += `<div class="section-label">Aktuelle Reisen</div>`; active.forEach(t => h += tripCard(t)); }
+  if (active.length) { h += `<div class="section-label">🌍 Aktuelle Reisen</div>`; active.forEach(t => h += tripCard(t)); }
   if (done.length)   { h += `<div class="section-label" style="margin-top:24px;color:var(--muted)">✅ Abgeschlossene Reisen</div>`; done.forEach(t => h += tripCard(t)); }
 
   document.getElementById('homeTrips').innerHTML = h + '<div class="spacer"></div>';
