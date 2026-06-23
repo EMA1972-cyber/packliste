@@ -2332,7 +2332,7 @@ async function saveQty(id, qty, itemName, tripType, climate, days, remember, sca
   }
 
   const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
-  renderPacken(subs);
+  renderAll(subs);
 }
 
 // ── TASCHEN (nur Bikepacking) ──
