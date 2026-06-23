@@ -1350,12 +1350,15 @@ async function renderHome(trips) {
     return;
   }
 
-  const active = filtered.filter(t => t.status !== 'done');
-  const done   = filtered.filter(t => t.status === 'done');
+  const today = new Date().toISOString().slice(0,10);
+  const active = filtered.filter(t => t.status !== 'done')
+    .sort((a,b) => (a.date_from||'').localeCompare(b.date_from||''));
+  const done   = filtered.filter(t => t.status === 'done')
+    .sort((a,b) => (b.date_from||'').localeCompare(a.date_from||'')); // neueste zuerst
   let h = '';
 
   if (active.length) { h += `<div class="section-label">Aktuelle Reisen</div>`; active.forEach(t => h += tripCard(t)); }
-  if (done.length)   { h += `<div class="section-label" style="margin-top:24px">Abgeschlossen</div>`; done.forEach(t => h += tripCard(t)); }
+  if (done.length)   { h += `<div class="section-label" style="margin-top:24px;color:var(--muted)">✅ Abgeschlossene Reisen</div>`; done.forEach(t => h += tripCard(t)); }
 
   document.getElementById('homeTrips').innerHTML = h + '<div class="spacer"></div>';
 }
@@ -1369,7 +1372,7 @@ function tripCard(t) {
   const icon = t.is_bikepacking ? '🚴' : t.trip_type === 'business' ? '💼' : '🏖️';
   const nights = calcNights(t.date_from, t.date_to);
   const isDone = t.status === 'done';
-  return `<div class="trip-card${isDone?' done':''}" style="position:relative">
+  return `<div class="trip-card${isDone?' done':''}" style="position:relative${isDone?';opacity:0.6;filter:grayscale(0.3)':''}">
     <div onclick="openTrip('${t.id}')" style="display:flex;align-items:center;gap:14px;flex:1;cursor:pointer">
       <div class="tc-icon">${icon}</div>
       <div class="tc-body">
@@ -1379,14 +1382,69 @@ function tripCard(t) {
         ${!isDone ? `<div class="tc-prog">
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
           <div class="prog-label" style="justify-content:center">${pct}% der Reiseplanung</div>
-        </div>` : ''}
+        </div>` : `<div style="font-size:12px;color:var(--muted);margin-top:4px">✅ Abgeschlossen</div>`}
       </div>
       <div class="tc-arrow">›</div>
     </div>
+    <button onclick="event.stopPropagation();editTripMeta('${t.id}')"
+      style="position:absolute;top:8px;right:36px;background:rgba(100,100,100,0.1);border:none;color:var(--muted);border-radius:6px;width:24px;height:24px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center"
+      title="Reise bearbeiten">✏️</button>
     <button onclick="deleteTrip('${t.id}','${t.name}')"
       style="position:absolute;top:8px;right:8px;background:rgba(184,50,37,0.1);border:none;color:#B83225;border-radius:6px;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1"
       title="Reise löschen">✕</button>
   </div>`;
+}
+
+async function editTripMeta(id) {
+  const t = allTripsCache.find(x => x.id === id);
+  if (!t) return;
+
+  const html = `<div id="editTripModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto">
+      <h3 style="margin:0 0 20px;font-family:'DM Serif Display',serif">✏️ Reise bearbeiten</h3>
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Name
+        <input id="etName" class="inp-field" style="margin-top:4px;width:100%" value="${t.name||''}">
+      </label>
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Ziel
+        <input id="etDest" class="inp-field" style="margin-top:4px;width:100%" value="${t.destination||''}">
+      </label>
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Von
+        <input id="etFrom" class="inp-field" type="date" style="margin-top:4px;width:100%" value="${t.date_from||''}">
+      </label>
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Bis
+        <input id="etTo" class="inp-field" type="date" style="margin-top:4px;width:100%" value="${t.date_to||''}">
+      </label>
+      <label style="display:block;margin-bottom:20px;font-size:14px;font-weight:600">Notiz
+        <input id="etNotes" class="inp-field" style="margin-top:4px;width:100%" value="${t.notes||''}">
+      </label>
+      <div style="display:flex;gap:12px">
+        <button onclick="closeEditTripModal()" class="btn-sec" style="flex:1">Abbrechen</button>
+        <button onclick="saveTripMeta('${id}')" class="btn-pri" style="flex:2">Speichern</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function closeEditTripModal() {
+  document.getElementById('editTripModal')?.remove();
+}
+
+async function saveTripMeta(id) {
+  const name     = document.getElementById('etName').value.trim();
+  const dest     = document.getElementById('etDest').value.trim();
+  const dateFrom = document.getElementById('etFrom').value;
+  const dateTo   = document.getElementById('etTo').value;
+  const notes    = document.getElementById('etNotes').value.trim();
+  if (!name || !dest || !dateFrom || !dateTo) { alert('Bitte alle Pflichtfelder ausfüllen.'); return; }
+  try {
+    await sbPatch('trips', { id: `eq.${id}` }, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes });
+    closeEditTripModal();
+    // Cache invalidieren und neu laden
+    const t = allTripsCache.find(x => x.id === id);
+    if (t) { Object.assign(t, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes }); delete t._ja; }
+    await refreshTripsList();
+  } catch(e) { alert('Fehler: ' + e.message); }
 }
 
 async function deleteTrip(id, name) {
