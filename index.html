@@ -1853,14 +1853,28 @@ async function generateTripItems(tripId) {
 }
 
 async function generateTripTodos(tripId) {
-  const templates = await sbGet('todo_templates', { order: 'sort_order' });
   const toInsert = [];
 
-  for (const t of templates) {
-    if (wiz.type === 'urlaub'   && !t.show_urlaub)   continue;
-    if (wiz.type === 'business' && !t.show_business)  continue;
-    if (t.show_abroad === 2     && !wiz.abroad)        continue;
-    toInsert.push({ trip_id: tripId, name: t.name, show_abroad: t.show_abroad, show_urlaub: t.show_urlaub, show_business: t.show_business, sort_order: t.sort_order });
+  // 1. Erst die User-eigenen general_todos laden
+  const userTodos = await sbGet('general_todos', { filter: { user_id: `eq.${currentUser.id}` }, order: 'sort_order' }) || [];
+
+  if (userTodos.length > 0) {
+    // User hat eigene ToDos — diese verwenden (mit trip_type/abroad Filter)
+    for (const t of userTodos) {
+      if (wiz.type === 'urlaub'   && t.show_urlaub   === false) continue;
+      if (wiz.type === 'business' && t.show_business  === false) continue;
+      if (t.show_abroad === 2     && !wiz.abroad)               continue;
+      toInsert.push({ trip_id: tripId, name: t.name, show_abroad: t.show_abroad ?? 1, show_urlaub: t.show_urlaub ?? true, show_business: t.show_business ?? true, sort_order: t.sort_order });
+    }
+  } else {
+    // Fallback: Admin-Templates verwenden (neue User ohne eigene ToDos)
+    const templates = await sbGet('todo_templates', { order: 'sort_order' }) || [];
+    for (const t of templates) {
+      if (wiz.type === 'urlaub'   && !t.show_urlaub)   continue;
+      if (wiz.type === 'business' && !t.show_business)  continue;
+      if (t.show_abroad === 2     && !wiz.abroad)        continue;
+      toInsert.push({ trip_id: tripId, name: t.name, show_abroad: t.show_abroad, show_urlaub: t.show_urlaub, show_business: t.show_business, sort_order: t.sort_order });
+    }
   }
 
   if (toInsert.length) await sbPost('trip_todos', toInsert);
