@@ -711,6 +711,11 @@ body {
       </div>
       <div class="pp-bar"><div class="pp-fill" id="tBar" style="width:0%"></div></div>
     </div>
+    <div id="tripDoneBanner" style="display:none;margin-top:12px;text-align:center">
+      <button onclick="markTripDone()" style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.6);color:#fff;border-radius:20px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.3px">
+        ✅ Reise abschließen
+      </button>
+    </div>
   </div>
 
   <div class="tabs">
@@ -1447,6 +1452,27 @@ async function saveTripMeta(id) {
   } catch(e) { alert('Fehler: ' + e.message); }
 }
 
+async function markTripDone(auto = false) {
+  if (!curTrip) return;
+  if (!auto && !confirm(`"${curTrip.name}" als abgeschlossen markieren?`)) return;
+  try {
+    await sbPatch('trips', { id: `eq.${curTrip.id}` }, { status: 'done' });
+    curTrip.status = 'done';
+    // Cache invalidieren
+    const t = allTripsCache?.find(x => x.id === curTrip.id);
+    if (t) { t.status = 'done'; delete t._ja; }
+    // Button ausblenden
+    const doneBanner = document.getElementById('tripDoneBanner');
+    if (doneBanner) doneBanner.style.display = 'none';
+    // Kurzes Feedback
+    if (auto) {
+      document.getElementById('tPct').textContent = '🎉 100%';
+    } else {
+      alert(`✅ "${curTrip.name}" wurde abgeschlossen!`);
+    }
+  } catch(e) { alert('Fehler: ' + e.message); }
+}
+
 async function deleteTrip(id, name) {
   if (!confirm(`"${name}" wirklich löschen?`)) return;
   try {
@@ -1870,6 +1896,10 @@ async function openTrip(id) {
     document.getElementById('tName').textContent  = curTrip.name;
     document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
 
+    // Bei bereits abgeschlossener Reise Banner ausblenden
+    const doneBanner = document.getElementById('tripDoneBanner');
+    if (doneBanner) doneBanner.style.display = 'none';
+
     // Pool-Modal Kategorien befüllen
     document.getElementById('mPoolCat').innerHTML = categories.map(c =>
       `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
@@ -1924,6 +1954,21 @@ function updateProgress() {
   document.getElementById('tPct').textContent = pctGesamt === 100 ? '🎉 100%' : pctGesamt+'%';
   document.getElementById('tSub').textContent = `der Reiseplanung`;
   document.getElementById('tBar').style.width = pctGesamt+'%';
+
+  // "Reise abschließen" Button: ab 80% anzeigen (außer Reise ist schon done)
+  const doneBanner = document.getElementById('tripDoneBanner');
+  if (doneBanner) {
+    if (curTrip?.status !== 'done' && pctGesamt >= 80) {
+      doneBanner.style.display = 'block';
+    } else {
+      doneBanner.style.display = 'none';
+    }
+  }
+
+  // Automatisch abschließen bei 100%
+  if (pctGesamt === 100 && curTrip && curTrip.status !== 'done') {
+    markTripDone(true); // true = automatisch, kein confirm
+  }
 }
 
 function getItemsByCat(catId, subId, pendingOnly, jaOnly, applyTripFilter = false) {
