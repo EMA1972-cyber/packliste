@@ -18,7 +18,7 @@
 <script>emailjs.init("gVPEv9I7dFI_xSiKR");</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
- 
+
 :root {
   --blue-900: #0D2137;
   --blue-800: #1A3A5C;
@@ -2297,9 +2297,24 @@ async function confirmQtyModal() {
 }
 
 async function saveQty(id, qty, itemName, tripType, climate, days, remember, scales) {
-  await sbPatch('trip_items', { id: `eq.${id}` }, { qty });
+  // DOM SOFORT aktualisieren — noch bevor der DB-Call läuft
+  const vrEl = document.getElementById('vr_' + id);
+  if (vrEl) {
+    const qtyEl = vrEl.querySelector('.iqty');
+    if (qtyEl) { qtyEl.textContent = qty; qtyEl.onclick = () => editQty(id, qty); }
+  }
+  const prEl = document.getElementById('pr_' + id);
+  if (prEl) {
+    const qtyEl = prEl.querySelector('.iqty');
+    if (qtyEl) { qtyEl.textContent = qty; qtyEl.onclick = () => editQty(id, qty); }
+  }
+
+  // curItems State aktualisieren
   const ti = curItems.find(i => i.id === id);
   if (ti) ti.qty = qty;
+
+  // DB async im Hintergrund speichern
+  await sbPatch('trip_items', { id: `eq.${id}` }, { qty });
 
   if (remember && currentUser) {
     const qtyNum    = parseInt(qty);
@@ -2329,26 +2344,6 @@ async function saveQty(id, qty, itemName, tripType, climate, days, remember, sca
         })
       });
     } catch(e) { console.error('Präferenz speichern:', e); }
-  }
-
-  // Row direkt im DOM aktualisieren — kein kompletter Re-render nötig
-  // Vorschläge-Tab: vr_{id}
-  const vrEl = document.getElementById('vr_' + id);
-  if (vrEl) {
-    const qtyEl = vrEl.querySelector('.iqty');
-    if (qtyEl) {
-      qtyEl.textContent = qty;
-      qtyEl.onclick = () => editQty(id, qty);
-    }
-  }
-  // Packen-Tab: pr_{id}
-  const prEl = document.getElementById('pr_' + id);
-  if (prEl) {
-    const qtyEl = prEl.querySelector('.iqty');
-    if (qtyEl) {
-      qtyEl.textContent = qty;
-      qtyEl.onclick = () => editQty(id, qty);
-    }
   }
 }
 
