@@ -1372,7 +1372,7 @@ function tripCard(t) {
   // Gewichteter Gesamt-% (20% Vorschläge / 60% Packen / 20% Todos) — konsistent mit updateProgress()
   const pctV = t._vsTotal  ? Math.round(t._vsDone  / t._vsTotal  * 100) : 100;
   const pctP = t._ja       ? Math.round(t._packed  / t._ja       * 100) : 0;
-  const pctT = t._todoTotal ? Math.round(t._todoDone / t._todoTotal * 100) : 0;
+  const pctT = t._todoTotal ? Math.round(t._todoDone / t._todoTotal * 100) : 100;
   const pct  = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
   const icon = t.is_bikepacking ? '🚴' : t.trip_type === 'business' ? '💼' : '🏖️';
   const nights = calcNights(t.date_from, t.date_to);
@@ -1943,10 +1943,10 @@ function updateProgress() {
   const vorschlaegeDone  = vorschlaegeAll2.filter(i => i.decision !== 'pending').length;
   const pctV = vorschlaegeTotal ? Math.round(vorschlaegeDone / vorschlaegeTotal * 100) : 100;
 
-  // ToDos %
+  // ToDos % — wenn keine Todos vorhanden, gilt 100% (nichts zu tun = erledigt)
   const todoTotal = curTodos.length;
   const todoDone  = curTodos.filter(t => t.decision === 'ja').length;
-  const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 0;
+  const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 100;
 
   // Gewichteter Gesamt-% (20/60/20)
   const pctGesamt = Math.round(pctV * 0.2 + pctPacken * 0.6 + pctT * 0.2);
@@ -2117,7 +2117,7 @@ function updateTabProgress() {
   // ToDos: aus curTodos Array (nicht DOM)
   const todoTotal   = curTodos.length;
   const todoDone    = curTodos.filter(t => t.decision === 'ja').length;
-  const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 0;
+  const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 100;
 
   // Gesamt: gewichtet 20/60/20
   const pctGesamt = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
