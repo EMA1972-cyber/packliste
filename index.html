@@ -526,7 +526,7 @@ body {
       <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
         style="background:none;border:none;cursor:pointer;font-size:24px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
     </div>
-    <h2 id="homeTitle" data-i18n="appName">Reiseplaner</h2>
+    <h2 id="homeTitle">Reiseplaner</h2>
     <p data-i18n="neverForget">Nie wieder etwas vergessen</p>
   </div>
   <div class="manage-grid">
@@ -1133,6 +1133,14 @@ function setLang(l) {
   lang = l;
   localStorage.setItem('lang', l);
   applyLang();
+  // Personalisierten Titel neu setzen falls User eingeloggt
+  const firstName = currentProfile?.display_name?.split(' ')[0] || currentUser?.user_metadata?.first_name;
+  if (firstName) {
+    const titleEl = document.getElementById('homeTitle');
+    if (titleEl) titleEl.textContent = lang === 'en'
+      ? `${firstName}'s Travel Planner`
+      : `${firstName}s Reiseplaner`;
+  }
 }
 
 function applyLang() {
@@ -1338,7 +1346,9 @@ async function afterLogin() {
   const fullName  = lastName ? `${firstName} ${lastName}` : firstName;
   if (firstName) {
     const titleEl = document.getElementById('homeTitle');
-    if (titleEl) titleEl.textContent = `${firstName}s Reiseplaner`;
+    if (titleEl) titleEl.textContent = lang === 'en'
+      ? `${firstName}'s Travel Planner`
+      : `${firstName}s Reiseplaner`;
   }
   const nameEl = document.getElementById('heroUserName');
   if (nameEl) nameEl.textContent = fullName;
@@ -1661,11 +1671,11 @@ async function renderHome(trips) {
   }
 
   const q = (document.getElementById('tripSearch')?.value || '').trim().toLowerCase();
-  const filtered = q ? trips.filter(t =>
-    t.name.toLowerCase().includes(q) ||
-    (t.destination || '').toLowerCase().includes(q) ||
-    (t.destination_country || '').toLowerCase().includes(q) ||
-    (t.notes || '').toLowerCase().includes(q)
+  const filtered = q ? trips.filter(tr =>
+    tr.name.toLowerCase().includes(q) ||
+    (tr.destination || '').toLowerCase().includes(q) ||
+    (tr.destination_country || '').toLowerCase().includes(q) ||
+    (tr.notes || '').toLowerCase().includes(q)
   ) : trips;
 
   if (!filtered.length) {
@@ -1678,34 +1688,34 @@ async function renderHome(trips) {
   }
 
   const today = new Date().toISOString().slice(0,10);
-  const active = filtered.filter(t => t.status !== 'done')
+  const active = filtered.filter(tr => tr.status !== 'done')
     .sort((a,b) => (a.date_from||'').localeCompare(b.date_from||''));
-  const done   = filtered.filter(t => t.status === 'done')
-    .sort((a,b) => (b.date_from||'').localeCompare(a.date_from||'')); // neueste zuerst
+  const done   = filtered.filter(tr => tr.status === 'done')
+    .sort((a,b) => (b.date_from||'').localeCompare(a.date_from||''));
   let h = '';
 
-  if (active.length) { h += `<div class="section-label">${t('activeTrips')}</div>`; active.forEach(t2 => h += tripCard(t2)); }
-  if (done.length)   { h += `<div class="section-label" style="margin-top:24px;color:var(--muted)">${t('doneTrips')}</div>`; done.forEach(t2 => h += tripCard(t2)); }
+  if (active.length) { h += `<div class="section-label">${t('activeTrips')}</div>`; active.forEach(tr => h += tripCard(tr)); }
+  if (done.length)   { h += `<div class="section-label" style="margin-top:24px;color:var(--muted)">${t('doneTrips')}</div>`; done.forEach(tr => h += tripCard(tr)); }
 
   document.getElementById('homeTrips').innerHTML = h + '<div class="spacer"></div>';
 }
 
-function tripCard(t) {
-  // Gewichteter Gesamt-% (20% Vorschläge / 60% Packen / 20% Todos) — konsistent mit updateProgress()
-  const pctV = t._vsTotal  ? Math.round(t._vsDone  / t._vsTotal  * 100) : 100;
-  const pctP = t._ja       ? Math.round(t._packed  / t._ja       * 100) : 0;
-  const pctT = t._todoTotal ? Math.round(t._todoDone / t._todoTotal * 100) : 100;
+function tripCard(trip) {
+  // Gewichteter Gesamt-% (20% Vorschläge / 60% Packen / 20% Todos)
+  const pctV = trip._vsTotal  ? Math.round(trip._vsDone  / trip._vsTotal  * 100) : 100;
+  const pctP = trip._ja       ? Math.round(trip._packed  / trip._ja       * 100) : 0;
+  const pctT = trip._todoTotal ? Math.round(trip._todoDone / trip._todoTotal * 100) : 100;
   const pct  = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
-  const icon = t.is_bikepacking ? '🚴' : t.trip_type === 'business' ? '💼' : '🏖️';
-  const nights = calcNights(t.date_from, t.date_to);
-  const isDone = t.status === 'done';
+  const icon = trip.is_bikepacking ? '🚴' : trip.trip_type === 'business' ? '💼' : '🏖️';
+  const nights = calcNights(trip.date_from, trip.date_to);
+  const isDone = trip.status === 'done';
   return `<div class="trip-card${isDone?' done':''}" style="position:relative${isDone?';opacity:0.6;filter:grayscale(0.3)':''}">
-    <div onclick="openTrip('${t.id}')" style="display:flex;align-items:center;gap:14px;flex:1;cursor:pointer">
+    <div onclick="openTrip('${trip.id}')" style="display:flex;align-items:center;gap:14px;flex:1;cursor:pointer">
       <div class="tc-icon">${icon}</div>
       <div class="tc-body">
-        <div class="tc-name">${t.name}</div>
-        <div class="tc-meta">${fmtDate(t.date_from)} – ${fmtDate(t.date_to)} · ${t.destination}${t.destination_country ? ', '+t.destination_country : ''} · ${nights} Nächte</div>
-        ${t.notes ? `<div class="tc-meta" style="font-style:italic;margin-top:2px">📝 ${t.notes}</div>` : ''}
+        <div class="tc-name">${trip.name}</div>
+        <div class="tc-meta">${fmtDate(trip.date_from)} – ${fmtDate(trip.date_to)} · ${trip.destination}${trip.destination_country ? ', '+trip.destination_country : ''} · ${nights} ${nights===1?t('night'):t('nights')}</div>
+        ${trip.notes ? `<div class="tc-meta" style="font-style:italic;margin-top:2px">📝 ${trip.notes}</div>` : ''}
         ${!isDone ? `<div class="tc-prog">
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
           <div class="prog-label" style="justify-content:center">${pct}% ${t('tripProgress')}</div>
@@ -1713,10 +1723,10 @@ function tripCard(t) {
       </div>
       <div class="tc-arrow">›</div>
     </div>
-    <button onclick="event.stopPropagation();editTripMeta('${t.id}')"
+    <button onclick="event.stopPropagation();editTripMeta('${trip.id}')"
       style="position:absolute;top:8px;right:36px;background:rgba(100,100,100,0.1);border:none;color:var(--muted);border-radius:6px;width:24px;height:24px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center"
       title="Reise bearbeiten">✏️</button>
-    <button onclick="deleteTrip('${t.id}','${t.name}')"
+    <button onclick="deleteTrip('${trip.id}','${trip.name}')"
       style="position:absolute;top:8px;right:8px;background:rgba(184,50,37,0.1);border:none;color:#B83225;border-radius:6px;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1"
       title="Reise löschen">✕</button>
   </div>`;
