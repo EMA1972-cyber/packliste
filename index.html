@@ -402,11 +402,9 @@ body {
 <div class="app-header" style="display:none">
   <button class="back-btn" id="backBtn" onclick="goHome()" data-i18n="back">← Zurück</button>
   <h1 id="hTitle">🧳 Reiseplaner</h1>
-  <div style="display:flex;align-items:center;gap:8px">
-    <div id="homeHeaderBar" style="display:none;align-items:center;gap:8px">
-      <span class="home-header-name" id="heroUserName"></span>
-      <button class="home-header-logout" onclick="doLogout()" data-i18n="logout">Abmelden</button>
-    </div>
+  <div id="homeHeaderBar" style="display:none;align-items:center;justify-content:space-between;width:100%">
+    <span class="home-header-name" id="heroUserName"></span>
+    <button class="home-header-logout" onclick="doLogout()" data-i18n="logout">Abmelden</button>
   </div>
   <button id="logoutBtn" onclick="doLogout()" style="display:none" title="Abmelden"></button>
 </div>
@@ -956,6 +954,10 @@ const TRANSLATIONS = {
     mandatoryInfo: 'Pflicht-Items bereits vorgemerkt',
     allDone: '✅ Alle Vorschläge abgearbeitet!',
     allDoneSub: 'Wechsle zu "Packen" um deinen Koffer zu befüllen 🧳',
+    allPacked: '🎉 Koffer ist gepackt!',
+    allPackedSub: 'Alles eingepackt — gute Reise! ✈️',
+    allTodos: '✅ Alle ToDos erledigt!',
+    allTodosSub: 'Du bist bestens vorbereitet! 🙌',
     addItemPlaceholder: 'Eigenes Item …',
     addItemPackPlaceholder: 'Item direkt hinzufügen …',
     rememberNext: '💡 Für nächstes Mal merken',
@@ -1093,6 +1095,10 @@ const TRANSLATIONS = {
     mandatoryInfo: 'Mandatory items already added',
     allDone: '✅ All suggestions reviewed!',
     allDoneSub: 'Switch to "Pack" to fill your suitcase 🧳',
+    allPacked: '🎉 All packed!',
+    allPackedSub: 'Everything packed — have a great trip! ✈️',
+    allTodos: '✅ All to-dos done!',
+    allTodosSub: "You're perfectly prepared! 🙌",
     addItemPlaceholder: 'Custom item …',
     addItemPackPlaceholder: 'Add item directly …',
     rememberNext: '💡 Remember for next time',
@@ -2514,7 +2520,7 @@ function renderPacken(subs) {
 
   let h = '';
   const packed = jaAll.filter(i => i.is_checked).length;
-  if (packed === jaAll.length) h += `<div class="done-bnr"><h3>🎉 Koffer ist gepackt!</h3><p>Gute Reise!</p></div>`;
+  if (packed === jaAll.length && jaAll.length > 0) h += `<div class="done-bnr"><h3>${t('allPacked')}</h3><p>${t('allPackedSub')}</p></div>`;
 
   categories.forEach(cat => {
     const catJa = curItems.filter(ti => ti.items?.category_id === cat.id && ti.decision === 'ja');
@@ -2747,7 +2753,14 @@ function renderTodos() {
 
   curTodos.forEach(todo => h += todoRow(todo));
 
-  h += `</div></div><div class="spacer"></div>`;
+  h += `</div></div>`;
+
+  // Banner wenn alle ToDos erledigt
+  if (curTodos.length > 0 && done === curTodos.length) {
+    h += `<div class="done-bnr"><h3>${t('allTodos')}</h3><p>${t('allTodosSub')}</p></div>`;
+  }
+
+  h += `<div class="spacer"></div>`;
   document.getElementById('tpTodos').innerHTML = h;
   updateTabProgress();
 }
