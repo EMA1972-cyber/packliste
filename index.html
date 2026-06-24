@@ -1711,7 +1711,7 @@ function tripCard(trip) {
   const pctV = trip._vsTotal  ? Math.round(trip._vsDone  / trip._vsTotal  * 100) : 100;
   const pctP = trip._ja       ? Math.round(trip._packed  / trip._ja       * 100) : 0;
   const pctT = trip._todoTotal ? Math.round(trip._todoDone / trip._todoTotal * 100) : 100;
-  const pct  = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
+  const pct  = (pctV === 100 && pctP === 100 && pctT === 100) ? 100 : Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
   const icon = trip.is_bikepacking ? '🚴' : trip.trip_type === 'business' ? '💼' : '🏖️';
   const nights = calcNights(trip.date_from, trip.date_to);
   const isDone = trip.status === 'done';
@@ -2301,7 +2301,7 @@ function updateProgress() {
   const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 100;
 
   // Gewichteter Gesamt-% (20/60/20)
-  const pctGesamt = Math.round(pctV * 0.2 + pctPacken * 0.6 + pctT * 0.2);
+  const pctGesamt = (pctV === 100 && pctPacken === 100 && pctT === 100) ? 100 : Math.round(pctV * 0.2 + pctPacken * 0.6 + pctT * 0.2);
 
   document.getElementById('tPct').textContent = pctGesamt === 100 ? '🎉 100%' : pctGesamt+'%';
   document.getElementById('tSub').textContent = t('tripProgress');
@@ -2472,7 +2472,7 @@ function updateTabProgress() {
   const pctT = todoTotal ? Math.round(todoDone / todoTotal * 100) : 100;
 
   // Gesamt: gewichtet 20/60/20
-  const pctGesamt = Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
+  const pctGesamt = (pctV === 100 && pctP === 100 && pctT === 100) ? 100 : Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
 
   // Tab-Labels aktualisieren
   const elV = document.getElementById('pctVorschlaege');
@@ -2520,7 +2520,7 @@ function renderPacken(subs) {
 
   let h = '';
   const packed = jaAll.filter(i => i.is_checked).length;
-  if (packed === jaAll.length && jaAll.length > 0) h += `<div class="done-bnr"><h3>${t('allPacked')}</h3><p>${t('allPackedSub')}</p></div>`;
+  if (packed === jaAll.length && jaAll.length > 0) h = `<div class="done-bnr"><h3>${t('allPacked')}</h3><p>${t('allPackedSub')}</p></div>` + h;
 
   categories.forEach(cat => {
     const catJa = curItems.filter(ti => ti.items?.category_id === cat.id && ti.decision === 'ja');
@@ -2743,7 +2743,13 @@ function renderTaschen(subs) {
 // ── TODOS ──
 function renderTodos() {
   const done = curTodos.filter(t => t.decision === 'ja').length;
-  let h = `<div class="cat-block" style="margin-top:14px">
+
+  // Banner oben wenn alle erledigt
+  let h = curTodos.length > 0 && done === curTodos.length
+    ? `<div class="done-bnr"><h3>${t('allTodos')}</h3><p>${t('allTodosSub')}</p></div>`
+    : '';
+
+  h += `<div class="cat-block" style="margin-top:14px">
     <div class="cat-hd">
       <span class="cat-hd-ico">📋</span>
       <span class="cat-hd-title">Vor der Abreise erledigen</span>
@@ -2753,14 +2759,7 @@ function renderTodos() {
 
   curTodos.forEach(todo => h += todoRow(todo));
 
-  h += `</div></div>`;
-
-  // Banner wenn alle ToDos erledigt
-  if (curTodos.length > 0 && done === curTodos.length) {
-    h += `<div class="done-bnr"><h3>${t('allTodos')}</h3><p>${t('allTodosSub')}</p></div>`;
-  }
-
-  h += `<div class="spacer"></div>`;
+  h += `</div></div><div class="spacer"></div>`;
   document.getElementById('tpTodos').innerHTML = h;
   updateTabProgress();
 }
