@@ -397,6 +397,14 @@ body {
 .spacer { height: 24px; }
 </style>
 </head>
+<!-- Sprach-Fahnen: immer oben rechts sichtbar -->
+<div style="position:fixed;top:10px;right:12px;z-index:10000;display:flex;gap:6px;align-items:center">
+  <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
+    style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s">🇩🇪</button>
+  <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
+    style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+</div>
+
 <body>
 
 <div class="app-header" style="display:none">
@@ -639,20 +647,7 @@ body {
     </div>
   </div>
 
-  <div class="wiz-step" id="ws3">
-    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 3 <span data-i18n="of">von</span> 5</div>
-    <div class="step-q" data-i18n="wizQ3">Ist Bikepacking dabei?</div>
-    <div class="choices">
-      <button class="choice" onclick="setBike(true,this)">
-        <span class="choice-ico">🚴</span>
-        <div class="choice-txt"><strong data-i18n="bikeYes">Ja, Bikepacking!</strong><small data-i18n="bikeYesSub">Packliste nach Taschen</small></div>
-      </button>
-      <button class="choice" onclick="setBike(false,this)">
-        <span class="choice-ico">🏖️</span>
-        <div class="choice-txt"><strong data-i18n="bikeNo">Nein, normaler Urlaub</strong><small data-i18n="bikeNoSub">Standard Packliste</small></div>
-      </button>
-    </div>
-  </div>
+  <div class="wiz-step" id="ws3" style="display:none"></div>
 
   <div class="wiz-step" id="ws3b">
     <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 3 <span data-i18n="of">von</span> 5</div>
@@ -1857,7 +1852,7 @@ function startWizard() {
   document.getElementById('climCard').style.display='none';
   document.getElementById('destAlts').style.display='none';
   document.getElementById('destAlts').innerHTML='';
-  show('sWizard'); setHeader('Neue Reise', true);
+  show('sWizard'); setHeader(lang === 'en' ? 'New Trip' : 'Neue Reise', true);
   showStep(1);
 }
 
