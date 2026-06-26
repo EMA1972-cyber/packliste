@@ -59,14 +59,15 @@ body {
 .app-header {
   background: #C85A00;
   color: white;
-  padding: 16px 20px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 16px rgba(200,90,0,0.3);
+  min-height: 44px;
 }
 .app-header h1 {
   font-family: 'DM Serif Display', serif;
@@ -400,24 +401,25 @@ body {
 <body>
 
 <div class="app-header" id="appHeader" style="display:none">
-  <!-- Links: Zurück-Icon -->
+  <!-- Links: Zurück -->
   <div style="flex:1;display:flex;align-items:center">
-    <button id="backBtn" onclick="goHome()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">←</button>
+    <button id="backBtn" onclick="goHome()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;align-items:center;justify-content:center">←</button>
   </div>
-  <!-- Mitte: Koffer + Name -->
-  <div style="flex:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
-    <span style="font-size:22px">🧳</span>
-    <span id="heroUserName" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:0.03em"></span>
-  </div>
-  <!-- Rechts: Fahnen + Abmelden -->
-  <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+  <!-- Mitte: Fahnen -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
     <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-      style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px;transition:all 0.2s">🇩🇪</button>
+      style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s">🇩🇪</button>
     <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
-      style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
-    <button class="home-header-logout" id="logoutBtn" onclick="doLogout()" style="display:none" data-i18n="logout">Abmelden</button>
+      style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+  </div>
+  <!-- Rechts: Abmelden -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:flex-end">
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;gap:4px;align-items:center">
+      🔓 <span data-i18n="logout">Abmelden</span>
+    </button>
   </div>
   <h1 id="hTitle" style="display:none"></h1>
+  <span id="heroUserName" style="display:none"></span>
 </div>
 
 <div class="screen active" id="sLogin">
@@ -528,9 +530,7 @@ body {
 
 <div class="screen" id="sHome">
   <div class="home-hero">
-    <span class="hero-icon">🧳</span>
     <h2 id="homeTitle">Reiseplaner</h2>
-    <p data-i18n="neverForget">Nie wieder etwas vergessen</p>
   </div>
   <div class="manage-grid">
     <div class="manage-col">
@@ -1606,6 +1606,7 @@ async function goHome() {
     if (t) { delete t._ja; delete t._packed; delete t._vsTotal; delete t._vsDone; delete t._todoTotal; delete t._todoDone; }
   }
   show('sHome'); setHeader(null, false);
+  setSubHeader(null);
   await refreshTripsList();
   refreshItemsCount();
   refreshGeneralTodosCount();
@@ -2263,7 +2264,7 @@ async function openTrip(id) {
     // Kategorien + Subkats
     const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
 
-    setHeader(curTrip?.name || '', true);
+    setHeader(curTrip?.name || (lang==='en'?'Trip':'Reise'), true);
     document.getElementById('tName').textContent  = curTrip.name;
     document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
 
@@ -3418,8 +3419,8 @@ function setHeader(title, back) {
   if (isAuthScreen) { header.style.display = 'none'; setSubHeader(null); return; }
 
   header.style.display = 'flex';
-  nameEl.style.display  = currentUser ? 'block' : 'none';
-  logout.style.display  = currentUser ? 'block' : 'none';
+  nameEl.style.display  = 'none'; // Name ist jetzt im homeTitle, nicht im Header
+  logout.style.display  = currentUser ? 'flex' : 'none';
   backBtn.style.display = back ? 'flex' : 'none';
 
   setSubHeader(title);
@@ -3430,12 +3431,12 @@ function setSubHeader(title) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'subHeader';
-    el.style.cssText = 'display:none;align-items:center;justify-content:center;padding:10px 16px;background:#D4711A;position:sticky;top:56px;z-index:99';
+    el.style.cssText = 'display:none;align-items:center;justify-content:center;padding:7px 16px;background:#D4711A;position:sticky;top:44px;z-index:99';
     document.getElementById('appHeader').after(el);
   }
   if (!title || title.trim() === '') { el.style.display = 'none'; return; }
   el.style.display = 'flex';
-  el.innerHTML = `<span style="color:#fff;font-weight:700;font-size:15px;text-align:center">${title}</span>`;
+  el.innerHTML = `<span style="color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px"><span style="font-size:16px">🧳</span>${title}</span>`;
 }
 function showTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
