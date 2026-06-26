@@ -400,25 +400,24 @@ body {
 <body>
 
 <div class="app-header" id="appHeader" style="display:none">
-  <!-- Links: Zurück-Button ODER Name -->
-  <div style="flex:1;display:flex;align-items:center;min-width:0">
-    <button class="back-btn" id="backBtn" onclick="goHome()" style="display:none" data-i18n="back">← Zurück</button>
-    <span class="home-header-name" id="heroUserName" style="display:none"></span>
+  <!-- Links: Zurück-Icon -->
+  <div style="flex:1;display:flex;align-items:center">
+    <button id="backBtn" onclick="goHome()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">←</button>
   </div>
-  <!-- Mitte: Titel ODER Fahnen -->
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
-    <h1 id="hTitle" style="display:none;margin:0;font-size:1rem;font-weight:600;color:#fff">🧳</h1>
-    <div id="headerFlags" style="display:flex;gap:8px;align-items:center">
-      <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-        style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s">🇩🇪</button>
-      <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
-        style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
-    </div>
+  <!-- Mitte: Koffer + Name -->
+  <div style="flex:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+    <span style="font-size:22px">🧳</span>
+    <span id="heroUserName" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:0.03em"></span>
   </div>
-  <!-- Rechts: Abmelden -->
-  <div style="flex:1;display:flex;align-items:center;justify-content:flex-end">
+  <!-- Rechts: Fahnen + Abmelden -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+    <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
+      style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px;transition:all 0.2s">🇩🇪</button>
+    <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
+      style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
     <button class="home-header-logout" id="logoutBtn" onclick="doLogout()" style="display:none" data-i18n="logout">Abmelden</button>
   </div>
+  <h1 id="hTitle" style="display:none"></h1>
 </div>
 
 <div class="screen active" id="sLogin">
@@ -429,8 +428,8 @@ body {
       <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
         style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
     </div>
-    <div style="font-size:72px;margin-bottom:16px">🧳</div>
-    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px" data-i18n="appName">Reiseplaner</h1>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 8px" data-i18n="appName">Reiseplaner</h1>
+    <div style="font-size:72px;margin-bottom:8px">🧳</div>
     <p style="color:var(--muted);font-size:14px;margin:0 0 40px" data-i18n="appTagline">Nie wieder etwas vergessen</p>
 
     <div style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px">
@@ -1642,7 +1641,7 @@ async function refreshGeneralTodosCount() {
 }
 
 function openTripsList() {
-  show('sTripsList'); setHeader('Aktuelle Reisen', true);
+  show('sTripsList'); setHeader('🌍 ' + (lang==='en' ? 'Current Trips' : 'Aktuelle Reisen'), true);
   const ts = document.getElementById('tripSearch');
   if (ts) ts.value = '';
 }
@@ -1850,7 +1849,7 @@ function startWizard() {
   document.getElementById('climCard').style.display='none';
   document.getElementById('destAlts').style.display='none';
   document.getElementById('destAlts').innerHTML='';
-  show('sWizard'); setHeader(lang === 'en' ? 'New Trip' : 'Neue Reise', true);
+  show('sWizard'); setHeader(lang==='en' ? '✏️ New Trip' : '✏️ Neue Reise', true);
   showStep(1);
 }
 
@@ -2264,7 +2263,7 @@ async function openTrip(id) {
     // Kategorien + Subkats
     const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
 
-    setHeader(' ', true);
+    setHeader(curTrip?.name || '', true);
     document.getElementById('tName').textContent  = curTrip.name;
     document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
 
@@ -2871,7 +2870,7 @@ async function saveNewTodoRow() {
 let allGeneralTodosCache = null;
 
 async function openGeneralTodos() {
-  show('sGeneralTodos'); setHeader('ToDos', true);
+  show('sGeneralTodos'); setHeader('✅ ToDos', true);
   document.getElementById('generalTodoSearch').value = '';
 
   document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade ToDos…</span></div>';
@@ -3166,7 +3165,7 @@ let allSubsCache  = null;
 let allTripsCache = null;
 
 async function openItemsManager() {
-  show('sItems'); setHeader('Items verwalten', true);
+  show('sItems'); setHeader(lang==='en' ? '📦 Items' : '📦 Items verwalten', true);
   document.getElementById('itemSearch').value = '';
 
   if (!allItemsCache) {
@@ -3412,37 +3411,31 @@ function setHeader(title, back) {
   const header  = document.getElementById('appHeader');
   const backBtn = document.getElementById('backBtn');
   const nameEl  = document.getElementById('heroUserName');
-  const hTitle  = document.getElementById('hTitle');
   const logout  = document.getElementById('logoutBtn');
 
-  // Auth-Screens: Header komplett ausblenden
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
-  if (isAuthScreen) { header.style.display = 'none'; setSubHeader(null, false); return; }
+  if (isAuthScreen) { header.style.display = 'none'; setSubHeader(null); return; }
 
-  // Dunkler Header: immer gleich — Name links, Fahnen Mitte, Abmelden rechts
-  header.style.display  = 'flex';
+  header.style.display = 'flex';
   nameEl.style.display  = currentUser ? 'block' : 'none';
   logout.style.display  = currentUser ? 'block' : 'none';
-  backBtn.style.display = 'none';
-  hTitle.style.display  = 'none';
+  backBtn.style.display = back ? 'flex' : 'none';
 
-  // Sub-Header: Zurück + Titel im helleren Bereich
-  setSubHeader(title, back);
+  setSubHeader(title);
 }
 
-function setSubHeader(title, back) {
+function setSubHeader(title) {
   let el = document.getElementById('subHeader');
   if (!el) {
     el = document.createElement('div');
     el.id = 'subHeader';
-    el.style.cssText = 'display:none;align-items:center;gap:12px;padding:10px 16px;background:#D4711A;position:sticky;top:56px;z-index:99;box-shadow:0 2px 8px rgba(200,90,0,0.2)';
+    el.style.cssText = 'display:none;align-items:center;justify-content:center;padding:10px 16px;background:#D4711A;position:sticky;top:56px;z-index:99';
     document.getElementById('appHeader').after(el);
   }
-  if (!title) { el.style.display = 'none'; return; }
+  if (!title || title.trim() === '') { el.style.display = 'none'; return; }
   el.style.display = 'flex';
-  el.style.justifyContent = 'center';
-  el.innerHTML = `<button onclick="goHome()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:7px 20px;font-size:14px;font-weight:600;cursor:pointer">← ${lang==='en'?'Back':'Zurück'}</button>`;
+  el.innerHTML = `<span style="color:#fff;font-weight:700;font-size:15px;text-align:center">${title}</span>`;
 }
 function showTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
