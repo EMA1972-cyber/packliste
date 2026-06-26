@@ -634,8 +634,8 @@ body {
       <button class="act-btn" onclick="setType('urlaub','kultur',this)"><span class="ai">🎭</span><span class="al" data-i18n="eventCulture">Kultur</span></button>
       <button class="act-btn" onclick="setType('urlaub','sport',this)"><span class="ai">⚽</span><span class="al" data-i18n="eventSport">Sportevent</span></button>
       <button class="act-btn" onclick="setType('urlaub','familie',this)"><span class="ai">👨‍👩‍👧</span><span class="al" data-i18n="eventFamily">Familie & Freunde</span></button>
-      <button class="act-btn" onclick="setType('urlaub','medizin',this)"><span class="ai">🏥</span><span class="al" data-i18n="eventMedical">Med. Termin</span></button>
-      <button class="act-btn" onclick="setType('business','weiterbildung',this)"><span class="ai">🎓</span><span class="al" data-i18n="eventEducation">Weiterbildung</span></button>
+      <button class="act-btn" onclick="setType('urlaub','bikepacking',this)"><span class="ai">🚴</span><span class="al" data-i18n="eventBike">Bikepacking</span></button>
+      <button class="act-btn" onclick="setType('business','bildung',this)"><span class="ai">🎓</span><span class="al" data-i18n="eventEducation">Bildung</span></button>
     </div>
   </div>
 
@@ -919,7 +919,8 @@ const TRANSLATIONS = {
     eventSport: 'Sportevent',
     eventFamily: 'Familie & Freunde',
     eventMedical: 'Med. Termin',
-    eventEducation: 'Weiterbildung',
+    eventEducation: 'Bildung',
+    eventBike: 'Bikepacking',
     wizQ3: 'Ist Bikepacking dabei?',
     bikeYes: 'Ja, Bikepacking!',
     bikeYesSub: 'Packliste nach Taschen',
@@ -1064,7 +1065,8 @@ const TRANSLATIONS = {
     eventSport: 'Sports event',
     eventFamily: 'Family & Friends',
     eventMedical: 'Medical',
-    eventEducation: 'Training',
+    eventEducation: 'Education',
+    eventBike: 'Bikepacking',
     wizQ3: 'Is bikepacking involved?',
     bikeYes: 'Yes, bikepacking!',
     bikeYesSub: 'Packing list by bags',
@@ -1720,8 +1722,8 @@ function tripCard(trip) {
   const pctP = trip._ja       ? Math.round(trip._packed  / trip._ja       * 100) : 0;
   const pctT = trip._todoTotal ? Math.round(trip._todoDone / trip._todoTotal * 100) : 100;
   const pct  = (pctV === 100 && pctP === 100 && pctT === 100) ? 100 : Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
-  const eventIcons = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', medizin:'🏥', weiterbildung:'🎓' };
-  const icon = trip.is_bikepacking ? '🚴' : (eventIcons[trip.event_type] || eventIcons[trip.trip_type] || '🏖️');
+  const eventIcons = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', bikepacking:'🚴', bildung:'🎓' };
+  const icon = (trip.is_bikepacking || trip.event_type === 'bikepacking') ? '🚴' : (eventIcons[trip.event_type] || eventIcons[trip.trip_type] || '🏖️');
   const nights = calcNights(trip.date_from, trip.date_to);
   const isDone = trip.status === 'done';
   return `<div class="trip-card${isDone?' done':''}" style="position:relative${isDone?';opacity:0.6;filter:grayscale(0.3)':''}">
@@ -1751,11 +1753,11 @@ async function editTripMeta(id) {
   const trip = allTripsCache.find(x => x.id === id);
   if (!trip) return;
 
-  const eventIcons3 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', medizin:'🏥', weiterbildung:'🎓' };
+  const eventIcons3 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', bikepacking:'🚴', bildung:'🎓' };
   const eventOptions = [
     ['urlaub','🏖️ Urlaub'], ['business','💼 Business'], ['konzert','🎸 Konzert'],
     ['kultur','🎭 Kultur'], ['sport','⚽ Sportevent'], ['familie','👨‍👩‍👧 Familie & Freunde'],
-    ['medizin','🏥 Med. Termin'], ['weiterbildung','🎓 Weiterbildung']
+    ['bikepacking','🚴 Bikepacking'], ['bildung','🎓 Bildung']
   ].map(([v,l]) => `<option value="${v}"${(trip.event_type||trip.trip_type)===v?' selected':''}>${l}</option>`).join('');
 
   const html = `<div id="editTripModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
@@ -1799,7 +1801,7 @@ async function saveTripMeta(id) {
   const dateTo    = document.getElementById('etTo').value;
   const eventType = document.getElementById('etEvent').value;
   const notes     = document.getElementById('etNotes').value.trim();
-  const tripTypeMap = { urlaub:'urlaub', business:'business', konzert:'urlaub', kultur:'urlaub', sport:'urlaub', familie:'urlaub', medizin:'urlaub', weiterbildung:'business' };
+  const tripTypeMap = { urlaub:'urlaub', business:'business', konzert:'urlaub', kultur:'urlaub', sport:'urlaub', familie:'urlaub', bikepacking:'urlaub', bildung:'business' };
   const tripType  = tripTypeMap[eventType] || 'urlaub';
   if (!name || !dest || !dateFrom || !dateTo) { alert('Bitte alle Pflichtfelder ausfüllen.'); return; }
   try {
@@ -1861,10 +1863,10 @@ function startWizard() {
 
 function getSteps() {
   let s = ['ws1','ws2'];
-  if (wiz.type === 'urlaub' || !wiz.type) {
-    s.push(wiz.bike ? 'ws3b' : 'ws3');
-    if (!wiz.bike) s.push('ws4');
-  }
+  // ws3 (Bikepacking) und ws3b (Solo/Duo) entfallen —
+  // Bikepacking wird direkt in Schritt 2 gewählt
+  if (wiz.bike) s.push('ws3b'); // Solo/Duo nur bei Bikepacking noch relevant
+  if (!wiz.bike && (wiz.type === 'urlaub' || !wiz.type)) s.push('ws4');
   s.push('ws5');
   return s;
 }
@@ -1913,6 +1915,7 @@ function wizNext() {
 function setType(tripType, eventType, btn) {
   wiz.type  = tripType;
   wiz.event = eventType;
+  wiz.bike  = eventType === 'bikepacking';
   document.querySelectorAll('#typeGrid .act-btn').forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
   setTimeout(wizNext, 280);
@@ -2114,7 +2117,7 @@ function updateSummary() {
   const nights = calcNights(wiz.from, wiz.to);
   const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',sonstiger_sport:'🏓'};
   const acts = wiz.acts.map(a => icons[a]||a).join(' ');
-  const eventIcons2 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', medizin:'🏥', weiterbildung:'🎓' };
+  const eventIcons2 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', bikepacking:'🚴', bildung:'🎓' };
   const type = (eventIcons2[wiz.event] || '🏖️') + ' ' + (wiz.event || wiz.type || 'Urlaub');
   document.getElementById('wSumText').innerHTML =
     `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} Nächte<br>${type} · ${wiz.abroad?'✈️ Ausland':'🏠 Inland'}${acts?' · '+acts:''}`;
