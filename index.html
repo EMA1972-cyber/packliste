@@ -93,7 +93,7 @@ body {
 .home-hero {
   background: linear-gradient(155deg, #E8821A 0%, #D4700A 60%, #C85A00 100%);
   color: white;
-  padding: 16px 20px 20px;
+  padding: 16px 20px 24px;
   text-align: center;
   position: sticky;
   top: 44px;
@@ -426,6 +426,7 @@ body {
 <div class="home-hero" id="globalHero" style="display:none">
   <span class="hero-icon">🧳</span>
   <h2 id="homeTitle">Reiseplaner</h2>
+  <div id="heroContext" style="font-size:12px;font-weight:700;opacity:0.85;margin-top:6px;letter-spacing:0.1em;text-transform:uppercase"></div>
 </div>
 
 <div class="screen active" id="sLogin">
@@ -1610,6 +1611,8 @@ async function goHome() {
   }
   show('sHome'); setHeader(null, false);
   setSubHeader(null);
+  const ctx = document.getElementById('heroContext');
+  if (ctx) ctx.textContent = lang === 'en' ? 'MY OVERVIEW' : 'MEINE ÜBERSICHT';
   await refreshTripsList();
   refreshItemsCount();
   refreshGeneralTodosCount();
@@ -1645,7 +1648,7 @@ async function refreshGeneralTodosCount() {
 }
 
 function openTripsList() {
-  show('sTripsList'); setHeader('🌍 ' + (lang==='en' ? 'Current Trips' : 'Aktuelle Reisen'), true);
+  show('sTripsList'); setHeader(lang==='en' ? 'My Trips' : 'Meine Reisen', true);
   document.getElementById('tripsListBackBar').innerHTML = backBar(lang==='en'?'My Trips':'Meine Reisen');
   const ts = document.getElementById('tripSearch');
   if (ts) ts.value = '';
@@ -1854,7 +1857,7 @@ function startWizard() {
   document.getElementById('climCard').style.display='none';
   document.getElementById('destAlts').style.display='none';
   document.getElementById('destAlts').innerHTML='';
-  show('sWizard'); setHeader(lang==='en' ? '✏️ New Trip' : '✏️ Neue Reise', true);
+  show('sWizard'); setHeader(lang==='en' ? 'New Trip' : 'Neue Reise', true);
   showStep(1);
 }
 
@@ -2877,7 +2880,7 @@ async function saveNewTodoRow() {
 let allGeneralTodosCache = null;
 
 async function openGeneralTodos() {
-  show('sGeneralTodos'); setHeader('✅ ToDos', true);
+  show('sGeneralTodos'); setHeader(lang==='en' ? 'My To-Dos' : 'Meine ToDos', true);
   document.getElementById('todosBackBar').innerHTML = backBar('ToDos');
   document.getElementById('generalTodoSearch').value = '';
 
@@ -3173,7 +3176,7 @@ let allSubsCache  = null;
 let allTripsCache = null;
 
 async function openItemsManager() {
-  show('sItems'); setHeader(lang==='en' ? '📦 Items' : '📦 Items verwalten', true);
+  show('sItems'); setHeader(lang==='en' ? 'My Items' : 'Meine Items', true);
   document.getElementById('itemsBackBar').innerHTML = backBar(lang==='en'?'Items':'Items verwalten');
   document.getElementById('itemSearch').value = '';
 
@@ -3421,6 +3424,7 @@ function setHeader(title, back) {
   const logout  = document.getElementById('logoutBtn');
   const backBtn = document.getElementById('backBtn');
   const hero    = document.getElementById('globalHero');
+  const ctx     = document.getElementById('heroContext');
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
   if (isAuthScreen) {
@@ -3433,6 +3437,7 @@ function setHeader(title, back) {
   backBtn.style.display = back ? 'flex' : 'none';
   backBtn.textContent   = lang === 'en' ? '← Back' : '← Zurück';
   if (hero) hero.style.display = 'block';
+  if (ctx) ctx.textContent = title || '';
   const sub = document.getElementById('subHeader');
   if (sub) sub.style.display = 'none';
 }
