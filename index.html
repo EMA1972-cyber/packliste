@@ -397,35 +397,39 @@ body {
 .spacer { height: 24px; }
 </style>
 </head>
-<!-- Sprach-Fahnen: immer oben rechts sichtbar -->
-<div style="position:fixed;top:10px;right:12px;z-index:10000;display:flex;gap:6px;align-items:center">
-  <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-    style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s">🇩🇪</button>
-  <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
-    style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
-</div>
-
 <body>
 
-<div class="app-header" style="display:none">
-  <button class="back-btn" id="backBtn" onclick="goHome()" data-i18n="back">← Zurück</button>
-  <h1 id="hTitle">🧳 Reiseplaner</h1>
-  <div id="homeHeaderBar" style="display:none;align-items:center;justify-content:space-between;width:100%">
-    <span class="home-header-name" id="heroUserName"></span>
-    <button class="home-header-logout" onclick="doLogout()" data-i18n="logout">Abmelden</button>
+<div class="app-header" id="appHeader" style="display:none">
+  <!-- Links: Zurück-Button ODER Name -->
+  <div style="flex:1;display:flex;align-items:center;min-width:0">
+    <button class="back-btn" id="backBtn" onclick="goHome()" style="display:none" data-i18n="back">← Zurück</button>
+    <span class="home-header-name" id="heroUserName" style="display:none"></span>
   </div>
-  <button id="logoutBtn" onclick="doLogout()" style="display:none" title="Abmelden"></button>
+  <!-- Mitte: Titel ODER Fahnen -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
+    <h1 id="hTitle" style="display:none;margin:0;font-size:1rem;font-weight:600;color:#fff">🧳</h1>
+    <div id="headerFlags" style="display:flex;gap:8px;align-items:center">
+      <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
+        style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s">🇩🇪</button>
+      <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
+        style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+    </div>
+  </div>
+  <!-- Rechts: Abmelden -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:flex-end">
+    <button class="home-header-logout" id="logoutBtn" onclick="doLogout()" style="display:none" data-i18n="logout">Abmelden</button>
+  </div>
 </div>
 
 <div class="screen active" id="sLogin">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
-    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
+    <div style="display:flex;gap:12px;margin-bottom:12px">
       <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
         style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s">🇩🇪</button>
-      <span style="font-size:72px">🧳</span>
       <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
         style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
     </div>
+    <div style="font-size:72px;margin-bottom:16px">🧳</div>
     <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 6px" data-i18n="appName">Reiseplaner</h1>
     <p style="color:var(--muted);font-size:14px;margin:0 0 40px" data-i18n="appTagline">Nie wieder etwas vergessen</p>
 
@@ -525,13 +529,7 @@ body {
 
 <div class="screen" id="sHome">
   <div class="home-hero">
-    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px">
-      <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-        style="background:none;border:none;cursor:pointer;font-size:24px;padding:4px;transition:all 0.2s">🇩🇪</button>
-      <span class="hero-icon" style="margin-bottom:0">🧳</span>
-      <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
-        style="background:none;border:none;cursor:pointer;font-size:24px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
-    </div>
+    <span class="hero-icon">🧳</span>
     <h2 id="homeTitle">Reiseplaner</h2>
     <p data-i18n="neverForget">Nie wieder etwas vergessen</p>
   </div>
@@ -3411,36 +3409,41 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 function setHeader(title, back) {
-  const header  = document.querySelector('.app-header');
-  const homeBar = document.getElementById('homeHeaderBar');
-  const hTitle  = document.getElementById('hTitle');
-  const backBtn = document.getElementById('backBtn');
+  const header   = document.getElementById('appHeader');
+  const backBtn  = document.getElementById('backBtn');
+  const nameEl   = document.getElementById('heroUserName');
+  const hTitle   = document.getElementById('hTitle');
+  const flags    = document.getElementById('headerFlags');
+  const logout   = document.getElementById('logoutBtn');
 
-  // Aktiven Screen prüfen
+  // Auth-Screens: Header ausblenden
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
+  if (isAuthScreen) { header.style.display = 'none'; return; }
 
-  if (isAuthScreen) {
-    // Login/Register/Onboarding: Header komplett ausblenden
-    header.style.display = 'none';
-    return;
-  }
+  header.style.display = 'flex';
 
+  // Links: Home → Name, andere Screens → Zurück
   if (title === null) {
-    // Home: User-Leiste anzeigen, Titel ausblenden
-    header.style.display = 'flex';
-    hTitle.style.display  = 'none';
     backBtn.style.display = 'none';
-    homeBar.style.display = currentUser ? 'flex' : 'none';
-    return;
+    nameEl.style.display  = currentUser ? 'block' : 'none';
+  } else {
+    backBtn.style.display = back ? 'block' : 'none';
+    nameEl.style.display  = 'none';
   }
 
-  // Andere Screens: Titel anzeigen, User-Leiste ausblenden
-  header.style.display  = 'flex';
-  hTitle.style.display  = 'block';
-  homeBar.style.display = 'none';
-  hTitle.textContent    = title;
-  backBtn.style.display = back ? 'block' : 'none';
+  // Mitte: Home → Fahnen, andere Screens → Titel + Fahnen klein
+  if (title === null) {
+    hTitle.style.display = 'none';
+    flags.style.display  = 'flex';
+  } else {
+    hTitle.style.display    = 'block';
+    hTitle.textContent      = title;
+    flags.style.display     = 'flex'; // Fahnen immer sichtbar
+  }
+
+  // Rechts: immer Abmelden wenn eingeloggt
+  logout.style.display = currentUser ? 'block' : 'none';
 }
 function showTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
