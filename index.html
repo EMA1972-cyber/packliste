@@ -627,15 +627,15 @@ body {
   <div class="wiz-step" id="ws2">
     <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 2 <span data-i18n="of">von</span> 5</div>
     <div class="step-q" data-i18n="wizQ2">Was für eine Reise ist das?</div>
-    <div class="choices">
-      <button class="choice" onclick="setType('urlaub',this)">
-        <span class="choice-ico">🏖️</span>
-        <div class="choice-txt"><strong data-i18n="vacation">Urlaub</strong><small data-i18n="vacationSub">Erholung, Sport, Abenteuer</small></div>
-      </button>
-      <button class="choice" onclick="setType('business',this)">
-        <span class="choice-ico">💼</span>
-        <div class="choice-txt"><strong data-i18n="business">Business Trip</strong><small data-i18n="businessSub">Meetings, Konferenzen, Arbeit</small></div>
-      </button>
+    <div class="acts-grid" id="typeGrid">
+      <button class="act-btn" onclick="setType('urlaub','urlaub',this)"><span class="ai">🏖️</span><span class="al" data-i18n="vacation">Urlaub</span></button>
+      <button class="act-btn" onclick="setType('business','business',this)"><span class="ai">💼</span><span class="al" data-i18n="business">Business</span></button>
+      <button class="act-btn" onclick="setType('urlaub','konzert',this)"><span class="ai">🎸</span><span class="al" data-i18n="eventConcert">Konzert</span></button>
+      <button class="act-btn" onclick="setType('urlaub','kultur',this)"><span class="ai">🎭</span><span class="al" data-i18n="eventCulture">Kultur</span></button>
+      <button class="act-btn" onclick="setType('urlaub','sport',this)"><span class="ai">⚽</span><span class="al" data-i18n="eventSport">Sportevent</span></button>
+      <button class="act-btn" onclick="setType('urlaub','familie',this)"><span class="ai">👨‍👩‍👧</span><span class="al" data-i18n="eventFamily">Familie & Freunde</span></button>
+      <button class="act-btn" onclick="setType('urlaub','medizin',this)"><span class="ai">🏥</span><span class="al" data-i18n="eventMedical">Med. Termin</span></button>
+      <button class="act-btn" onclick="setType('business','weiterbildung',this)"><span class="ai">🎓</span><span class="al" data-i18n="eventEducation">Weiterbildung</span></button>
     </div>
   </div>
 
@@ -913,9 +913,13 @@ const TRANSLATIONS = {
     destPlaceholder: 'z.B. Hurghada, Berlin, Kapstadt …',
     wizQ2: 'Was für eine Reise ist das?',
     vacation: 'Urlaub',
-    vacationSub: 'Erholung, Sport, Abenteuer',
-    business: 'Business Trip',
-    businessSub: 'Meetings, Konferenzen, Arbeit',
+    business: 'Business',
+    eventConcert: 'Konzert',
+    eventCulture: 'Kultur',
+    eventSport: 'Sportevent',
+    eventFamily: 'Familie & Freunde',
+    eventMedical: 'Med. Termin',
+    eventEducation: 'Weiterbildung',
     wizQ3: 'Ist Bikepacking dabei?',
     bikeYes: 'Ja, Bikepacking!',
     bikeYesSub: 'Packliste nach Taschen',
@@ -1054,9 +1058,13 @@ const TRANSLATIONS = {
     destPlaceholder: 'e.g. Hurghada, Berlin, Cape Town …',
     wizQ2: 'What kind of trip is this?',
     vacation: 'Vacation',
-    vacationSub: 'Relaxation, sports, adventure',
-    business: 'Business Trip',
-    businessSub: 'Meetings, conferences, work',
+    business: 'Business',
+    eventConcert: 'Concert',
+    eventCulture: 'Culture',
+    eventSport: 'Sports event',
+    eventFamily: 'Family & Friends',
+    eventMedical: 'Medical',
+    eventEducation: 'Training',
     wizQ3: 'Is bikepacking involved?',
     bikeYes: 'Yes, bikepacking!',
     bikeYesSub: 'Packing list by bags',
@@ -1712,7 +1720,8 @@ function tripCard(trip) {
   const pctP = trip._ja       ? Math.round(trip._packed  / trip._ja       * 100) : 0;
   const pctT = trip._todoTotal ? Math.round(trip._todoDone / trip._todoTotal * 100) : 100;
   const pct  = (pctV === 100 && pctP === 100 && pctT === 100) ? 100 : Math.round(pctV * 0.2 + pctP * 0.6 + pctT * 0.2);
-  const icon = trip.is_bikepacking ? '🚴' : trip.trip_type === 'business' ? '💼' : '🏖️';
+  const eventIcons = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', medizin:'🏥', weiterbildung:'🎓' };
+  const icon = trip.is_bikepacking ? '🚴' : (eventIcons[trip.event_type] || eventIcons[trip.trip_type] || '🏖️');
   const nights = calcNights(trip.date_from, trip.date_to);
   const isDone = trip.status === 'done';
   return `<div class="trip-card${isDone?' done':''}" style="position:relative${isDone?';opacity:0.6;filter:grayscale(0.3)':''}">
@@ -1739,30 +1748,40 @@ function tripCard(trip) {
 }
 
 async function editTripMeta(id) {
-  const t = allTripsCache.find(x => x.id === id);
-  if (!t) return;
+  const trip = allTripsCache.find(x => x.id === id);
+  if (!trip) return;
+
+  const eventIcons3 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', medizin:'🏥', weiterbildung:'🎓' };
+  const eventOptions = [
+    ['urlaub','🏖️ Urlaub'], ['business','💼 Business'], ['konzert','🎸 Konzert'],
+    ['kultur','🎭 Kultur'], ['sport','⚽ Sportevent'], ['familie','👨‍👩‍👧 Familie & Freunde'],
+    ['medizin','🏥 Med. Termin'], ['weiterbildung','🎓 Weiterbildung']
+  ].map(([v,l]) => `<option value="${v}"${(trip.event_type||trip.trip_type)===v?' selected':''}>${l}</option>`).join('');
 
   const html = `<div id="editTripModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
     <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto">
-      <h3 style="margin:0 0 20px;font-family:'DM Serif Display',serif">✏️ Reise bearbeiten</h3>
-      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Name
-        <input id="etName" class="inp-field" style="margin-top:4px;width:100%" value="${t.name||''}">
+      <h3 style="margin:0 0 20px;font-family:'DM Serif Display',serif">${t('editTripTitle')}</h3>
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">${t('editTripName')}
+        <input id="etName" class="inp-field" style="margin-top:4px;width:100%" value="${trip.name||''}">
       </label>
-      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Ziel
-        <input id="etDest" class="inp-field" style="margin-top:4px;width:100%" value="${t.destination||''}">
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">${t('editTripDest')}
+        <input id="etDest" class="inp-field" style="margin-top:4px;width:100%" value="${trip.destination||''}">
       </label>
-      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Von
-        <input id="etFrom" class="inp-field" type="date" style="margin-top:4px;width:100%" value="${t.date_from||''}">
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">${t('editTripFrom')}
+        <input id="etFrom" class="inp-field" type="date" style="margin-top:4px;width:100%" value="${trip.date_from||''}">
       </label>
-      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Bis
-        <input id="etTo" class="inp-field" type="date" style="margin-top:4px;width:100%" value="${t.date_to||''}">
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">${t('editTripTo')}
+        <input id="etTo" class="inp-field" type="date" style="margin-top:4px;width:100%" value="${trip.date_to||''}">
       </label>
-      <label style="display:block;margin-bottom:20px;font-size:14px;font-weight:600">Notiz
-        <input id="etNotes" class="inp-field" style="margin-top:4px;width:100%" value="${t.notes||''}">
+      <label style="display:block;margin-bottom:12px;font-size:14px;font-weight:600">Anlass / Art
+        <select id="etEvent" class="inp-field" style="margin-top:4px;width:100%">${eventOptions}</select>
+      </label>
+      <label style="display:block;margin-bottom:20px;font-size:14px;font-weight:600">${t('editTripNotes')}
+        <input id="etNotes" class="inp-field" style="margin-top:4px;width:100%" value="${trip.notes||''}">
       </label>
       <div style="display:flex;gap:12px">
-        <button onclick="closeEditTripModal()" class="btn-sec" style="flex:1">Abbrechen</button>
-        <button onclick="saveTripMeta('${id}')" class="btn-pri" style="flex:2">Speichern</button>
+        <button onclick="closeEditTripModal()" class="btn-sec" style="flex:1">${t('cancel')}</button>
+        <button onclick="saveTripMeta('${id}')" class="btn-pri" style="flex:2">${t('saveTripBtn')}</button>
       </div>
     </div>
   </div>`;
@@ -1774,18 +1793,20 @@ function closeEditTripModal() {
 }
 
 async function saveTripMeta(id) {
-  const name     = document.getElementById('etName').value.trim();
-  const dest     = document.getElementById('etDest').value.trim();
-  const dateFrom = document.getElementById('etFrom').value;
-  const dateTo   = document.getElementById('etTo').value;
-  const notes    = document.getElementById('etNotes').value.trim();
+  const name      = document.getElementById('etName').value.trim();
+  const dest      = document.getElementById('etDest').value.trim();
+  const dateFrom  = document.getElementById('etFrom').value;
+  const dateTo    = document.getElementById('etTo').value;
+  const eventType = document.getElementById('etEvent').value;
+  const notes     = document.getElementById('etNotes').value.trim();
+  const tripTypeMap = { urlaub:'urlaub', business:'business', konzert:'urlaub', kultur:'urlaub', sport:'urlaub', familie:'urlaub', medizin:'urlaub', weiterbildung:'business' };
+  const tripType  = tripTypeMap[eventType] || 'urlaub';
   if (!name || !dest || !dateFrom || !dateTo) { alert('Bitte alle Pflichtfelder ausfüllen.'); return; }
   try {
-    await sbPatch('trips', { id: `eq.${id}` }, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes });
+    await sbPatch('trips', { id: `eq.${id}` }, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes, event_type: eventType, trip_type: tripType });
     closeEditTripModal();
-    // Cache invalidieren und neu laden
-    const t = allTripsCache.find(x => x.id === id);
-    if (t) { Object.assign(t, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes }); delete t._ja; }
+    const trip = allTripsCache.find(x => x.id === id);
+    if (trip) { Object.assign(trip, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes, event_type: eventType, trip_type: tripType }); delete trip._ja; }
     await refreshTripsList();
   } catch(e) { alert('Fehler: ' + e.message); }
 }
@@ -1889,10 +1910,12 @@ function wizNext() {
   showStep(wiz.step + 1);
 }
 
-function setType(t, btn) {
-  wiz.type = t;
-  document.querySelectorAll('#ws2 .choice').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel'); updateNextBtn();
+function setType(tripType, eventType, btn) {
+  wiz.type  = tripType;
+  wiz.event = eventType;
+  document.querySelectorAll('#typeGrid .act-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  setTimeout(wizNext, 280);
 }
 function setBike(v, btn) {
   wiz.bike = v;
@@ -2091,7 +2114,8 @@ function updateSummary() {
   const nights = calcNights(wiz.from, wiz.to);
   const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',sonstiger_sport:'🏓'};
   const acts = wiz.acts.map(a => icons[a]||a).join(' ');
-  const type = wiz.type==='business'?'💼 Business':'🏖️ Urlaub';
+  const eventIcons2 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', medizin:'🏥', weiterbildung:'🎓' };
+  const type = (eventIcons2[wiz.event] || '🏖️') + ' ' + (wiz.event || wiz.type || 'Urlaub');
   document.getElementById('wSumText').innerHTML =
     `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} Nächte<br>${type} · ${wiz.abroad?'✈️ Ausland':'🏠 Inland'}${acts?' · '+acts:''}`;
 }
@@ -2108,7 +2132,7 @@ async function createTrip() {
     const [trip] = await sbPost('trips', {
       name, destination, destination_country: wiz.country,
       date_from: wiz.from, date_to: wiz.to,
-      trip_type: wiz.type, is_abroad: wiz.abroad,
+      trip_type: wiz.type, event_type: wiz.event || wiz.type, is_abroad: wiz.abroad,
       is_bikepacking: wiz.bike, bike_mode: wiz.mode,
       activities: wiz.acts, climate: wiz.climate, avg_temp: wiz.temp,
       notes
