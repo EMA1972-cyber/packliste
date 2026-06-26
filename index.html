@@ -404,7 +404,9 @@ body {
 <body>
 
 <div class="app-header" id="appHeader" style="display:none">
-  <div style="flex:1"></div>
+  <div style="flex:1;display:flex;align-items:center">
+    <button id="backBtn" onclick="goHome()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
+  </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
     <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
       style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s">🇩🇪</button>
@@ -418,7 +420,6 @@ body {
   </div>
   <h1 id="hTitle" style="display:none"></h1>
   <span id="heroUserName" style="display:none"></span>
-  <button id="backBtn" style="display:none"></button>
 </div>
 
 <!-- Globaler Hero: immer sichtbar auf allen Screens -->
@@ -570,7 +571,6 @@ body {
 
 <!-- AKTUELLE REISEN -->
 <div class="screen" id="sTripsList">
-  <div id="tripsListBackBar"></div>
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="startWizard()" style="width:100%;padding:13px" data-i18n="newTrip">✏️ NEUE REISE</button>
   </div>
@@ -584,7 +584,6 @@ body {
 
 <!-- ITEMS VERWALTEN -->
 <div class="screen" id="sItems">
-  <div id="itemsBackBar"></div>
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="openItemModal()" style="width:100%;padding:13px" data-i18n="newItem">✏️ NEUES ITEM</button>
   </div>
@@ -596,7 +595,6 @@ body {
 
 <!-- ALLGEMEINE TODOS (nicht reisegebunden) -->
 <div class="screen" id="sGeneralTodos">
-  <div id="todosBackBar"></div>
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="openGeneralTodoForm()" style="width:100%;padding:13px" data-i18n="newTodo">✏️ NEUES TODO</button>
   </div>
@@ -709,9 +707,6 @@ body {
 <!-- TRIP VIEW -->
 <div class="screen" id="sTrip">
   <div class="trip-hdr">
-    <div style="margin-bottom:10px">
-      <button id="tripBackBtn" onclick="goHome()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
-    </div>
     <h2 id="tName">–</h2>
     <div class="th-meta" id="tMeta">–</div>
     <div class="pack-prog">
@@ -3422,9 +3417,10 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 function setHeader(title, back) {
-  const header = document.getElementById('appHeader');
-  const logout = document.getElementById('logoutBtn');
-  const hero   = document.getElementById('globalHero');
+  const header  = document.getElementById('appHeader');
+  const logout  = document.getElementById('logoutBtn');
+  const backBtn = document.getElementById('backBtn');
+  const hero    = document.getElementById('globalHero');
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
   if (isAuthScreen) {
@@ -3432,8 +3428,10 @@ function setHeader(title, back) {
     if (hero) hero.style.display = 'none';
     return;
   }
-  header.style.display = 'flex';
-  logout.style.display = currentUser ? 'flex' : 'none';
+  header.style.display  = 'flex';
+  logout.style.display  = currentUser ? 'flex' : 'none';
+  backBtn.style.display = back ? 'flex' : 'none';
+  backBtn.textContent   = lang === 'en' ? '← Back' : '← Zurück';
   if (hero) hero.style.display = 'block';
   const sub = document.getElementById('subHeader');
   if (sub) sub.style.display = 'none';
