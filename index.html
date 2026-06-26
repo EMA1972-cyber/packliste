@@ -3409,41 +3409,42 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 function setHeader(title, back) {
-  const header   = document.getElementById('appHeader');
-  const backBtn  = document.getElementById('backBtn');
-  const nameEl   = document.getElementById('heroUserName');
-  const hTitle   = document.getElementById('hTitle');
-  const flags    = document.getElementById('headerFlags');
-  const logout   = document.getElementById('logoutBtn');
+  const header  = document.getElementById('appHeader');
+  const backBtn = document.getElementById('backBtn');
+  const nameEl  = document.getElementById('heroUserName');
+  const hTitle  = document.getElementById('hTitle');
+  const logout  = document.getElementById('logoutBtn');
 
-  // Auth-Screens: Header ausblenden
+  // Auth-Screens: Header komplett ausblenden
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
-  if (isAuthScreen) { header.style.display = 'none'; return; }
+  if (isAuthScreen) { header.style.display = 'none'; setSubHeader(null, false); return; }
 
-  header.style.display = 'flex';
+  // Dunkler Header: immer gleich — Name links, Fahnen Mitte, Abmelden rechts
+  header.style.display  = 'flex';
+  nameEl.style.display  = currentUser ? 'block' : 'none';
+  logout.style.display  = currentUser ? 'block' : 'none';
+  backBtn.style.display = 'none';
+  hTitle.style.display  = 'none';
 
-  // Links: Home → Name, andere Screens → Zurück
-  if (title === null) {
-    backBtn.style.display = 'none';
-    nameEl.style.display  = currentUser ? 'block' : 'none';
-  } else {
-    backBtn.style.display = back ? 'block' : 'none';
-    nameEl.style.display  = 'none';
+  // Sub-Header: Zurück + Titel im helleren Bereich
+  setSubHeader(title, back);
+}
+
+function setSubHeader(title, back) {
+  let el = document.getElementById('subHeader');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'subHeader';
+    el.style.cssText = 'display:none;align-items:center;gap:12px;padding:10px 16px;background:#D4711A;position:sticky;top:56px;z-index:99;box-shadow:0 2px 8px rgba(200,90,0,0.2)';
+    document.getElementById('appHeader').after(el);
   }
-
-  // Mitte: Home → Fahnen, andere Screens → Titel + Fahnen klein
-  if (title === null) {
-    hTitle.style.display = 'none';
-    flags.style.display  = 'flex';
-  } else {
-    hTitle.style.display    = 'block';
-    hTitle.textContent      = title;
-    flags.style.display     = 'flex'; // Fahnen immer sichtbar
-  }
-
-  // Rechts: immer Abmelden wenn eingeloggt
-  logout.style.display = currentUser ? 'block' : 'none';
+  if (!title) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = `
+    ${back ? `<button onclick="goHome()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer">← ${lang==='en'?'Back':'Zurück'}</button>` : ''}
+    <span style="color:#fff;font-weight:700;font-size:15px;flex:1">${title}</span>
+  `;
 }
 function showTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
