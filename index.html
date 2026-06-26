@@ -93,11 +93,14 @@ body {
 .home-hero {
   background: linear-gradient(155deg, #E8821A 0%, #D4700A 60%, #C85A00 100%);
   color: white;
-  padding: 20px 20px 40px;
+  padding: 16px 20px 20px;
   text-align: center;
+  position: sticky;
+  top: 44px;
+  z-index: 89;
 }
-.hero-icon { font-size: 56px; margin-bottom: 8px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
-.home-hero h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; font-weight: 400; margin-bottom: 6px; }
+.hero-icon { font-size: 40px; margin-bottom: 4px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+.home-hero h2 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; font-weight: 400; margin-bottom: 0; }
 .home-hero p { opacity: .7; font-size: 14px; margin: 0; }
 
 /* User-Leiste im app-header (nur auf Home sichtbar) */
@@ -418,6 +421,12 @@ body {
   <button id="backBtn" style="display:none"></button>
 </div>
 
+<!-- Globaler Hero: immer sichtbar auf allen Screens -->
+<div class="home-hero" id="globalHero" style="display:none">
+  <span class="hero-icon">🧳</span>
+  <h2 id="homeTitle">Reiseplaner</h2>
+</div>
+
 <div class="screen active" id="sLogin">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
     <div style="display:flex;gap:12px;margin-bottom:12px">
@@ -525,10 +534,6 @@ body {
 </div>
 
 <div class="screen" id="sHome">
-  <div class="home-hero">
-    <span class="hero-icon" style="font-size:48px;margin-bottom:8px">🧳</span>
-    <h2 id="homeTitle" style="margin:0 0 4px">Reiseplaner</h2>
-  </div>
   <div class="manage-grid">
     <div class="manage-col">
       <div class="manage-row-top">
@@ -3419,12 +3424,17 @@ function show(id) {
 function setHeader(title, back) {
   const header = document.getElementById('appHeader');
   const logout = document.getElementById('logoutBtn');
+  const hero   = document.getElementById('globalHero');
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
-  if (isAuthScreen) { header.style.display = 'none'; return; }
+  if (isAuthScreen) {
+    header.style.display = 'none';
+    if (hero) hero.style.display = 'none';
+    return;
+  }
   header.style.display = 'flex';
   logout.style.display = currentUser ? 'flex' : 'none';
-  // Sub-Header ausblenden falls noch vorhanden
+  if (hero) hero.style.display = 'block';
   const sub = document.getElementById('subHeader');
   if (sub) sub.style.display = 'none';
 }
