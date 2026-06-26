@@ -401,25 +401,21 @@ body {
 <body>
 
 <div class="app-header" id="appHeader" style="display:none">
-  <!-- Links: Zurück -->
-  <div style="flex:1;display:flex;align-items:center">
-    <button id="backBtn" onclick="goHome()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;align-items:center;justify-content:center">←</button>
-  </div>
-  <!-- Mitte: Fahnen -->
+  <div style="flex:1"></div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
     <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
       style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s">🇩🇪</button>
     <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
       style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
   </div>
-  <!-- Rechts: Abmelden -->
   <div style="flex:1;display:flex;align-items:center;justify-content:flex-end">
-    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;gap:4px;align-items:center">
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;align-items:center;gap:4px">
       🔓 <span data-i18n="logout">Abmelden</span>
     </button>
   </div>
   <h1 id="hTitle" style="display:none"></h1>
   <span id="heroUserName" style="display:none"></span>
+  <button id="backBtn" style="display:none"></button>
 </div>
 
 <div class="screen active" id="sLogin">
@@ -530,7 +526,8 @@ body {
 
 <div class="screen" id="sHome">
   <div class="home-hero">
-    <h2 id="homeTitle">Reiseplaner</h2>
+    <span class="hero-icon" style="font-size:48px;margin-bottom:8px">🧳</span>
+    <h2 id="homeTitle" style="margin:0 0 4px">Reiseplaner</h2>
   </div>
   <div class="manage-grid">
     <div class="manage-col">
@@ -568,6 +565,7 @@ body {
 
 <!-- AKTUELLE REISEN -->
 <div class="screen" id="sTripsList">
+  <div id="tripsListBackBar"></div>
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="startWizard()" style="width:100%;padding:13px" data-i18n="newTrip">✏️ NEUE REISE</button>
   </div>
@@ -581,6 +579,7 @@ body {
 
 <!-- ITEMS VERWALTEN -->
 <div class="screen" id="sItems">
+  <div id="itemsBackBar"></div>
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="openItemModal()" style="width:100%;padding:13px" data-i18n="newItem">✏️ NEUES ITEM</button>
   </div>
@@ -592,6 +591,7 @@ body {
 
 <!-- ALLGEMEINE TODOS (nicht reisegebunden) -->
 <div class="screen" id="sGeneralTodos">
+  <div id="todosBackBar"></div>
   <div style="padding:16px 20px 0">
     <button class="manage-btn primary" onclick="openGeneralTodoForm()" style="width:100%;padding:13px" data-i18n="newTodo">✏️ NEUES TODO</button>
   </div>
@@ -704,6 +704,9 @@ body {
 <!-- TRIP VIEW -->
 <div class="screen" id="sTrip">
   <div class="trip-hdr">
+    <div style="margin-bottom:10px">
+      <button id="tripBackBtn" onclick="goHome()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
+    </div>
     <h2 id="tName">–</h2>
     <div class="th-meta" id="tMeta">–</div>
     <div class="pack-prog">
@@ -1643,6 +1646,7 @@ async function refreshGeneralTodosCount() {
 
 function openTripsList() {
   show('sTripsList'); setHeader('🌍 ' + (lang==='en' ? 'Current Trips' : 'Aktuelle Reisen'), true);
+  document.getElementById('tripsListBackBar').innerHTML = backBar(lang==='en'?'My Trips':'Meine Reisen');
   const ts = document.getElementById('tripSearch');
   if (ts) ts.value = '';
 }
@@ -2265,6 +2269,8 @@ async function openTrip(id) {
     const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
 
     setHeader(curTrip?.name || (lang==='en'?'Trip':'Reise'), true);
+    const tripBack = document.getElementById('tripBackBtn');
+    if (tripBack) tripBack.textContent = `← ${lang==='en'?'Back':'Zurück'}`;
     document.getElementById('tName').textContent  = curTrip.name;
     document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
 
@@ -2872,6 +2878,7 @@ let allGeneralTodosCache = null;
 
 async function openGeneralTodos() {
   show('sGeneralTodos'); setHeader('✅ ToDos', true);
+  document.getElementById('todosBackBar').innerHTML = backBar('ToDos');
   document.getElementById('generalTodoSearch').value = '';
 
   document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade ToDos…</span></div>';
@@ -3167,6 +3174,7 @@ let allTripsCache = null;
 
 async function openItemsManager() {
   show('sItems'); setHeader(lang==='en' ? '📦 Items' : '📦 Items verwalten', true);
+  document.getElementById('itemsBackBar').innerHTML = backBar(lang==='en'?'Items':'Items verwalten');
   document.getElementById('itemSearch').value = '';
 
   if (!allItemsCache) {
@@ -3409,34 +3417,26 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 function setHeader(title, back) {
-  const header  = document.getElementById('appHeader');
-  const backBtn = document.getElementById('backBtn');
-  const nameEl  = document.getElementById('heroUserName');
-  const logout  = document.getElementById('logoutBtn');
-
+  const header = document.getElementById('appHeader');
+  const logout = document.getElementById('logoutBtn');
   const activeScreen = document.querySelector('.screen.active')?.id || '';
   const isAuthScreen = ['sLogin','sRegister','sOnboarding','sOnboarding2'].includes(activeScreen);
-  if (isAuthScreen) { header.style.display = 'none'; setSubHeader(null); return; }
-
+  if (isAuthScreen) { header.style.display = 'none'; return; }
   header.style.display = 'flex';
-  nameEl.style.display  = 'none'; // Name ist jetzt im homeTitle, nicht im Header
-  logout.style.display  = currentUser ? 'flex' : 'none';
-  backBtn.style.display = back ? 'flex' : 'none';
-
-  setSubHeader(title);
+  logout.style.display = currentUser ? 'flex' : 'none';
+  // Sub-Header ausblenden falls noch vorhanden
+  const sub = document.getElementById('subHeader');
+  if (sub) sub.style.display = 'none';
 }
 
-function setSubHeader(title) {
-  let el = document.getElementById('subHeader');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'subHeader';
-    el.style.cssText = 'display:none;align-items:center;justify-content:center;padding:7px 16px;background:#D4711A;position:sticky;top:44px;z-index:99';
-    document.getElementById('appHeader').after(el);
-  }
-  if (!title || title.trim() === '') { el.style.display = 'none'; return; }
-  el.style.display = 'flex';
-  el.innerHTML = `<span style="color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px"><span style="font-size:16px">🧳</span>${title}</span>`;
+function setSubHeader(title) { /* nicht mehr verwendet */ }
+
+function backBar(label) {
+  // Zurück-Balken im helleren Orange direkt im Content-Bereich
+  return `<div style="background:#D4711A;padding:8px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:44px;z-index:90">
+    <button onclick="goHome()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer">← ${lang==='en'?'Back':'Zurück'}</button>
+    ${label ? `<span style="color:#fff;font-weight:700;font-size:14px">${label}</span>` : ''}
+  </div>`;
 }
 function showTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
