@@ -793,11 +793,11 @@ body {
   <div class="modal-sh" style="text-align:center">
     <div class="modal-bar"></div>
     <div style="font-size:40px;margin:8px 0 12px">👋</div>
-    <div class="modal-title" style="margin-bottom:6px">Abmelden?</div>
-    <p style="font-size:14px;color:var(--muted);margin:0 0 20px">Bis bald, <span id="mLogoutName"></span>!</p>
+    <div class="modal-title" style="margin-bottom:6px" data-i18n="logoutTitle">Abmelden?</div>
+    <p style="font-size:14px;color:var(--muted);margin:0 0 20px" id="logoutSubText">Bis bald, <span id="mLogoutName"></span>!</p>
     <div class="modal-btns">
-      <button class="btn-ghost" onclick="closeModal('mLogout')">Abbrechen</button>
-      <button class="btn-main" style="flex:1;background:var(--red);border-color:var(--red)" onclick="confirmLogout()">Abmelden</button>
+      <button class="btn-ghost" onclick="closeModal('mLogout')" data-i18n="cancel">Abbrechen</button>
+      <button class="btn-main" style="flex:1;background:var(--red);border-color:var(--red)" onclick="confirmLogout()" data-i18n="logout">Abmelden</button>
     </div>
   </div>
 </div>
@@ -989,6 +989,8 @@ const TRANSLATIONS = {
     rememberQty: 'Für ähnliche Reisen merken?',
     scalesQ: 'Skaliert mit Reisedauer?',
     apply: 'Übernehmen ✓',
+    logoutTitle: 'Abmelden?',
+    logoutSub: 'Bis bald',
   },
   en: {
     // App
@@ -1135,6 +1137,8 @@ const TRANSLATIONS = {
     rememberQty: 'Remember for similar trips?',
     scalesQ: 'Scales with trip duration?',
     apply: 'Apply ✓',
+    logoutTitle: 'Sign out?',
+    logoutSub: 'See you soon',
   }
 };
 
@@ -1144,13 +1148,32 @@ function setLang(l) {
   lang = l;
   localStorage.setItem('lang', l);
   applyLang();
-  // Personalisierten Titel neu setzen falls User eingeloggt
+  // Personalisierten Titel neu setzen
   const firstName = currentProfile?.display_name?.split(' ')[0] || currentUser?.user_metadata?.first_name;
   if (firstName) {
     const titleEl = document.getElementById('homeTitle');
     if (titleEl) titleEl.textContent = lang === 'en'
       ? `${firstName}'s Travel Planner`
       : `${firstName}s Reiseplaner`;
+  }
+  // heroContext neu setzen (hat kein data-i18n)
+  const ctx = document.getElementById('heroContext');
+  if (ctx && ctx.textContent) {
+    const activeScreen = document.querySelector('.screen.active')?.id || '';
+    const contextMap = {
+      sHome: lang === 'en' ? 'OVERVIEW' : 'ÜBERSICHT',
+      sTripsList: lang === 'en' ? 'MY TRIPS' : 'MEINE REISEN',
+      sItems: lang === 'en' ? 'MY ITEMS' : 'MEINE ITEMS',
+      sGeneralTodos: lang === 'en' ? 'MY TO-DOS' : 'MEINE TODOS',
+      sWizard: lang === 'en' ? 'NEW TRIP' : 'NEUE REISE',
+      sTrip: ctx.textContent, // Trip-Name bleibt gleich
+    };
+    if (contextMap[activeScreen]) ctx.textContent = contextMap[activeScreen];
+  }
+  // Zurück-Button Text aktualisieren
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn && backBtn.style.display !== 'none') {
+    backBtn.textContent = lang === 'en' ? '← Back' : '← Zurück';
   }
 }
 
@@ -1317,8 +1340,11 @@ async function doRegister() {
 // ── Logout ──
 async function doLogout() {
   const firstName = (currentUser?.user_metadata?.first_name || currentProfile?.display_name || '').split(' ')[0];
-  document.getElementById('mLogoutName').textContent = firstName || 'du';
+  const subEl = document.getElementById('logoutSubText');
+  if (subEl) subEl.innerHTML = `${t('logoutSub')}, <span id="mLogoutName">${firstName || (lang==='en'?'you':'du')}</span>!`;
+  else document.getElementById('mLogoutName').textContent = firstName || (lang==='en'?'you':'du');
   document.getElementById('mLogout').classList.add('open');
+  applyLang();
 }
 
 async function confirmLogout() {
@@ -2964,9 +2990,11 @@ function editGeneralTodoRow(id) {
 async function saveGeneralTodoRow(id) {
   const name = document.getElementById('editGeneralTodoName_'+id).value.trim();
   if (!name) return;
-  await sbPatch('general_todos', { id: `eq.${id}` }, { name });
   const todo = allGeneralTodosCache.find(t => t.id === id);
-  todo.name = name;
+  const nameChanged = todo?.name !== name;
+  const name_en = nameChanged ? await translateToEn(name) : (todo?.name_en || null);
+  await sbPatch('general_todos', { id: `eq.${id}` }, { name, name_en });
+  todo.name = name; todo.name_en = name_en;
   allGeneralTodosCache.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderGeneralTodos();
 }
@@ -3004,7 +3032,8 @@ async function saveNewGeneralTodoRow() {
   const name = document.getElementById('newGeneralTodoName').value.trim();
   if (!name) return;
   const maxOrder = (allGeneralTodosCache||[]).reduce((m,t) => Math.max(m, t.sort_order||0), 0);
-  const [newTodo] = await sbPost('general_todos', { name, decision: 'pending', sort_order: maxOrder + 1 });
+  const name_en = await translateToEn(name);
+  const [newTodo] = await sbPost('general_todos', { name, name_en, decision: 'pending', sort_order: maxOrder + 1 });
   if (!allGeneralTodosCache) allGeneralTodosCache = [];
   allGeneralTodosCache.push(newTodo);
   allGeneralTodosCache.sort((a,b) => a.name.localeCompare(b.name, 'de'));
@@ -3024,7 +3053,8 @@ async function saveNewGeneralTodoFromHome() {
   if (!name) return;
 
   const maxOrder = (allGeneralTodosCache||[]).reduce((m,t) => Math.max(m, t.sort_order||0), 0);
-  const [newTodo] = await sbPost('general_todos', { name, decision: 'pending', sort_order: maxOrder + 1 });
+  const name_en = await translateToEn(name);
+  const [newTodo] = await sbPost('general_todos', { name, name_en, decision: 'pending', sort_order: maxOrder + 1 });
   if (allGeneralTodosCache) {
     allGeneralTodosCache.push(newTodo);
     allGeneralTodosCache.sort((a,b) => a.name.localeCompare(b.name, 'de'));
@@ -3338,6 +3368,30 @@ function updateSubcatOptions(id) {
   document.getElementById('editSub_'+id).innerHTML = opts;
 }
 
+// ── DeepL Auto-Übersetzung ──
+const DEEPL_KEY = '4c1c560c-5002-48bd-a50f-4ca9aa4b994e:fx';
+const DEEPL_URL = 'https://api-free.deepl.com/v2/translate';
+
+async function translateToEn(text) {
+  try {
+    const res = await fetch(DEEPL_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        auth_key: DEEPL_KEY,
+        text: text,
+        source_lang: 'DE',
+        target_lang: 'EN-GB'
+      })
+    });
+    const data = await res.json();
+    return data?.translations?.[0]?.text || null;
+  } catch(e) {
+    console.warn('DeepL Übersetzung fehlgeschlagen:', e);
+    return null;
+  }
+}
+
 async function saveItemRow(id) {
   const name   = document.getElementById('editName_'+id).value.trim();
   const catId  = parseInt(document.getElementById('editCat_'+id).value);
@@ -3350,9 +3404,16 @@ async function saveItemRow(id) {
   if (!name) return;
 
   const item = allItemsCache.find(i => i.id === id);
-  await sbPatch('items', { id: `eq.${id}` }, { name, category_id: catId, subcategory_id: subId, bike_bag_id: bagId, default_qty: defaultQty });
+  const nameChanged = item?.name !== name;
 
-  item.name = name; item.category_id = catId; item.subcategory_id = subId; item.bike_bag_id = bagId; item.default_qty = defaultQty;
+  // Auto-Übersetzung wenn Name geändert
+  let name_en = item?.name_en || null;
+  if (nameChanged) {
+    name_en = await translateToEn(name);
+  }
+
+  await sbPatch('items', { id: `eq.${id}` }, { name, name_en, category_id: catId, subcategory_id: subId, bike_bag_id: bagId, default_qty: defaultQty });
+  item.name = name; item.name_en = name_en; item.category_id = catId; item.subcategory_id = subId; item.bike_bag_id = bagId; item.default_qty = defaultQty;
   renderItemsManager();
 }
 
@@ -3400,7 +3461,8 @@ async function saveNewItemRow(catId) {
   const subVal = document.getElementById('newItemSub').value;
   const subId = subVal ? parseInt(subVal) : null;
 
-  const [newItem] = await sbPost('items', { category_id: catId, subcategory_id: subId, name, show_urlaub: true, show_business: true });
+  const name_en = await translateToEn(name);
+  const [newItem] = await sbPost('items', { category_id: catId, subcategory_id: subId, name, name_en, show_urlaub: true, show_business: true });
   allItemsCache.push(newItem);
   renderItemsManager();
 }
