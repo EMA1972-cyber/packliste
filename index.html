@@ -1611,7 +1611,7 @@ async function goHome() {
   show('sHome'); setHeader(null, false);
   setSubHeader(null);
   const ctx = document.getElementById('heroContext');
-  if (ctx) ctx.textContent = lang === 'en' ? 'MY OVERVIEW' : 'MEINE ÜBERSICHT';
+  if (ctx) ctx.textContent = lang === 'en' ? 'OVERVIEW' : 'ÜBERSICHT';
   await refreshTripsList();
   refreshItemsCount();
   refreshGeneralTodosCount();
@@ -2919,7 +2919,7 @@ function renderGeneralTodos() {
     <div class="cat-hd">
       <span class="cat-hd-ico">✅</span>
       <span class="cat-hd-title">Meine ToDos</span>
-      <span class="cat-count${done===todos.length&&todos.length?' done':''}">${done}/${todos.length}</span>
+      <span class="cat-count">${todos.length}</span>
       <button class="cat-add-btn" onclick="addGeneralTodoForm(event)" title="Neues ToDo">➕</button>
     </div><div class="cat-body" id="generalTodoBody">`;
 
@@ -2930,10 +2930,8 @@ function renderGeneralTodos() {
 }
 
 function generalTodoRow(todo) {
-  const chk = todo.decision === 'ja';
-  return `<div class="item-row${chk?' faded':''}" id="gtodo_${todo.id}">
-    <div class="ichk${chk?' on':''}" onclick="toggleGeneralTodoCheck('${todo.id}',${!chk})">${chk?'✓':''}</div>
-    <span class="iname${chk?' packed':''}">${todo.name}</span>
+  return `<div class="item-row" id="gtodo_${todo.id}">
+    <span class="iname">${todo.name}</span>
     <div class="irow-actions">
       <button class="irow-btn" onclick="editGeneralTodoRow('${todo.id}')" title="Bearbeiten">✏️</button>
       <button class="irow-btn del" onclick="deleteGeneralTodoRow('${todo.id}')" title="Löschen">🗑️</button>
