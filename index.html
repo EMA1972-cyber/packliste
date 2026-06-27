@@ -57,7 +57,7 @@ body {
 }
 
 .app-header {
-  background: #C85A00;
+  background: linear-gradient(155deg, #E8821A 0%, #D4700A 60%, #C85A00 100%);
   color: white;
   padding: 8px 16px;
   display: flex;
@@ -66,7 +66,6 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 16px rgba(200,90,0,0.3);
   min-height: 44px;
 }
 .app-header h1 {
@@ -1649,7 +1648,6 @@ async function refreshGeneralTodosCount() {
 
 function openTripsList() {
   show('sTripsList'); setHeader(lang==='en' ? 'My Trips' : 'Meine Reisen', true);
-  document.getElementById('tripsListBackBar').innerHTML = backBar(lang==='en'?'My Trips':'Meine Reisen');
   const ts = document.getElementById('tripSearch');
   if (ts) ts.value = '';
 }
@@ -2881,12 +2879,11 @@ let allGeneralTodosCache = null;
 
 async function openGeneralTodos() {
   show('sGeneralTodos'); setHeader(lang==='en' ? 'My To-Dos' : 'Meine ToDos', true);
-  document.getElementById('todosBackBar').innerHTML = backBar('ToDos');
   document.getElementById('generalTodoSearch').value = '';
 
   document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade ToDos…</span></div>';
   try {
-    allGeneralTodosCache = await sbGet('general_todos', { order: 'name' }) || [];
+    allGeneralTodosCache = await sbGet('general_todos', { filter: { user_id: `eq.${currentUser.id}` }, order: 'name' }) || [];
   } catch(e) {
     document.getElementById('generalTodosList').innerHTML = `<div class="error-box">⚠️ Fehler: ${e.message}</div>`;
     return;
@@ -3177,7 +3174,6 @@ let allTripsCache = null;
 
 async function openItemsManager() {
   show('sItems'); setHeader(lang==='en' ? 'My Items' : 'Meine Items', true);
-  document.getElementById('itemsBackBar').innerHTML = backBar(lang==='en'?'Items':'Items verwalten');
   document.getElementById('itemSearch').value = '';
 
   if (!allItemsCache) {
