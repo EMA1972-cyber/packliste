@@ -2258,7 +2258,7 @@ async function openTrip(id) {
 
     // Items mit Item-Details laden
     const rawItems = await sbGet('trip_items', {
-      select: '*,items(id,name,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id,show_urlaub,show_business,show_abroad)',
+      select: '*,items(id,name,name_en,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id,show_urlaub,show_business,show_abroad)',
       filter: { trip_id: `eq.${id}` }
     });
     curItems = rawItems || [];
@@ -2523,7 +2523,7 @@ function vorschlagRow(ti) {
   const qty  = ti.qty ? `<span class="iqty" onclick="editQty('${ti.id}','${ti.qty}')" title="Menge ändern">${ti.qty}</span>` : '';
   const pool = item?.is_pool ? `<span class="ipool">⭐ neu</span>` : '';
   return `<div class="item-row" id="vr_${ti.id}">
-    <span class="iname">${item?.name || '?'}</span>
+    <span class="iname">${((lang==='en'&&item?.name_en)||item?.name||'?')}</span>
     ${pool}${qty}
     <div class="ja-nein">
       <button class="ja-b"   onclick="decide('${ti.id}','ja')">JA</button>
@@ -2589,7 +2589,7 @@ function packRow(ti) {
   const qty    = `<span class="iqty" onclick="editQty('${ti.id}','${ti.qty||''}')" title="Menge ändern">${qtyDisplay}</span>`;
   return `<div class="item-row${chk?' faded':''}" id="pr_${ti.id}">
     <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
-    <span class="iname${chk?' packed':''}">${ti.items?.name||'?'}</span>
+    <span class="iname${chk?' packed':''}">${((lang==='en'&&ti.items?.name_en)||ti.items?.name||'?')}</span>
     ${qty}
     <button onclick="removeFromPack('${ti.id}')" title="Aus Packliste entfernen"
       style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 6px;opacity:0.5;line-height:1">✕</button>
@@ -2640,7 +2640,7 @@ function updateQtyPreview() {
 
 function editQty(id, currentQty) {
   const ti   = curItems.find(i => i.id === id);
-  const name = ti?.items?.name || 'Item';
+  const name = ((lang==='en'&&ti?.items?.name_en)||ti?.items?.name||'Item');
   const nights = calcNights(curTrip?.date_from, curTrip?.date_to);
 
   _qtyModalState = {
@@ -2795,7 +2795,7 @@ function todoRow(todo) {
   const chk = todo.decision === 'ja';
   return `<div class="item-row${chk?' faded':''}" id="todo_${todo.id}">
     <div class="ichk${chk?' on':''}" onclick="toggleTodoCheck('${todo.id}',${!chk})">${chk?'✓':''}</div>
-    <span class="iname${chk?' packed':''}">${todo.name}</span>
+    <span class="iname${chk?' packed':''}">${(lang==='en'&&todo.name_en)||todo.name}</span>
     <div class="irow-actions">
       <button class="irow-btn" onclick="editTodoRow('${todo.id}')" title="Bearbeiten">✏️</button>
       <button class="irow-btn del" onclick="deleteTodoRow('${todo.id}')" title="Löschen">🗑️</button>
@@ -2931,7 +2931,7 @@ function renderGeneralTodos() {
 
 function generalTodoRow(todo) {
   return `<div class="item-row" id="gtodo_${todo.id}">
-    <span class="iname">${todo.name}</span>
+    <span class="iname">${(lang==='en'&&todo.name_en)||todo.name}</span>
     <div class="irow-actions">
       <button class="irow-btn" onclick="editGeneralTodoRow('${todo.id}')" title="Bearbeiten">✏️</button>
       <button class="irow-btn del" onclick="deleteGeneralTodoRow('${todo.id}')" title="Löschen">🗑️</button>
@@ -3274,7 +3274,7 @@ function quickBagPicker(id) {
 
   row.innerHTML = `
     <div class="item-edit-row" style="width:100%;align-items:center">
-      <span class="iname">${item.name}</span>
+      <span class="iname">${(lang==='en'&&item.name_en)||item.name}</span>
       <select class="add-inp" id="quickBag_${id}" onchange="saveQuickBag(${id})" style="flex:1.2">${opts}</select>
       <button class="irow-btn" onclick="renderItemsManager()" title="Schließen">✕</button>
     </div>`;
