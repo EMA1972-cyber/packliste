@@ -408,7 +408,7 @@ body {
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
     <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-      style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s">🇩🇪</button>
+      style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s;opacity:0.4">🇩🇪</button>
     <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
       style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
   </div>
@@ -432,7 +432,7 @@ body {
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
     <div style="display:flex;gap:12px;margin-bottom:12px">
       <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-        style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s">🇩🇪</button>
+        style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇩🇪</button>
       <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
         style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
     </div>
@@ -1649,7 +1649,10 @@ async function refreshTripsList() {
   try {
     const trips = await sbGet('trips', { order: 'name' });
     allTripsCache = trips || [];
-    document.getElementById('tripsCount').textContent = `${allTripsCache.length} Reise${allTripsCache.length===1?'':'n'}`;
+    const tc = allTripsCache.length;
+    document.getElementById('tripsCount').textContent = lang === 'en'
+      ? `${tc} Trip${tc===1?'':'s'}`
+      : `${tc} Reise${tc===1?'':'n'}`;
     await renderHome(allTripsCache);
   } catch(e) {
     document.getElementById('homeTrips').innerHTML =
@@ -1660,7 +1663,10 @@ async function refreshTripsList() {
 async function refreshItemsCount() {
   try {
     const items = allItemsCache || await sbGet('items', { select: 'id' });
-    document.getElementById('itemsCount').textContent = `${(items||[]).length} Item${(items||[]).length===1?'':'s'}`;
+    const ic = (items||[]).length;
+    document.getElementById('itemsCount').textContent = lang === 'en'
+      ? `${ic} Item${ic===1?'':'s'}`
+      : `${ic} Item${ic===1?'':'s'}`;
   } catch(e) { /* still fine, just no count shown */ }
 }
 
@@ -1668,7 +1674,9 @@ async function refreshGeneralTodosCount() {
   try {
     const todos = allGeneralTodosCache || await sbGet('general_todos', { select: 'id,decision' });
     const open = (todos||[]).filter(t => t.decision !== 'ja').length;
-    document.getElementById('generalTodosCount').textContent = `${open} ToDo${open===1?'':'s'}`;
+    document.getElementById('generalTodosCount').textContent = lang === 'en'
+      ? `${open} To-Do${open===1?'':'s'}`
+      : `${open} ToDo${open===1?'':'s'}`;
   } catch(e) { /* still fine, just no count shown */ }
 }
 
@@ -2541,7 +2549,7 @@ function updateTabProgress() {
   const progLbl = document.querySelector('.prog-label');
   if (progEl) progEl.textContent = pctGesamt + '%';
   if (progBar) progBar.style.width = pctGesamt + '%';
-  if (progLbl) progLbl.textContent = 'Gesamt-Fortschritt';
+  if (progLbl) progLbl.textContent = lang === 'en' ? 'Overall Progress' : 'Gesamt-Fortschritt';
 }
 
 function vorschlagRow(ti) {
@@ -3368,26 +3376,21 @@ function updateSubcatOptions(id) {
   document.getElementById('editSub_'+id).innerHTML = opts;
 }
 
-// ── DeepL Auto-Übersetzung ──
-const DEEPL_KEY = '4c1c560c-5002-48bd-a50f-4ca9aa4b994e:fx';
-const DEEPL_URL = 'https://api-free.deepl.com/v2/translate';
-
+// ── DeepL Auto-Übersetzung via Supabase Edge Function ──
 async function translateToEn(text) {
   try {
-    const res = await fetch(DEEPL_URL, {
+    const res = await fetch('https://dzignltxlpymglikyyox.supabase.co/functions/v1/translate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        auth_key: DEEPL_KEY,
-        text: text,
-        source_lang: 'DE',
-        target_lang: 'EN-GB'
-      })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPA_KEY}`
+      },
+      body: JSON.stringify({ text })
     });
     const data = await res.json();
-    return data?.translations?.[0]?.text || null;
+    return data?.translation || null;
   } catch(e) {
-    console.warn('DeepL Übersetzung fehlgeschlagen:', e);
+    console.warn('Übersetzung fehlgeschlagen:', e);
     return null;
   }
 }
