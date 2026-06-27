@@ -1148,6 +1148,22 @@ function setLang(l) {
   lang = l;
   localStorage.setItem('lang', l);
   applyLang();
+  // Counts sofort in neuer Sprache aktualisieren
+  if (allTripsCache !== undefined) {
+    const tc = (allTripsCache||[]).length;
+    const tcEl = document.getElementById('tripsCount');
+    if (tcEl) tcEl.textContent = lang === 'en' ? `${tc} Trip${tc===1?'':'s'}` : `${tc} Reise${tc===1?'':'n'}`;
+  }
+  if (allItemsCache) {
+    const ic = allItemsCache.length;
+    const icEl = document.getElementById('itemsCount');
+    if (icEl) icEl.textContent = `${ic} Item${ic===1?'':'s'}`;
+  }
+  if (allGeneralTodosCache) {
+    const open = allGeneralTodosCache.filter(t => t.decision !== 'ja').length;
+    const tcEl2 = document.getElementById('generalTodosCount');
+    if (tcEl2) tcEl2.textContent = lang === 'en' ? `${open} To-Do${open===1?'':'s'}` : `${open} ToDo${open===1?'':'s'}`;
+  }
   // Personalisierten Titel neu setzen
   const firstName = currentProfile?.display_name?.split(' ')[0] || currentUser?.user_metadata?.first_name;
   if (firstName) {
