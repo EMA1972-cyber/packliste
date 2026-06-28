@@ -1636,8 +1636,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadCategories() {
   try {
     const [cats, subs] = await Promise.all([
-      sbGet('categories', { order: 'sort_order' }),
-      sbGet('subcategories', { select: 'id,name,category_id,icon', order: 'sort_order' })
+      sbGet('categories', { select: 'id,name,name_en,icon,sort_order', order: 'sort_order' }),
+      sbGet('subcategories', { select: 'id,name,name_en,category_id,icon', order: 'sort_order' })
     ]);
     categories = cats || [];
     subcategories = subs || [];
@@ -2485,7 +2485,7 @@ function renderVorschlaege(subs) {
     h += `<div class="cat-block">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
-        <span class="cat-hd-title">${cat.name}</span>
+        <span class="cat-hd-title">${(lang==='en'&&cat.name_en)||cat.name}</span>
         <span class="cat-count">${catPending.length} offen</span>
         <span class="cat-chev open">▼</span>
       </div><div class="cat-body">`;
@@ -2497,7 +2497,7 @@ function renderVorschlaege(subs) {
     subs.filter(s => s.category_id === cat.id).forEach(sub => {
       const subPending = getItemsByCat(cat.id, sub.id, true, false, true);
       if (!subPending.length) return;
-      h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
+      h += `<div class="subcat-hd">${sub.icon||''} ${(lang==='en'&&sub.name_en)||sub.name}</div>`;
       subPending.forEach(ti => h += vorschlagRow(ti));
     });
 
@@ -2611,7 +2611,7 @@ function renderPacken(subs) {
     h += `<div class="cat-block">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
-        <span class="cat-hd-title">${cat.name}</span>
+        <span class="cat-hd-title">${(lang==='en'&&cat.name_en)||cat.name}</span>
         <span class="cat-count${p===catJa.length?' done':''}">${p}/${catJa.length}</span>
         <span class="cat-chev open">▼</span>
       </div><div class="cat-body">`;
@@ -2621,7 +2621,7 @@ function renderPacken(subs) {
     subs.filter(s => s.category_id === cat.id).forEach(sub => {
       const sj = getItemsByCat(cat.id, sub.id, false, true);
       if (!sj.length) return;
-      h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
+      h += `<div class="subcat-hd">${sub.icon||''} ${(lang==='en'&&sub.name_en)||sub.name}</div>`;
       sj.forEach(ti => h += packRow(ti));
     });
 
@@ -3005,7 +3005,7 @@ async function toggleGeneralTodoCheck(id, checked) {
 }
 
 function editGeneralTodoRow(id) {
-  const todo = allGeneralTodosCache.find(t => t.id === id);
+  const todo = allGeneralTodosCache.find(t => t.id == id);
   const row = document.getElementById('gtodo_' + id);
   row.innerHTML = `
     <div class="item-edit-form">
@@ -3020,7 +3020,7 @@ function editGeneralTodoRow(id) {
 async function saveGeneralTodoRow(id) {
   const name = document.getElementById('editGeneralTodoName_'+id).value.trim();
   if (!name) return;
-  const todo = allGeneralTodosCache.find(t => t.id === id);
+  const todo = allGeneralTodosCache.find(t => t.id == id);
   const nameChanged = todo?.name !== name;
   const name_en = nameChanged ? await translateToEn(name) : (todo?.name_en || null);
   await sbPatch('general_todos', { id: `eq.${id}` }, { name, name_en });
@@ -3239,7 +3239,7 @@ async function openItemsManager() {
     try {
       const [items, subs] = await Promise.all([
         sbGet('items', { select: 'id,name,name_en,category_id,subcategory_id,is_mandatory,bike_bag_id', order: 'category_id,name' }),
-        sbGet('subcategories', { select: 'id,name,category_id,icon' })
+        sbGet('subcategories', { select: 'id,name,name_en,category_id,icon' })
       ]);
       allItemsCache = items || [];
       allSubsCache  = subs || [];
@@ -3265,9 +3265,9 @@ function renderItemsManager() {
     h += `<div class="cat-block" data-cat="${cat.id}">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
-        <span class="cat-hd-title">${cat.name}</span>
+        <span class="cat-hd-title">${(lang==='en'&&cat.name_en)||cat.name}</span>
         <span class="cat-count">${items.length}</span>
-        <button class="cat-add-btn" onclick="addNewItemForm(event, ${cat.id})" title="Neues Item in ${cat.name}">➕</button>
+        <button class="cat-add-btn" onclick="addNewItemForm(event, ${cat.id})" title="${lang==='en'?'New item in':'Neues Item in'} ${(lang==='en'&&cat.name_en)||cat.name}">➕</button>
         <span class="cat-chev open">▼</span>
       </div><div class="cat-body">`;
 
@@ -3282,7 +3282,7 @@ function renderItemsManager() {
     catSubs.forEach(sub => {
       const subItems = items.filter(it => it.subcategory_id === sub.id);
       if (!subItems.length) return;
-      h += `<div class="subcat-hd">${sub.icon||''} ${sub.name}</div>`;
+      h += `<div class="subcat-hd">${sub.icon||''} ${(lang==='en'&&sub.name_en)||sub.name}</div>`;
       subItems.forEach(it => h += itemMgrRow(it));
     });
 
