@@ -1191,6 +1191,10 @@ function setLang(l) {
   if (backBtn && backBtn.style.display !== 'none') {
     backBtn.textContent = lang === 'en' ? '← Back' : '← Zurück';
   }
+  // Aktive Listen sofort neu rendern
+  const activeId = document.querySelector('.screen.active')?.id || '';
+  if (activeId === 'sItems' && allItemsCache) renderItemsManager();
+  if (activeId === 'sGeneralTodos' && allGeneralTodosCache) renderGeneralTodos();
 }
 
 function applyLang() {
@@ -2943,15 +2947,17 @@ async function openGeneralTodos() {
 
 function renderGeneralTodos() {
   const q = (document.getElementById('generalTodoSearch')?.value || '').trim().toLowerCase();
-  const todos = (allGeneralTodosCache || []).filter(t => !q || t.name.toLowerCase().includes(q));
+  const todos = (allGeneralTodosCache || []).filter(t => !q ||
+    t.name.toLowerCase().includes(q) ||
+    (t.name_en && t.name_en.toLowerCase().includes(q)));
   const done = todos.filter(t => t.decision === 'ja').length;
 
   if (!allGeneralTodosCache || !allGeneralTodosCache.length) {
     document.getElementById('generalTodosList').innerHTML = `
       <div style="text-align:center;padding:48px 20px;color:var(--muted)">
         <div style="font-size:48px;margin-bottom:12px">✅</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)">Noch keine ToDos</div>
-        <div style="font-size:14px;margin-top:6px">Lege dein erstes freies ToDo an!</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)">${lang==='en'?'No To-Dos yet':'Noch keine ToDos'}</div>
+        <div style="font-size:14px;margin-top:6px">${lang==='en'?'Create your first To-Do!':'Lege dein erstes freies ToDo an!'}</div>
       </div>`;
     return;
   }
@@ -2960,7 +2966,7 @@ function renderGeneralTodos() {
     document.getElementById('generalTodosList').innerHTML = `
       <div style="text-align:center;padding:48px 20px;color:var(--muted)">
         <div style="font-size:40px;margin-bottom:10px">🔍</div>
-        <div>Keine ToDos gefunden</div>
+        <div>${lang==='en'?'No To-Dos found':'Keine ToDos gefunden'}</div>
       </div>`;
     return;
   }
@@ -2968,9 +2974,9 @@ function renderGeneralTodos() {
   let h = `<div class="cat-block" style="margin-top:14px">
     <div class="cat-hd">
       <span class="cat-hd-ico">✅</span>
-      <span class="cat-hd-title">Meine ToDos</span>
+      <span class="cat-hd-title">${lang==='en'?'My To-Dos':'Meine ToDos'}</span>
       <span class="cat-count">${todos.length}</span>
-      <button class="cat-add-btn" onclick="addGeneralTodoForm(event)" title="Neues ToDo">➕</button>
+      <button class="cat-add-btn" onclick="addGeneralTodoForm(event)" title="${lang==='en'?'New To-Do':'Neues ToDo'}">➕</button>
     </div><div class="cat-body" id="generalTodoBody">`;
 
   todos.forEach(todo => h += generalTodoRow(todo));
@@ -3232,7 +3238,7 @@ async function openItemsManager() {
     document.getElementById('itemsMgrList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade Items…</span></div>';
     try {
       const [items, subs] = await Promise.all([
-        sbGet('items', { select: 'id,name,category_id,subcategory_id,is_mandatory,bike_bag_id', order: 'category_id,name' }),
+        sbGet('items', { select: 'id,name,name_en,category_id,subcategory_id,is_mandatory,bike_bag_id', order: 'category_id,name' }),
         sbGet('subcategories', { select: 'id,name,category_id,icon' })
       ]);
       allItemsCache = items || [];
@@ -3253,7 +3259,7 @@ function renderItemsManager() {
 
   sortedCats.forEach(cat => {
     const items = allItemsCache.filter(it => it.category_id === cat.id &&
-      (!q || it.name.toLowerCase().includes(q)));
+      (!q || it.name.toLowerCase().includes(q) || (it.name_en && it.name_en.toLowerCase().includes(q))));
     if (!items.length) return;
 
     h += `<div class="cat-block" data-cat="${cat.id}">
@@ -3297,8 +3303,9 @@ function itemMgrRow(it) {
   const bag = it.bike_bag_id ? allSubsCache.find(s => s.id === it.bike_bag_id) : null;
   const bagLabel = bag ? ` <small style="color:var(--muted);font-weight:600">${bag.name}</small>` : '';
   const mand = !!it.is_mandatory;
+  const displayName = (lang === 'en' && it.name_en) ? it.name_en : it.name;
   return `<div class="item-row" id="imr_${it.id}">
-    <span class="iname${mand?' mandatory':''}">${it.name}${subLabel}${bagLabel}</span>
+    <span class="iname${mand?' mandatory':''}">${displayName}${subLabel}${bagLabel}</span>
     <button class="mand-toggle${mand?' on':''}" onclick="toggleMandatory(${it.id})" title="Pflicht-Item">!</button>
     <button class="mand-toggle${bag?' bag-on':''}" onclick="quickBagPicker(${it.id})" title="Bikepacking-Tasche">🚲</button>
     <div class="irow-actions">
