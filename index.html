@@ -506,30 +506,30 @@ body {
   </div>
 </div>
 
-<!-- ONBOARDING STEP 1: Items übernehmen? -->
+<!-- ONBOARDING STEP 1: Artikel übernehmen? -->
 <div class="screen" id="sOnboarding">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
     <div style="font-size:64px;margin-bottom:16px">📦</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px" data-i18n="onboardItemsTitle">Items übernehmen?</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px"><span data-i18n="onboardItemsText1">Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit</span> <strong id="onboardItemCount"></strong>.</p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px" data-i18n="onboardItemsTitle">Artikel übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px"><span data-i18n="onboardItemsText1">Der Reiseplaner enthält bereits eine umfangreiche Artikel-Bibliothek mit</span> <strong id="onboardItemCount"></strong>.</p>
     <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px" data-i18n="onboardItemsText2">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
     <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
-      <button class="manage-btn primary" onclick="doOnboardItems(true)" style="padding:15px;font-size:15px" data-i18n="onboardItemsYes">✅ Ja, Items übernehmen</button>
-      <button class="manage-btn" onclick="doOnboardItems(false)" style="padding:15px;font-size:15px" data-i18n="onboardItemsNo">❌ Nein danke, ohne Items starten</button>
+      <button class="manage-btn primary" onclick="doOnboardItems(true)" style="padding:15px;font-size:15px" data-i18n="onboardItemsYes">✅ Ja, Artikel übernehmen</button>
+      <button class="manage-btn" onclick="doOnboardItems(false)" style="padding:15px;font-size:15px" data-i18n="onboardItemsNo">❌ Nein danke, ohne Artikel starten</button>
     </div>
   </div>
 </div>
 
-<!-- ONBOARDING STEP 2: ToDos übernehmen? -->
+<!-- ONBOARDING STEP 2: Aufgaben übernehmen? -->
 <div class="screen" id="sOnboarding2">
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand);text-align:center">
     <div style="font-size:64px;margin-bottom:16px">✅</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px" data-i18n="onboardTodosTitle">ToDos übernehmen?</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px"><span data-i18n="onboardTodosText1">Es gibt auch eine ToDo-Liste mit</span> <strong id="onboardTodoCount"></strong> <span data-i18n="onboardTodosText2">vorbereiteten Aufgaben für vor der Abreise.</span></p>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin:0 0 12px" data-i18n="onboardTodosTitle">Aufgaben übernehmen?</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 12px"><span data-i18n="onboardTodosText1">Es gibt auch eine Aufgaben-Liste mit</span> <strong id="onboardTodoCount"></strong> <span data-i18n="onboardTodosText2">vorbereiteten Aufgaben für vor der Abreise.</span></p>
     <p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 32px" data-i18n="onboardTodosText3">Du kannst alles jederzeit anpassen, löschen oder ergänzen.</p>
     <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
-      <button class="manage-btn primary" onclick="doOnboardTodos(true)" style="padding:15px;font-size:15px" data-i18n="onboardTodosYes">✅ Ja, ToDos übernehmen</button>
-      <button class="manage-btn" onclick="doOnboardTodos(false)" style="padding:15px;font-size:15px" data-i18n="onboardTodosNo">❌ Nein danke, ohne ToDos starten</button>
+      <button class="manage-btn primary" onclick="doOnboardTodos(true)" style="padding:15px;font-size:15px" data-i18n="onboardTodosYes">✅ Ja, Aufgaben übernehmen</button>
+      <button class="manage-btn" onclick="doOnboardTodos(false)" style="padding:15px;font-size:15px" data-i18n="onboardTodosNo">❌ Nein danke, ohne Aufgaben starten</button>
     </div>
   </div>
 </div>
@@ -727,7 +727,7 @@ body {
     <button class="tab-btn active" onclick="showTab('Vorschlaege',this)"><span data-i18n="tabSuggestions">📋 Vorschläge</span><br><span class="tab-pct" id="pctVorschlaege">–</span></button>
     <button class="tab-btn" onclick="showTab('Packen',this)"><span data-i18n="tabPack">🧳 Packen</span><br><span class="tab-pct" id="pctPacken">–</span></button>
     <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none" data-i18n="tabBags">🚲 Taschen</button>
-    <button class="tab-btn" onclick="showTab('Todos',this)"><span data-i18n="tabTodos">✅ ToDos</span><br><span class="tab-pct" id="pctTodos">–</span></button>
+    <button class="tab-btn" onclick="showTab('Todos',this)"><span data-i18n="tabTodos">✅ Aufgaben</span><br><span class="tab-pct" id="pctTodos">–</span></button>
   </div>
 
   <div class="tab-pane active" id="tpVorschlaege"></div>
@@ -866,21 +866,21 @@ const TRANSLATIONS = {
     backToLogin: '← Zurück zur Anmeldung',
     pwMin: 'Mindestens 6 Zeichen',
     // Onboarding
-    onboardItemsTitle: 'Items übernehmen?',
-    onboardItemsText1: 'Der Reiseplaner enthält bereits eine umfangreiche Item-Bibliothek mit',
+    onboardItemsTitle: 'Artikel übernehmen?',
+    onboardItemsText1: 'Der Reiseplaner enthält bereits eine umfangreiche Artikel-Bibliothek mit',
     onboardItemsText2: 'Du kannst alles jederzeit anpassen, löschen oder ergänzen.',
-    onboardItemsYes: '✅ Ja, Items übernehmen',
-    onboardItemsNo: '❌ Nein danke, ohne Items starten',
-    onboardTodosTitle: 'ToDos übernehmen?',
-    onboardTodosText1: 'Es gibt auch eine ToDo-Liste mit',
+    onboardItemsYes: '✅ Ja, Artikel übernehmen',
+    onboardItemsNo: '❌ Nein danke, ohne Artikel starten',
+    onboardTodosTitle: 'Aufgaben übernehmen?',
+    onboardTodosText1: 'Es gibt auch eine Aufgaben-Liste mit',
     onboardTodosText2: 'vorbereiteten Aufgaben für vor der Abreise.',
     onboardTodosText3: 'Du kannst alles jederzeit anpassen, löschen oder ergänzen.',
-    onboardTodosYes: '✅ Ja, ToDos übernehmen',
-    onboardTodosNo: '❌ Nein danke, ohne ToDos starten',
+    onboardTodosYes: '✅ Ja, Aufgaben übernehmen',
+    onboardTodosNo: '❌ Nein danke, ohne Aufgaben starten',
     // Home
     trips: '🧳 Reisen',
-    items: '📦 Items',
-    todos: '✅ ToDos',
+    items: '📦 Artikel',
+    todos: '✅ Aufgaben',
     newBtn: '✏️ NEU',
     currentBtn: '📋 AKTUELL',
     neverForget: 'Nie wieder etwas vergessen',
@@ -893,11 +893,11 @@ const TRANSLATIONS = {
     tripProgress: 'der Reiseplanung',
     loadingTrips: 'Lade Reisen…',
     // Items Manager
-    newItem: '✏️ NEUES ITEM',
-    searchItem: '🔍 Item suchen…',
+    newItem: '✏️ NEUER ARTIKEL',
+    searchItem: '🔍 Artikel suchen…',
     // Todos Manager
-    newTodo: '✏️ NEUES TODO',
-    searchTodo: '🔍 ToDo suchen…',
+    newTodo: '✏️ NEUE AUFGABE',
+    searchTodo: '🔍 Aufgabe suchen…',
     // Wizard
     step: 'Schritt',
     of: 'von',
@@ -948,24 +948,24 @@ const TRANSLATIONS = {
     tabSuggestions: '📋 Vorschläge',
     tabPack: '🧳 Packen',
     tabBags: '🚲 Taschen',
-    tabTodos: '✅ ToDos',
+    tabTodos: '✅ Aufgaben',
     finishTrip: '✅ Reise abschließen',
     // Suggestions
-    mandatoryInfo: 'Pflicht-Items bereits vorgemerkt',
+    mandatoryInfo: 'Pflicht-Artikel bereits vorgemerkt',
     allDone: '✅ Alle Vorschläge abgearbeitet!',
     allDoneSub: 'Wechsle zu "Packen" um deinen Koffer zu befüllen 🧳',
     allPacked: '🎉 Koffer ist gepackt!',
     allPackedSub: 'Alles eingepackt — gute Reise! ✈️',
-    allTodos: '✅ Alle ToDos erledigt!',
+    allTodos: '✅ Alle Aufgaben erledigt!',
     allTodosSub: 'Du bist bestens vorbereitet! 🙌',
-    addItemPlaceholder: 'Eigenes Item …',
-    addItemPackPlaceholder: 'Item direkt hinzufügen …',
+    addItemPlaceholder: 'Eigener Artikel …',
+    addItemPackPlaceholder: 'Artikel direkt hinzufügen …',
     rememberNext: '💡 Für nächstes Mal merken',
     // Pack
-    nothingToPack: 'Noch keine Items zum Einpacken.',
-    noSuggestions: 'Gehe zu Vorschläge um Items hinzuzufügen.',
+    nothingToPack: 'Noch keine Artikel zum Einpacken.',
+    noSuggestions: 'Gehe zu Vorschläge um Artikel hinzuzufügen.',
     // Todos
-    noTodos: 'Noch keine ToDos.',
+    noTodos: 'Noch keine Aufgaben.',
     // General
     save: 'Speichern',
     cancel: 'Abbrechen',
@@ -1027,7 +1027,7 @@ const TRANSLATIONS = {
     onboardTodosNo: '❌ No thanks, start without to-dos',
     // Home
     trips: '🧳 Trips',
-    items: '📦 Items',
+    items: '📦 Artikel',
     todos: '✅ To-Dos',
     newBtn: '✏️ NEW',
     currentBtn: '📋 CURRENT',
@@ -1162,7 +1162,7 @@ function setLang(l) {
   if (allGeneralTodosCache) {
     const open = allGeneralTodosCache.filter(t => t.decision !== 'ja').length;
     const tcEl2 = document.getElementById('generalTodosCount');
-    if (tcEl2) tcEl2.textContent = lang === 'en' ? `${open} To-Do${open===1?'':'s'}` : `${open} ToDo${open===1?'':'s'}`;
+    if (tcEl2) tcEl2.textContent = lang === 'en' ? `${open} To-Do${open===1?'':'s'}` : `${open} Aufgabe${open===1?'':'n'}`;
   }
   // Personalisierten Titel neu setzen
   const firstName = currentProfile?.display_name?.split(' ')[0] || currentUser?.user_metadata?.first_name;
@@ -1426,7 +1426,7 @@ async function showOnboarding() {
   setHeader(null, false);
   try {
     const adminItems = await sbGet('items', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
-    document.getElementById('onboardItemCount').textContent = `${(adminItems||[]).length} Items`;
+    document.getElementById('onboardItemCount').textContent = `${(adminItems||[]).length} Artikel`;
   } catch(e) {}
 }
 
@@ -1456,7 +1456,7 @@ async function showOnboarding2() {
   setHeader(null, false);
   try {
     const adminTodos = await sbGet('general_todos', { filter: { user_id: `eq.${ADMIN_UID}` }, select: 'id' });
-    document.getElementById('onboardTodoCount').textContent = `${(adminTodos||[]).length} ToDos`;
+    document.getElementById('onboardTodoCount').textContent = `${(adminTodos||[]).length} Aufgaben`;
   } catch(e) {}
 }
 
@@ -1686,7 +1686,7 @@ async function refreshItemsCount() {
     const ic = (items||[]).length;
     document.getElementById('itemsCount').textContent = lang === 'en'
       ? `${ic} Item${ic===1?'':'s'}`
-      : `${ic} Item${ic===1?'':'s'}`;
+      : `${ic} Artikel`;
   } catch(e) { /* still fine, just no count shown */ }
 }
 
@@ -1696,7 +1696,7 @@ async function refreshGeneralTodosCount() {
     const open = (todos||[]).filter(t => t.decision !== 'ja').length;
     document.getElementById('generalTodosCount').textContent = lang === 'en'
       ? `${open} To-Do${open===1?'':'s'}`
-      : `${open} ToDo${open===1?'':'s'}`;
+      : `${open} Aufgabe${open===1?'':'n'}`;
   } catch(e) { /* still fine, just no count shown */ }
 }
 
@@ -2593,7 +2593,7 @@ function renderPacken(subs) {
     document.getElementById('tpPacken').innerHTML =
       `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
         <div style="font-size:40px;margin-bottom:10px">📋</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--ink)">Noch keine JA-Items</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--ink)">Noch keine JA-Artikel</div>
         <div style="font-size:13px;margin-top:5px">Erst Vorschläge bewerten!</div>
       </div>`;
     return;
@@ -2814,7 +2814,7 @@ function renderTaschen(subs) {
     h = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
       <div style="font-size:40px;margin-bottom:10px">🚲</div>
       <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--ink)">Noch keine Items zugeordnet</div>
-      <div style="font-size:13px;margin-top:5px">Items in "Items verwalten" über 🚲 einer Tasche zuordnen</div>
+      <div style="font-size:13px;margin-top:5px">Artikel in "Artikel verwalten" über 🚲 einer Tasche zuordnen</div>
     </div>`;
   }
 
@@ -2932,10 +2932,10 @@ async function saveNewTodoRow() {
 let allGeneralTodosCache = null;
 
 async function openGeneralTodos() {
-  show('sGeneralTodos'); setHeader(lang==='en' ? 'My To-Dos' : 'Meine ToDos', true);
+  show('sGeneralTodos'); setHeader(lang==='en' ? 'My To-Dos' : 'Meine Aufgaben', true);
   document.getElementById('generalTodoSearch').value = '';
 
-  document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade ToDos…</span></div>';
+  document.getElementById('generalTodosList').innerHTML = '<div class="loading"><div class="spinner"></div><span>Lade Aufgaben…</span></div>';
   try {
     allGeneralTodosCache = await sbGet('general_todos', { filter: { user_id: `eq.${currentUser.id}` }, order: 'name' }) || [];
   } catch(e) {
@@ -2956,8 +2956,8 @@ function renderGeneralTodos() {
     document.getElementById('generalTodosList').innerHTML = `
       <div style="text-align:center;padding:48px 20px;color:var(--muted)">
         <div style="font-size:48px;margin-bottom:12px">✅</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)">${lang==='en'?'No To-Dos yet':'Noch keine ToDos'}</div>
-        <div style="font-size:14px;margin-top:6px">${lang==='en'?'Create your first To-Do!':'Lege dein erstes freies ToDo an!'}</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)">${lang==='en'?'No To-Dos yet':'Noch keine Aufgaben'}</div>
+        <div style="font-size:14px;margin-top:6px">${lang==='en'?'Create your first To-Do!':'Lege deine erste Aufgabe an!'}</div>
       </div>`;
     return;
   }
@@ -2966,7 +2966,7 @@ function renderGeneralTodos() {
     document.getElementById('generalTodosList').innerHTML = `
       <div style="text-align:center;padding:48px 20px;color:var(--muted)">
         <div style="font-size:40px;margin-bottom:10px">🔍</div>
-        <div>${lang==='en'?'No To-Dos found':'Keine ToDos gefunden'}</div>
+        <div>${lang==='en'?'No To-Dos found':'Keine Aufgaben gefunden'}</div>
       </div>`;
     return;
   }
@@ -2974,9 +2974,9 @@ function renderGeneralTodos() {
   let h = `<div class="cat-block" style="margin-top:14px">
     <div class="cat-hd">
       <span class="cat-hd-ico">✅</span>
-      <span class="cat-hd-title">${lang==='en'?'My To-Dos':'Meine ToDos'}</span>
+      <span class="cat-hd-title">${lang==='en'?'My To-Dos':'Meine Aufgaben'}</span>
       <span class="cat-count">${todos.length}</span>
-      <button class="cat-add-btn" onclick="addGeneralTodoForm(event)" title="${lang==='en'?'New To-Do':'Neues ToDo'}">➕</button>
+      <button class="cat-add-btn" onclick="addGeneralTodoForm(event)" title="${lang==='en'?'New To-Do':'Neue Aufgabe'}">➕</button>
     </div><div class="cat-body" id="generalTodoBody">`;
 
   todos.forEach(todo => h += generalTodoRow(todo));
@@ -3291,7 +3291,7 @@ function renderItemsManager() {
 
   if (!h) h = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
     <div style="font-size:40px;margin-bottom:10px">🔍</div>
-    <div>Keine Items gefunden</div>
+    <div>Keine Artikel gefunden</div>
   </div>`;
 
   document.getElementById('itemsMgrList').innerHTML = h + '<div class="spacer"></div>';
