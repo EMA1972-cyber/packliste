@@ -1027,7 +1027,7 @@ const TRANSLATIONS = {
     onboardTodosNo: '❌ No thanks, start without to-dos',
     // Home
     trips: '🧳 Trips',
-    items: '📦 Artikel',
+    items: '📦 Items',
     todos: '✅ To-Dos',
     newBtn: '✏️ NEW',
     currentBtn: '📋 CURRENT',
@@ -1157,7 +1157,7 @@ function setLang(l) {
   if (allItemsCache) {
     const ic = allItemsCache.length;
     const icEl = document.getElementById('itemsCount');
-    if (icEl) icEl.textContent = `${ic} Item${ic===1?'':'s'}`;
+    if (icEl) icEl.textContent = lang === 'en' ? `${ic} Item${ic===1?'':'s'}` : `${ic} Artikel`;
   }
   if (allGeneralTodosCache) {
     const open = allGeneralTodosCache.filter(t => t.decision !== 'ja').length;
