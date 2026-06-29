@@ -1179,7 +1179,7 @@ function setLang(l) {
     const contextMap = {
       sHome: lang === 'en' ? 'OVERVIEW' : 'ÜBERSICHT',
       sTripsList: lang === 'en' ? 'MY TRIPS' : 'MEINE REISEN',
-      sItems: lang === 'en' ? 'MY ITEMS' : 'MEINE ITEMS',
+      sItems: lang === 'en' ? 'MY ITEMS' : 'MEINE ARTIKEL',
       sGeneralTodos: lang === 'en' ? 'MY TO-DOS' : 'MEINE TODOS',
       sWizard: lang === 'en' ? 'NEW TRIP' : 'NEUE REISE',
       sTrip: ctx.textContent, // Trip-Name bleibt gleich
@@ -3231,7 +3231,7 @@ let allSubsCache  = null;
 let allTripsCache = null;
 
 async function openItemsManager() {
-  show('sItems'); setHeader(lang==='en' ? 'My Items' : 'Meine Items', true);
+  show('sItems'); setHeader(lang==='en' ? 'My Items' : 'Meine Artikel', true);
   document.getElementById('itemSearch').value = '';
 
   if (!allItemsCache) {
