@@ -1188,6 +1188,7 @@ function setLang(l) {
   const activeId = document.querySelector('.screen.active')?.id || '';
   if (activeId === 'sItems' && allItemsCache) renderItemsManager();
   if (activeId === 'sGeneralTodos' && allGeneralTodosCache) renderGeneralTodos();
+  if (activeId === 'sTripsList' && allTripsCache) refreshTripsList();
 }
 
 function applyLang() {
@@ -2165,7 +2166,7 @@ function updateSummary() {
   const eventIcons2 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', bikepacking:'🚴', bildung:'🎓' };
   const type = (eventIcons2[wiz.event] || '🏖️') + ' ' + (wiz.event || wiz.type || 'Urlaub');
   document.getElementById('wSumText').innerHTML =
-    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} Nächte<br>${type} · ${wiz.abroad?'✈️ Ausland':'🏠 Inland'}${acts?' · '+acts:''}`;
+    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} ${nights===1?t('night'):t('nights')}<br>${type} · ${wiz.abroad?'✈️ Ausland':'🏠 Inland'}${acts?' · '+acts:''}`;
 }
 
 async function createTrip() {
