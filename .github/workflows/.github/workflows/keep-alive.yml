@@ -1,0 +1,17 @@
+name: Keep Supabase alive
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # täglich um 8:00 Uhr
+  workflow_dispatch:       # auch manuell auslösbar
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -s \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MDY4NTMsImV4cCI6MjA2NDE4Mjg1M30.7wVcP0lFBMCPNbvMoiQSFjoYeJBZWTiBy2DYBlzaGbk" \
+            "https://dzignltxlpymglikyyox.supabase.co/rest/v1/categories?select=id&limit=1"
+          echo "Supabase pinged successfully"
