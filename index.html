@@ -944,6 +944,11 @@ const TRANSLATIONS = {
     wizNext: 'Weiter →',
     wizSkip: 'Überspringen',
     wizFinish: 'Reise erstellen 🚀',
+    abroad: 'Ausland',
+    inland: 'Inland',
+    evUrlaub: 'Urlaub', evBusiness: 'Business', evKonzert: 'Konzert',
+    evKultur: 'Kultur', evSport: 'Sport', evFamilie: 'Familie',
+    evBikepacking: 'Bikepacking', evBildung: 'Bildung',
     // Trip View
     tabSuggestions: '📋 Vorschläge',
     tabPack: '🧳 Packen',
@@ -1092,6 +1097,11 @@ const TRANSLATIONS = {
     wizNext: 'Next →',
     wizSkip: 'Skip',
     wizFinish: 'Create trip 🚀',
+    abroad: 'Abroad',
+    inland: 'Domestic',
+    evUrlaub: 'Holiday', evBusiness: 'Business', evKonzert: 'Concert',
+    evKultur: 'Culture', evSport: 'Sport', evFamilie: 'Family',
+    evBikepacking: 'Bikepacking', evBildung: 'Education',
     // Trip View
     tabSuggestions: '📋 Suggestions',
     tabPack: '🧳 Pack',
@@ -1928,7 +1938,7 @@ function showStep(s) {
     `<div class="wiz-pip ${i<s-1?'done':i===s-1?'active':''}"></div>`).join('');
 
   document.querySelectorAll('.step-eyebrow').forEach(e =>
-    e.textContent = `Schritt ${s} von ${steps.length}`);
+    e.textContent = `${t('step')} ${s} ${t('of')} ${steps.length}`);
 
   document.getElementById('wizNext').textContent = s===steps.length ? t('wizFinish') : t('wizNext');
   document.getElementById('wizSkip').style.display = steps[s-1]==='ws4' ? 'block' : 'none';
@@ -2164,9 +2174,11 @@ function updateSummary() {
   const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',sonstiger_sport:'🏓'};
   const acts = wiz.acts.map(a => icons[a]||a).join(' ');
   const eventIcons2 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', bikepacking:'🚴', bildung:'🎓' };
-  const type = (eventIcons2[wiz.event] || '🏖️') + ' ' + (wiz.event || wiz.type || 'Urlaub');
+  const eventLabels = { urlaub: t('evUrlaub'), business: t('evBusiness'), konzert: t('evKonzert'), kultur: t('evKultur'), sport: t('evSport'), familie: t('evFamilie'), bikepacking: t('evBikepacking'), bildung: t('evBildung') };
+  const eventKey = wiz.event || wiz.type || 'urlaub';
+  const type = (eventIcons2[eventKey] || '🏖️') + ' ' + (eventLabels[eventKey] || eventKey);
   document.getElementById('wSumText').innerHTML =
-    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} ${nights===1?t('night'):t('nights')}<br>${type} · ${wiz.abroad?'✈️ Ausland':'🏠 Inland'}${acts?' · '+acts:''}`;
+    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} ${nights===1?t('night'):t('nights')}<br>${type} · ${wiz.abroad?'✈️ '+t('abroad'):'🏠 '+t('inland')}${acts?' · '+acts:''}`;
 }
 
 async function createTrip() {
