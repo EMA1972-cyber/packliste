@@ -402,15 +402,36 @@ body {
 </head>
 <body>
 
+<svg style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="flag-de" viewBox="0 0 30 20">
+      <rect width="30" height="20" fill="#FFCE00"/>
+      <rect width="30" height="13.3333" fill="#DD0000"/>
+      <rect width="30" height="6.6667" fill="#000000"/>
+    </symbol>
+    <symbol id="flag-gb" viewBox="0 0 60 36">
+      <rect width="60" height="36" fill="#012169"/>
+      <path d="M0 0L60 36M60 0L0 36" stroke="#fff" stroke-width="7"/>
+      <path d="M0 0L60 36M60 0L0 36" stroke="#C8102E" stroke-width="3"/>
+      <path d="M30 0V36M0 18H60" stroke="#fff" stroke-width="12"/>
+      <path d="M30 0V36M0 18H60" stroke="#C8102E" stroke-width="7"/>
+    </symbol>
+  </defs>
+</svg>
+
 <div class="app-header" id="appHeader" style="display:none">
   <div style="flex:1;display:flex;align-items:center">
     <button id="backBtn" onclick="goHome()" style="display:none;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer">← Zurück</button>
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px">
     <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-      style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s;opacity:0.4">🇩🇪</button>
+      style="background:none;border:none;cursor:pointer;padding:1px;transition:all 0.2s;opacity:0.4;display:inline-flex;align-items:center;line-height:0">
+      <svg width="21" height="14" viewBox="0 0 30 20" style="display:block;border-radius:2px"><use href="#flag-de"/></svg>
+    </button>
     <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
-      style="background:none;border:none;cursor:pointer;font-size:20px;padding:1px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+      style="background:none;border:none;cursor:pointer;padding:1px;transition:all 0.2s;opacity:0.4;display:inline-flex;align-items:center;line-height:0">
+      <svg width="23" height="14" viewBox="0 0 60 36" style="display:block;border-radius:2px"><use href="#flag-gb"/></svg>
+    </button>
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:flex-end">
     <button id="logoutBtn" onclick="doLogout()" style="display:none;background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;align-items:center;gap:4px">
@@ -432,9 +453,13 @@ body {
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:var(--sand)">
     <div style="display:flex;gap:12px;margin-bottom:12px">
       <button class="lang-flag" data-lang="de" onclick="setLang('de')" title="Deutsch"
-        style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇩🇪</button>
+        style="background:none;border:none;cursor:pointer;padding:4px;transition:all 0.2s;opacity:0.4;display:inline-flex;align-items:center;line-height:0">
+        <svg width="30" height="20" viewBox="0 0 30 20" style="display:block;border-radius:3px"><use href="#flag-de"/></svg>
+      </button>
       <button class="lang-flag" data-lang="en" onclick="setLang('en')" title="English"
-        style="background:none;border:none;cursor:pointer;font-size:28px;padding:4px;transition:all 0.2s;opacity:0.4">🇬🇧</button>
+        style="background:none;border:none;cursor:pointer;padding:4px;transition:all 0.2s;opacity:0.4;display:inline-flex;align-items:center;line-height:0">
+        <svg width="33" height="20" viewBox="0 0 60 36" style="display:block;border-radius:3px"><use href="#flag-gb"/></svg>
+      </button>
     </div>
     <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin:0 0 8px" data-i18n="appName">Reiseplaner</h1>
     <div style="font-size:72px;margin-bottom:8px">🧳</div>
