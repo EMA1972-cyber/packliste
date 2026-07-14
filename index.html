@@ -966,6 +966,8 @@ const TRANSLATIONS = {
     addItemPlaceholder: 'Eigener Artikel …',
     addItemPackPlaceholder: 'Artikel direkt hinzufügen …',
     rememberNext: '💡 Für nächstes Mal merken',
+    lastAction: 'Zuletzt',
+    undo: 'Rückgängig',
     // Pack
     nothingToPack: 'Noch keine Artikel zum Einpacken.',
     noSuggestions: 'Gehe zu Vorschläge um Artikel hinzuzufügen.',
@@ -1119,6 +1121,8 @@ const TRANSLATIONS = {
     addItemPlaceholder: 'Custom item …',
     addItemPackPlaceholder: 'Add item directly …',
     rememberNext: '💡 Remember for next time',
+    lastAction: 'Last',
+    undo: 'Undo',
     // Pack
     nothingToPack: 'No items to pack yet.',
     noSuggestions: 'Go to Suggestions to add items.',
@@ -1859,19 +1863,19 @@ async function saveTripMeta(id) {
   const notes     = document.getElementById('etNotes').value.trim();
   const tripTypeMap = { urlaub:'urlaub', business:'business', konzert:'urlaub', kultur:'urlaub', sport:'urlaub', familie:'urlaub', bikepacking:'urlaub', bildung:'business' };
   const tripType  = tripTypeMap[eventType] || 'urlaub';
-  if (!name || !dest || !dateFrom || !dateTo) { alert('Bitte alle Pflichtfelder ausfüllen.'); return; }
+  if (!name || !dest || !dateFrom || !dateTo) { alert(lang==='en'?'Please fill in all required fields.':'Bitte alle Pflichtfelder ausfüllen.'); return; }
   try {
     await sbPatch('trips', { id: `eq.${id}` }, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes, event_type: eventType, trip_type: tripType });
     closeEditTripModal();
     const trip = allTripsCache.find(x => x.id === id);
     if (trip) { Object.assign(trip, { name, destination: dest, date_from: dateFrom, date_to: dateTo, notes, event_type: eventType, trip_type: tripType }); delete trip._ja; }
     await refreshTripsList();
-  } catch(e) { alert('Fehler: ' + e.message); }
+  } catch(e) { alert((lang==='en'?'Error: ':'Fehler: ') + e.message); }
 }
 
 async function markTripDone(auto = false) {
   if (!curTrip) return;
-  if (!auto && !confirm(`"${curTrip.name}" als abgeschlossen markieren?`)) return;
+  if (!auto && !confirm(lang==='en'?`Mark "${curTrip.name}" as completed?`:`"${curTrip.name}" als abgeschlossen markieren?`)) return;
   try {
     await sbPatch('trips', { id: `eq.${curTrip.id}` }, { status: 'done' });
     curTrip.status = 'done';
@@ -1885,20 +1889,20 @@ async function markTripDone(auto = false) {
     if (auto) {
       document.getElementById('tPct').textContent = '🎉 100%';
     } else {
-      alert(`✅ "${curTrip.name}" wurde abgeschlossen!`);
+      alert(lang==='en'?`✅ "${curTrip.name}" completed!`:`✅ "${curTrip.name}" wurde abgeschlossen!`);
     }
-  } catch(e) { alert('Fehler: ' + e.message); }
+  } catch(e) { alert((lang==='en'?'Error: ':'Fehler: ') + e.message); }
 }
 
 async function deleteTrip(id, name) {
-  if (!confirm(`"${name}" wirklich löschen?`)) return;
+  if (!confirm(lang==='en'?`Really delete "${name}"?`:`"${name}" wirklich löschen?`)) return;
   try {
     await sbDelete('trip_items', { trip_id: `eq.${id}` });
     await sbDelete('trip_todos', { trip_id: `eq.${id}` });
     await sbDelete('trips', { id: `eq.${id}` });
     await refreshTripsList();
   } catch(e) {
-    alert('Fehler beim Löschen: ' + e.message);
+    alert((lang==='en'?'Error deleting: ':'Fehler beim Löschen: ') + e.message);
   }
 }
 
@@ -2205,7 +2209,7 @@ async function createTrip() {
 
     await openTrip(trip.id);
   } catch(e) {
-    alert('Fehler: ' + e.message);
+    alert((lang==='en'?'Error: ':'Fehler: ') + e.message);
     btn.disabled = false; btn.textContent = '🧳 Packliste erstellen';
   }
 }
@@ -2342,7 +2346,7 @@ async function openTrip(id) {
 
     // Pool-Modal Kategorien befüllen
     document.getElementById('mPoolCat').innerHTML = categories.map(c =>
-      `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+      `<option value="${c.id}">${c.icon} ${(lang==='en'&&c.name_en)||c.name}</option>`).join('');
 
     renderAll(subs);
   } catch(e) {
@@ -2450,8 +2454,8 @@ function renderVorschlaege(subs) {
 
   if (undoLast) {
     h += `<div class="undo-strip">
-      <span class="un">Zuletzt: <strong>${undoLast.name}</strong></span>
-      <button onclick="doUndo()" title="Rückgängig">↩️</button>
+      <span class="un">${t('lastAction')}: <strong>${undoLast.name}</strong></span>
+      <button onclick="doUndo()" title="${t('undo')}">↩️</button>
     </div>`;
   }
 
@@ -2807,7 +2811,7 @@ function renderTaschen(subs) {
 
     h += `<div class="cat-block">
       <div class="cat-hd" onclick="togCat(this)">
-        <span class="cat-hd-title">${bag.name}</span>
+        <span class="cat-hd-title">${(lang==='en'&&bag.name_en)||bag.name}</span>
         <span class="cat-count${p===items.length?' done':''}">${p}/${items.length}</span>
         <span class="cat-chev open">▼</span>
       </div><div class="cat-body">`;
@@ -2897,7 +2901,7 @@ async function saveTodoRow(id) {
 
 async function deleteTodoRow(id) {
   const todo = curTodos.find(t => t.id == id);
-  if (!confirm(`"${todo.name}" wirklich löschen?`)) return;
+  if (!confirm(lang==='en'?`Really delete "${todo.name}"?`:`"${todo.name}" wirklich löschen?`)) return;
   await sbDelete('trip_todos', { id: `eq.${id}` });
   curTodos = curTodos.filter(t => t.id != id);
   renderTodos();
@@ -3038,7 +3042,7 @@ async function saveGeneralTodoRow(id) {
 
 async function deleteGeneralTodoRow(id) {
   const todo = allGeneralTodosCache.find(t => t.id == id);
-  if (!confirm(`"${todo.name}" wirklich löschen?`)) return;
+  if (!confirm(lang==='en'?`Really delete "${todo.name}"?`:`"${todo.name}" wirklich löschen?`)) return;
   await sbDelete('general_todos', { id: `eq.${id}` });
   allGeneralTodosCache = allGeneralTodosCache.filter(t => t.id != id);
   renderGeneralTodos();
@@ -3193,7 +3197,7 @@ async function savePool() {
 // ── Neues Item direkt von der Startseite (ohne Reise) ──
 function openItemModal() {
   document.getElementById('mItemCat').innerHTML = categories.map(c =>
-    `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    `<option value="${c.id}">${c.icon} ${(lang==='en'&&c.name_en)||c.name}</option>`).join('');
   document.getElementById('mItemFeedback').style.display = 'none';
   document.getElementById('mItemName').value = '';
   updateItemSubOptions();
@@ -3206,7 +3210,7 @@ function updateItemSubOptions() {
   const subs = subcategories.filter(s => s.category_id === catId);
   const sel = document.getElementById('mItemSub');
   sel.innerHTML = '<option value="">– keine –</option>' +
-    subs.map(s => `<option value="${s.id}">${s.icon ? s.icon + ' ' : ''}${s.name}</option>`).join('');
+    subs.map(s => `<option value="${s.id}">${s.icon ? s.icon + ' ' : ''}${(lang==='en'&&s.name_en)||s.name}</option>`).join('');
 }
 
 async function saveNewItem() {
@@ -3308,7 +3312,7 @@ function itemMgrRow(it) {
   const sub = it.subcategory_id ? allSubsCache.find(s => s.id === it.subcategory_id) : null;
   const subLabel = ''; // Subkategorie wird als Gruppen-Header angezeigt
   const bag = it.bike_bag_id ? allSubsCache.find(s => s.id === it.bike_bag_id) : null;
-  const bagLabel = bag ? ` <small style="color:var(--muted);font-weight:600">${bag.name}</small>` : '';
+  const bagLabel = bag ? ` <small style="color:var(--muted);font-weight:600">${(lang==='en'&&bag.name_en)||bag.name}</small>` : '';
   const mand = !!it.is_mandatory;
   const displayName = (lang === 'en' && it.name_en) ? it.name_en : it.name;
   return `<div class="item-row" id="imr_${it.id}">
@@ -3338,7 +3342,7 @@ function quickBagPicker(id) {
   const bikeBags = bikeCat ? allSubsCache.filter(s => s.category_id === bikeCat.id) : [];
   let opts = `<option value="">– keine Tasche –</option>`;
   opts += bikeBags.map(s =>
-    `<option value="${s.id}"${s.id===item.bike_bag_id?' selected':''}>${s.icon||''} ${s.name}</option>`).join('');
+    `<option value="${s.id}"${s.id===item.bike_bag_id?' selected':''}>${s.icon||''} ${(lang==='en'&&s.name_en)||s.name}</option>`).join('');
 
   row.innerHTML = `
     <div class="item-edit-row" style="width:100%;align-items:center">
@@ -3361,13 +3365,13 @@ function editItemRow(id) {
   const item = allItemsCache.find(i => i.id === id);
   const row = document.getElementById('imr_' + id);
   const catOptions = categories.map(c =>
-    `<option value="${c.id}"${c.id===item.category_id?' selected':''}>${c.icon} ${c.name}</option>`).join('');
+    `<option value="${c.id}"${c.id===item.category_id?' selected':''}>${c.icon} ${(lang==='en'&&c.name_en)||c.name}</option>`).join('');
 
   const bikeCat = categories.find(c => c.name === 'Bikepacking');
   const bikeBags = bikeCat ? allSubsCache.filter(s => s.category_id === bikeCat.id) : [];
   let bagOpts = `<option value="">– keine Tasche –</option>`;
   bagOpts += bikeBags.map(s =>
-    `<option value="${s.id}"${s.id===item.bike_bag_id?' selected':''}>${s.icon||''} ${s.name}</option>`).join('');
+    `<option value="${s.id}"${s.id===item.bike_bag_id?' selected':''}>${s.icon||''} ${(lang==='en'&&s.name_en)||s.name}</option>`).join('');
 
   row.innerHTML = `
     <div class="item-edit-form">
@@ -3401,7 +3405,7 @@ function updateSubcatOptions(id) {
 
   let opts = `<option value="">– keine Unterkategorie –</option>`;
   opts += subs.map(s =>
-    `<option value="${s.id}"${s.id===currentSub?' selected':''}>${s.icon||''} ${s.name}</option>`).join('');
+    `<option value="${s.id}"${s.id===currentSub?' selected':''}>${s.icon||''} ${(lang==='en'&&s.name_en)||s.name}</option>`).join('');
 
   document.getElementById('editSub_'+id).innerHTML = opts;
 }
@@ -3452,7 +3456,7 @@ async function saveItemRow(id) {
 
 async function deleteItemRow(id) {
   const item = allItemsCache.find(i => i.id === id);
-  if (!confirm(`"${item.name}" wirklich löschen?\n\nWird auch aus allen bestehenden Reisen entfernt.`)) return;
+  if (!confirm(lang==='en'?`Really delete "${item.name}"?\n\nWill also be removed from all existing trips.`:`"${item.name}" wirklich löschen?\n\nWird auch aus allen bestehenden Reisen entfernt.`)) return;
 
   await sbDelete('items', { id: `eq.${id}` });
   allItemsCache = allItemsCache.filter(i => i.id !== id);
@@ -3468,7 +3472,7 @@ function addNewItemForm(e, catId) {
 
   const subs = allSubsCache.filter(s => s.category_id === catId);
   let subOpts = `<option value="">– keine Unterkategorie –</option>`;
-  subOpts += subs.map(s => `<option value="${s.id}">${s.icon||''} ${s.name}</option>`).join('');
+  subOpts += subs.map(s => `<option value="${s.id}">${s.icon||''} ${(lang==='en'&&s.name_en)||s.name}</option>`).join('');
 
   const form = document.createElement('div');
   form.className = 'item-row';
