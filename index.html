@@ -1640,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadCategories() {
   try {
     const [cats, subs] = await Promise.all([
-      sbGet('categories', { select: 'id,name,name_en,icon,sort_order', order: 'sort_order' }),
+      sbGet('categories', { select: 'id,name,name_en,icon,sort_order,show_urlaub,show_business', order: 'sort_order' }),
       sbGet('subcategories', { select: 'id,name,name_en,category_id,icon', order: 'sort_order' })
     ]);
     categories = cats || [];
@@ -2326,8 +2326,9 @@ async function openTrip(id) {
     // Todos laden
     curTodos = await sbGet('trip_todos', { filter: { trip_id: `eq.${id}` }, order: 'name' }) || [];
 
-    // Kategorien + Subkats
-    const subs = await sbGet('subcategories', { order: 'sort_order' }) || [];
+    // Kategorien + Subkats (neu laden falls leer)
+    if (!categories.length) await loadCategories();
+    const subs = await sbGet('subcategories', { select: 'id,name,name_en,category_id,icon', order: 'sort_order' }) || [];
 
     setHeader(curTrip?.name || (lang==='en'?'Trip':'Reise'), true);
     const tripBack = document.getElementById('tripBackBtn');
