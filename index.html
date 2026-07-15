@@ -1678,7 +1678,7 @@ async function doForgotPassword() {
   if (!email) { errEl.textContent = lang==='en' ? 'Please enter your email address.' : 'Bitte E-Mail-Adresse eingeben.'; errEl.style.display = 'block'; return; }
   btn.disabled = true; btn.textContent = lang==='en' ? 'Sending…' : 'Sende…';
   try {
-    await authFetch('recover', { email, email_redirect_to: 'https://ema1972-cyber.github.io/packliste/' });
+    await authFetch(`recover?redirect_to=${encodeURIComponent('https://ema1972-cyber.github.io/packliste/')}`, { email });
     // Formular durch Bestätigungsansicht ersetzen (gleiches Muster wie bei Registrierung)
     document.querySelector('#sForgotPassword > div').innerHTML = `
       <div style="font-size:72px;margin-bottom:16px">📬</div>
