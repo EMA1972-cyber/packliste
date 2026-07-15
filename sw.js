@@ -1,8 +1,13 @@
 // Packliste Service Worker — cached nur das Grundgerüst (HTML/Icons/Manifest),
 // niemals Supabase-API-Calls. So bleiben Live-Daten immer aktuell, aber die
 // App selbst lädt auch ohne Internetverbindung.
+//
+// Strategie: Network-first mit Cache-Fallback. Jeder Seitenaufruf holt sich
+// zuerst die aktuelle Version aus dem Netz — kein "erst beim zweiten Laden
+// aktuell"-Verhalten mehr wie bei cache-first. Nur wenn kein Netz verfügbar
+// ist, springt der Cache als Fallback ein (Offline-Fähigkeit bleibt erhalten).
 
-const CACHE_NAME = 'packliste-shell-v1';
+const CACHE_NAME = 'packliste-shell-v2';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -35,18 +40,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Grundgerüst: erst Cache, dann Netz (cache-first), mit Netz-Update im Hintergrund
+  // Grundgerüst: Netz zuerst (network-first), Cache nur als Offline-Fallback
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request).then(networkResp => {
-        if (networkResp && networkResp.status === 200) {
-          const clone = networkResp.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return networkResp;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+    fetch(event.request).then(networkResp => {
+      if (networkResp && networkResp.status === 200) {
+        const clone = networkResp.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return networkResp;
+    }).catch(() => caches.match(event.request))
   );
 });
