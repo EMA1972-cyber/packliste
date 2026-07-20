@@ -2670,7 +2670,7 @@ async function generateTripTodos(tripId) {
       if (wiz.type === 'urlaub'   && t.show_urlaub   === false) continue;
       if (wiz.type === 'business' && t.show_business  === false) continue;
       if (t.show_abroad === 2     && !wiz.abroad)               continue;
-      toInsert.push({ trip_id: tripId, name: t.name, show_abroad: t.show_abroad ?? 1, show_urlaub: t.show_urlaub ?? true, show_business: t.show_business ?? true, sort_order: t.sort_order });
+      toInsert.push({ trip_id: tripId, name: t.name, name_en: t.name_en || null, show_abroad: t.show_abroad ?? 1, show_urlaub: t.show_urlaub ?? true, show_business: t.show_business ?? true, sort_order: t.sort_order });
     }
   } else {
     // Fallback: Admin-Templates verwenden (neue User ohne eigene ToDos)
@@ -3271,9 +3271,11 @@ function editTodoRow(id) {
 async function saveTodoRow(id) {
   const name = document.getElementById('editTodoName_'+id).value.trim();
   if (!name) return;
-  await sbPatch('trip_todos', { id: `eq.${id}` }, { name });
   const todo = curTodos.find(t => t.id === id);
-  todo.name = name;
+  const nameChanged = todo?.name !== name;
+  const name_en = nameChanged ? await translateToEn(name) : (todo?.name_en || null);
+  await sbPatch('trip_todos', { id: `eq.${id}` }, { name, name_en });
+  todo.name = name; todo.name_en = name_en;
   curTodos.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderTodos();
 }
@@ -3310,7 +3312,8 @@ async function saveNewTodoRow() {
   const name = document.getElementById('newTodoName').value.trim();
   if (!name) return;
   const maxOrder = curTodos.reduce((m,t) => Math.max(m, t.sort_order||0), 0);
-  const [newTodo] = await sbPost('trip_todos', { trip_id: curTripId, name, decision: 'pending', sort_order: maxOrder + 1 });
+  const name_en = await translateToEn(name);
+  const [newTodo] = await sbPost('trip_todos', { trip_id: curTripId, name, name_en, decision: 'pending', sort_order: maxOrder + 1 });
   curTodos.push(newTodo);
   curTodos.sort((a,b) => a.name.localeCompare(b.name, 'de'));
   renderTodos();
