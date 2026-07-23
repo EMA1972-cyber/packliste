@@ -2616,6 +2616,7 @@ async function generateTripItems(tripId) {
     if (item.min_temp !== null  && (wiz.temp||20) > item.min_temp) continue;
     if (item.max_temp !== null  && (wiz.temp||20) < item.max_temp) continue;
     if (item.activity_key && !wiz.acts.includes(item.activity_key)) continue;
+    if (item.event_key && item.event_key !== (wiz.event || wiz.type)) continue;
     if (item.is_bikepacking && !wiz.bike) continue;
 
     // Bevorzugte Menge ermitteln: User-Präferenz > default_qty
@@ -2701,7 +2702,7 @@ async function openTrip(id) {
 
     // Items mit Item-Details laden
     const rawItems = await sbGet('trip_items', {
-      select: '*,items(id,name,name_en,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,bike_bag_id,show_urlaub,show_business,show_abroad)',
+      select: '*,items(id,name,name_en,category_id,subcategory_id,default_qty,is_pool,is_mandatory,activity_key,event_key,bike_bag_id,show_urlaub,show_business,show_abroad)',
       filter: { trip_id: `eq.${id}` }
     });
     curItems = rawItems || [];
@@ -2752,6 +2753,7 @@ function updateProgress() {
   const tripType = curTrip?.trip_type || 'urlaub';
   const isAbroad = curTrip?.is_abroad || false;
   const tripActs = curTrip?.activities || [];
+  const tripEvent = curTrip?.event_type || tripType;
   const vorschlaegeAll2  = curItems.filter(i => {
     if (!i.items) return false;
     if (i.items.is_pool || i.items.is_mandatory) return false;
@@ -2760,6 +2762,7 @@ function updateProgress() {
     if (i.items.show_abroad === 2 && !isAbroad) return false;
     if (i.items.show_abroad === 0 &&  isAbroad) return false;
     if (i.items.activity_key && !tripActs.includes(i.items.activity_key)) return false;
+    if (i.items.event_key && i.items.event_key !== tripEvent) return false;
     return true;
   });
   const vorschlaegeTotal = vorschlaegeAll2.length;
@@ -2798,6 +2801,7 @@ function getItemsByCat(catId, subId, pendingOnly, jaOnly, applyTripFilter = fals
   const tt = curTrip?.trip_type || 'urlaub';
   const ab = curTrip?.is_abroad || false;
   const ac = curTrip?.activities || [];
+  const ev = curTrip?.event_type || tt;
   return curItems.filter(ti => {
     const item = ti.items;
     if (!item) return false;
@@ -2813,6 +2817,7 @@ function getItemsByCat(catId, subId, pendingOnly, jaOnly, applyTripFilter = fals
       if (item.show_abroad === 2 && !ab) return false;
       if (item.show_abroad === 0 &&  ab) return false;
       if (item.activity_key && !ac.includes(item.activity_key)) return false;
+      if (item.event_key && item.event_key !== ev) return false;
     }
     return true;
   });
@@ -2842,6 +2847,7 @@ function renderVorschlaege(subs) {
   const _tt = curTrip?.trip_type || 'urlaub';
   const _ab = curTrip?.is_abroad || false;
   const _ac = curTrip?.activities || [];
+  const _ev = curTrip?.event_type || _tt;
   const pendingVisible = curItems.filter(i => {
     if (i.decision !== 'pending') return false;
     if (!i.items || i.items.is_mandatory || i.items.is_pool) return false;
@@ -2850,6 +2856,7 @@ function renderVorschlaege(subs) {
     if (i.items.show_abroad === 2 && !_ab) return false;
     if (i.items.show_abroad === 0 &&  _ab) return false;
     if (i.items.activity_key && !_ac.includes(i.items.activity_key)) return false;
+    if (i.items.event_key && i.items.event_key !== _ev) return false;
     return true;
   });
   if (!pendingVisible.length) h += `<div class="done-bnr"><h3>${t('allDone')}</h3><p>${t('allDoneSub')}</p></div>`;
@@ -2868,6 +2875,7 @@ function renderVorschlaege(subs) {
       if (ti.items.show_abroad === 2 && !_ab) return false;
       if (ti.items.show_abroad === 0 &&  _ab) return false;
       if (ti.items.activity_key && !_ac.includes(ti.items.activity_key)) return false;
+      if (ti.items.event_key && ti.items.event_key !== _ev) return false;
       return true;
     });
     if (!catPending.length) return;
@@ -2909,6 +2917,7 @@ function updateTabProgress() {
   const tripType = curTrip?.trip_type || 'urlaub';
   const isAbroad = curTrip?.is_abroad || false;
   const tripActs = curTrip?.activities || [];
+  const tripEvent2 = curTrip?.event_type || tripType;
   const vorschlaegeAll  = curItems.filter(i => {
     if (!i.items) return false;
     if (i.items.is_pool || i.items.is_mandatory) return false;
@@ -2917,6 +2926,7 @@ function updateTabProgress() {
     if (i.items.show_abroad === 2 && !isAbroad) return false;
     if (i.items.show_abroad === 0 &&  isAbroad) return false;
     if (i.items.activity_key && !tripActs.includes(i.items.activity_key)) return false;
+    if (i.items.event_key && i.items.event_key !== tripEvent2) return false;
     return true;
   });
   const vorschlaegeTotal = vorschlaegeAll.length;
