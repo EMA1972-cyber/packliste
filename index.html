@@ -1923,6 +1923,7 @@ let wiz = {};
 let curTripId = null;
 let curTrip   = null;
 let curItems  = [];
+let collapsedCats = new Set(); // merkt sich manuell eingeklappte Kategorien über Re-Renders hinweg (Key: "<screen>_<catId>")
 let curTodos  = [];
 let undoLast  = null;
 let climTimer = null;
@@ -2880,13 +2881,15 @@ function renderVorschlaege(subs) {
     });
     if (!catPending.length) return;
 
-    h += `<div class="cat-block">
+    const _ck = `vorschlaege_${cat.id}`;
+    const _collapsed = collapsedCats.has(_ck);
+    h += `<div class="cat-block" data-ck="${_ck}">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
         <span class="cat-hd-title">${(lang==='en'&&cat.name_en)||cat.name}</span>
         <span class="cat-count">${catPending.length} offen</span>
-        <span class="cat-chev open">▼</span>
-      </div><div class="cat-body">`;
+        <span class="cat-chev${_collapsed?'':' open'}">▼</span>
+      </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
     // Direkte Items (keine Subkat)
     getItemsByCat(cat.id, null, true, false, true).forEach(ti => h += vorschlagRow(ti));
@@ -3008,13 +3011,15 @@ function renderPacken(subs) {
     if (!catJa.length) return;
     const p = catJa.filter(i => i.is_checked).length;
 
-    h += `<div class="cat-block">
+    const _ck = `packen_${cat.id}`;
+    const _collapsed = collapsedCats.has(_ck);
+    h += `<div class="cat-block" data-ck="${_ck}">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
         <span class="cat-hd-title">${(lang==='en'&&cat.name_en)||cat.name}</span>
         <span class="cat-count${p===catJa.length?' done':''}">${p}/${catJa.length}</span>
-        <span class="cat-chev open">▼</span>
-      </div><div class="cat-body">`;
+        <span class="cat-chev${_collapsed?'':' open'}">▼</span>
+      </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
     getItemsByCat(cat.id, null, false, true).forEach(ti => h += packRow(ti));
 
@@ -3198,12 +3203,14 @@ function renderTaschen(subs) {
     if (!items.length) return;
     const p = items.filter(i => i.is_checked).length;
 
-    h += `<div class="cat-block">
+    const _ck = `taschen_${bag.id}`;
+    const _collapsed = collapsedCats.has(_ck);
+    h += `<div class="cat-block" data-ck="${_ck}">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-title">${(lang==='en'&&bag.name_en)||bag.name}</span>
         <span class="cat-count${p===items.length?' done':''}">${p}/${items.length}</span>
-        <span class="cat-chev open">▼</span>
-      </div><div class="cat-body">`;
+        <span class="cat-chev${_collapsed?'':' open'}">▼</span>
+      </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
     items.forEach(ti => h += packRow(ti));
 
@@ -3665,14 +3672,16 @@ function renderItemsManager() {
       (!q || it.name.toLowerCase().includes(q) || (it.name_en && it.name_en.toLowerCase().includes(q))));
     if (!items.length) return;
 
-    h += `<div class="cat-block" data-cat="${cat.id}">
+    const _ck = `itemsmgr_${cat.id}`;
+    const _collapsed = collapsedCats.has(_ck);
+    h += `<div class="cat-block" data-cat="${cat.id}" data-ck="${_ck}">
       <div class="cat-hd" onclick="togCat(this)">
         <span class="cat-hd-ico">${cat.icon}</span>
         <span class="cat-hd-title">${(lang==='en'&&cat.name_en)||cat.name}</span>
         <span class="cat-count">${items.length}</span>
         <button class="cat-add-btn" onclick="addNewItemForm(event, ${cat.id})" title="${lang==='en'?'New item in':'Neues Item in'} ${(lang==='en'&&cat.name_en)||cat.name}">➕</button>
-        <span class="cat-chev open">▼</span>
-      </div><div class="cat-body">`;
+        <span class="cat-chev${_collapsed?'':' open'}">▼</span>
+      </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
     // Gruppierung nach Unterkategorie
     const catSubs = allSubsCache.filter(s => s.category_id === cat.id);
@@ -3947,9 +3956,11 @@ function showTab(name, btn) {
 function togCat(hd) {
   const body = hd.nextElementSibling;
   const chev = hd.querySelector('.cat-chev');
+  const key  = hd.closest('.cat-block')?.dataset.ck;
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : '';
   chev.classList.toggle('open', !open);
+  if (key) { if (open) collapsedCats.add(key); else collapsedCats.delete(key); }
 }
 function fmtDate(d) { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}.${m}.${y}`; }
 function calcNights(a,b) { if(!a||!b) return 0; return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000)); }
