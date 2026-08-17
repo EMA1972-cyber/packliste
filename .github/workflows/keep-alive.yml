@@ -2,16 +2,29 @@ name: Keep Supabase alive
 
 on:
   schedule:
-    - cron: '0 8 * * *'
-  workflow_dispatch:
+    - cron: '0 8 * * *'   # täglich 08:00 UTC
+  workflow_dispatch:        # manuell auslösbar
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase
+      - name: Ping Supabase REST API
+        env:
+          # Public anon key (RLS-geschützt) – gültiger Key seit 13.06.2026
+          SUPA_ANON: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTI0NTIsImV4cCI6MjA5NjkyODQ1Mn0.a6VhC2QFLw9KRmtNam3fXvX4KX0mfdEn7NoPCqpqYYk"
         run: |
-          curl -s \
-            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MDY4NTMsImV4cCI6MjA2NDE4Mjg1M30.7wVcP0lFBMCPNbvMoiQSFjoYeJBZWTiBy2DYBlzaGbk" \
-            "https://dzignltxlpymglikyyox.supabase.co/rest/v1/categories?select=id&limit=1"
-          echo "Supabase pinged!"
+          set -euo pipefail
+          URL="https://dzignltxlpymglikyyox.supabase.co/rest/v1/categories?select=id&limit=1"
+          echo "Pinging Supabase ..."
+          HTTP=$(curl -s -o /tmp/resp -w "%{http_code}" \
+            -H "apikey: ${SUPA_ANON}" \
+            -H "Authorization: Bearer ${SUPA_ANON}" \
+            "$URL")
+          echo "HTTP status: $HTTP"
+          echo "Response body: $(cat /tmp/resp)"
+          if [ "$HTTP" != "200" ]; then
+            echo "::error::Supabase-Ping fehlgeschlagen (HTTP $HTTP) – Projekt evtl. pausiert oder Key ungueltig!"
+            exit 1
+          fi
+          echo "Supabase-Ping OK (HTTP 200) – Projekt aktiv."
