@@ -355,7 +355,6 @@ body {
 .lug-ico.lug-s { font-size: 22px; }
 .lug-ico.lug-m { font-size: 28px; }
 .lug-ico.lug-l { font-size: 34px; }
-#lugGrid .act-btn:last-child { grid-column: 1 / -1; }
 .lug-hint { background: var(--blue-50); border: 1px solid var(--blue-100); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--ink); margin-bottom: 14px; text-align: center; }
 .act-btn.recommended { box-shadow: 0 0 0 2px var(--blue-500); }
 .act-btn.recommended::after { content: '★'; position: absolute; top: 4px; right: 6px; font-size: 11px; color: var(--blue-500); }
@@ -807,6 +806,7 @@ body {
       <button class="act-btn" onclick="togLuggage('trolley_s',this)"><span class="ai lug-ico lug-s">🧳</span><span class="al" data-i18n="lugTrolleyS">Trolley (S)</span></button>
       <button class="act-btn" onclick="togLuggage('koffer_m',this)"><span class="ai lug-ico lug-m">🧳</span><span class="al" data-i18n="lugKofferM">Koffer (M)</span></button>
       <button class="act-btn" onclick="togLuggage('koffer_l',this)"><span class="ai lug-ico lug-l">🧳</span><span class="al" data-i18n="lugKofferL">Koffer (L)</span></button>
+      <button class="act-btn" onclick="togLuggage('sonstiges',this)"><span class="ai lug-ico lug-m">📦</span><span class="al" data-i18n="lugSonstiges">Sonstiges</span></button>
     </div>
     <p style="font-size:13px;color:var(--muted);margin-top:14px;text-align:center" data-i18n="multiSelect">Mehrfachauswahl möglich</p>
   </div>
@@ -1138,6 +1138,7 @@ const TRANSLATIONS = {
     lugTrolleyS: 'Trolley (S)',
     lugKofferM: 'Koffer (M)',
     lugKofferL: 'Koffer (L)',
+    lugSonstiges: 'Sonstiges',
     lugAssignTitle: '🧳 Gepäckstück wählen',
     actDiving: 'Tauchen',
     actGolf: 'Golf',
@@ -1328,6 +1329,7 @@ const TRANSLATIONS = {
     lugTrolleyS: 'Trolley (S)',
     lugKofferM: 'Suitcase (M)',
     lugKofferL: 'Suitcase (L)',
+    lugSonstiges: 'Other',
     lugAssignTitle: '🧳 Choose luggage',
     actDiving: 'Diving',
     actGolf: 'Golf',
@@ -2435,7 +2437,8 @@ const LUG_META = {
   sporttasche: { icon:'👜', de:'Sporttasche (S)',  en:'Sports bag (S)' },
   trolley_s:   { icon:'🧳', de:'Trolley (S)',      en:'Trolley (S)' },
   koffer_m:    { icon:'🧳', de:'Koffer (M)',       en:'Suitcase (M)' },
-  koffer_l:    { icon:'🧳', de:'Koffer (L)',       en:'Suitcase (L)' }
+  koffer_l:    { icon:'🧳', de:'Koffer (L)',       en:'Suitcase (L)' },
+  sonstiges:   { icon:'📦', de:'Sonstiges',        en:'Other' }
 };
 function lugLabel(key) { const m = LUG_META[key]; if (!m) return key; return lang==='en' ? m.en : m.de; }
 
