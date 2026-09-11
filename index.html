@@ -251,7 +251,7 @@ body {
 .act-btn {
   background: white; border: 2px solid var(--border);
   border-radius: 12px; padding: 16px 12px;
-  cursor: pointer; text-align: center;
+  cursor: pointer; text-align: center; position: relative;
   transition: all .15s; box-shadow: var(--shadow);
   font-family: 'DM Sans', sans-serif;
 }
@@ -351,6 +351,14 @@ body {
 .iqty { font-size: 11px; background: var(--blue-50); color: var(--blue-500); border-radius: 6px; padding: 2px 7px; white-space: nowrap; cursor: pointer; border: 1px solid var(--blue-100); }
 .iqty:hover { background: var(--blue-100); }
 .ipool { font-size: 10px; background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
+.lug-ico.lug-s { font-size: 22px; }
+.lug-ico.lug-m { font-size: 28px; }
+.lug-ico.lug-l { font-size: 34px; }
+.lug-hint { background: var(--blue-50); border: 1px solid var(--blue-100); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--ink); margin-bottom: 14px; text-align: center; }
+.act-btn.recommended { box-shadow: 0 0 0 2px var(--blue-500); }
+.act-btn.recommended::after { content: '★'; position: absolute; top: 4px; right: 6px; font-size: 11px; color: var(--blue-500); }
+.ilug { font-size: 15px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; flex-shrink: 0; opacity: .35; border: 1px solid var(--border); background: white; }
+.ilug.assigned { opacity: 1; background: var(--blue-50); border-color: var(--blue-100); }
 
 .ja-nein { display: flex; gap: 6px; flex-shrink: 0; }
 .ja-b, .nein-b { border: none; border-radius: 8px; padding: 7px 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .12s; }
@@ -787,6 +795,19 @@ body {
     </div>
   </div>
 
+  <div class="wiz-step" id="ws2b">
+    <div class="step-eyebrow"><span data-i18n="step">Schritt</span> 3 <span data-i18n="of">von</span> 4</div>
+    <div class="step-q" data-i18n="wizQ2b">Welches Gepäck nimmst du mit?</div>
+    <div class="lug-hint" id="lugHint" style="display:none"></div>
+    <div class="acts-grid" id="lugGrid">
+      <button class="act-btn" onclick="togLuggage('rucksack',this)"><span class="ai lug-ico lug-s">🎒</span><span class="al" data-i18n="lugRucksack">Rucksack</span></button>
+      <button class="act-btn" onclick="togLuggage('trolley_s',this)"><span class="ai lug-ico lug-s">🧳</span><span class="al" data-i18n="lugTrolleyS">Trolley (S)</span></button>
+      <button class="act-btn" onclick="togLuggage('koffer_m',this)"><span class="ai lug-ico lug-m">🧳</span><span class="al" data-i18n="lugKofferM">Koffer (M)</span></button>
+      <button class="act-btn" onclick="togLuggage('koffer_l',this)"><span class="ai lug-ico lug-l">🧳</span><span class="al" data-i18n="lugKofferL">Koffer (L)</span></button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:14px;text-align:center" data-i18n="multiSelect">Mehrfachauswahl möglich</p>
+  </div>
+
   <div class="wiz-step" id="ws3" style="display:none"></div>
 
   <div class="wiz-step" id="ws3b">
@@ -977,6 +998,18 @@ body {
   </div>
 </div>
 
+<!-- GEPÄCK-ZUORDNUNGS-MODAL -->
+<div class="modal-ov" id="mLug">
+  <div class="modal-sh">
+    <div class="modal-bar"></div>
+    <div class="modal-title" data-i18n="lugAssignTitle">🧳 Gepäckstück wählen</div>
+    <div id="mLugOptions" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+    <div class="modal-btns">
+      <button class="btn-ghost" style="flex:1" onclick="closeModal('mLug')" data-i18n="close">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // i18n — Übersetzungen DE / EN
@@ -1096,6 +1129,12 @@ const TRANSLATIONS = {
     duoSub: 'Ich packe für uns beide',
     wizQ4: 'Welche Aktivitäten sind dabei?',
     multiSelect: 'Mehrfachauswahl möglich',
+    wizQ2b: 'Welches Gepäck nimmst du mit?',
+    lugRucksack: 'Rucksack',
+    lugTrolleyS: 'Trolley (S)',
+    lugKofferM: 'Koffer (M)',
+    lugKofferL: 'Koffer (L)',
+    lugAssignTitle: '🧳 Gepäckstück wählen',
     actDiving: 'Tauchen',
     actGolf: 'Golf',
     actSki: 'Ski / Snowboard',
@@ -1279,6 +1318,12 @@ const TRANSLATIONS = {
     duoSub: "I'm packing for both of us",
     wizQ4: 'Which activities are included?',
     multiSelect: 'Multiple selection possible',
+    wizQ2b: 'What luggage are you taking?',
+    lugRucksack: 'Backpack',
+    lugTrolleyS: 'Trolley (S)',
+    lugKofferM: 'Suitcase (M)',
+    lugKofferL: 'Suitcase (L)',
+    lugAssignTitle: '🧳 Choose luggage',
     actDiving: 'Diving',
     actGolf: 'Golf',
     actSki: 'Ski / Snowboard',
@@ -2290,7 +2335,8 @@ async function deleteTrip(id, name) {
 // WIZARD
 // ══════════════════════════════════════════
 function startWizard() {
-  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null, resolvedCity:null, country:null, lat:null, lon:null };
+  wiz = { step:1, dest:'', from:'', to:'', type:'', bike:false, mode:null, acts:[], luggage:[], temp:null, abroad:false, climate:null, autoName:'', geoResults:null, resolvedCity:null, country:null, lat:null, lon:null };
+  _lugHintShown = false;
   document.querySelectorAll('.choice').forEach(b=>b.classList.remove('sel'));
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
   ['wDest','wFrom','wTo','wName','wNotes'].forEach(id => document.getElementById(id).value='');
@@ -2306,6 +2352,7 @@ function getSteps() {
   // ws3 (Bikepacking) und ws3b (Solo/Duo) entfallen —
   // Bikepacking wird direkt in Schritt 2 gewählt
   if (wiz.bike) s.push('ws3b'); // Solo/Duo nur bei Bikepacking noch relevant
+  if (!wiz.bike) s.push('ws2b'); // NEU: Gepäck-Auswahl (bei Bikepacking gibt's stattdessen die Taschen)
   if (!wiz.bike && (wiz.type === 'urlaub' || !wiz.type)) s.push('ws4');
   s.push('ws5');
   return s;
@@ -2328,6 +2375,7 @@ function showStep(s) {
   document.getElementById('wizSkip').style.display = steps[s-1]==='ws4' ? 'block' : 'none';
   document.getElementById('wizBack').style.display = s===1 ? 'none' : 'block';
 
+  if (steps[s-1]==='ws2b') updateLugHint();
   if (steps[s-1]==='ws5') updateSummary();
   updateNextBtn();
 }
@@ -2343,6 +2391,7 @@ function updateNextBtn() {
   let ok = true;
   if (s==='ws1') ok = !!(wiz.dest && wiz.from && wiz.to);
   if (s==='ws2') ok = !!wiz.type;
+  if (s==='ws2b') ok = wiz.luggage.length > 0;
   document.getElementById('wizNext').disabled = !ok;
 }
 
@@ -2373,6 +2422,50 @@ function setMode(m, btn) {
 function togAct(id, btn) {
   btn.classList.toggle('sel');
   wiz.acts = btn.classList.contains('sel') ? [...wiz.acts, id] : wiz.acts.filter(a => a !== id);
+}
+
+// ── Gepäck (Wizard Schritt "ws2b") ──
+const LUG_META = {
+  rucksack:  { icon:'🎒', de:'Rucksack',    en:'Backpack' },
+  trolley_s: { icon:'🧳', de:'Trolley (S)', en:'Trolley (S)' },
+  koffer_m:  { icon:'🧳', de:'Koffer (M)',  en:'Suitcase (M)' },
+  koffer_l:  { icon:'🧳', de:'Koffer (L)',  en:'Suitcase (L)' }
+};
+function lugLabel(key) { const m = LUG_META[key]; if (!m) return key; return lang==='en' ? m.en : m.de; }
+
+function togLuggage(id, btn) {
+  btn.classList.toggle('sel');
+  wiz.luggage = btn.classList.contains('sel') ? [...wiz.luggage, id] : wiz.luggage.filter(l => l !== id);
+  updateNextBtn();
+}
+
+function recommendLuggage(nights) {
+  if (nights <= 2)  return 'rucksack';
+  if (nights <= 5)  return 'trolley_s';
+  if (nights <= 10) return 'koffer_m';
+  return 'koffer_l';
+}
+
+let _lugHintShown = false;
+function updateLugHint() {
+  const nights = calcNights(wiz.from, wiz.to);
+  const rec = recommendLuggage(nights);
+  const hint = document.getElementById('lugHint');
+  hint.style.display = 'block';
+  hint.innerHTML = `💡 ${lang==='en'?'For':'Bei'} ${nights} ${nights===1?t('night'):t('nights')} ${lang==='en'?'we recommend':'empfehlen wir'}: ${LUG_META[rec].icon} <strong>${lugLabel(rec)}</strong>`;
+
+  document.querySelectorAll('#lugGrid .act-btn').forEach((b,i) => {
+    const key = Object.keys(LUG_META)[i];
+    b.classList.toggle('recommended', key === rec);
+  });
+
+  // Beim allerersten Betreten dieses Schritts die Empfehlung als Startpunkt vorauswählen
+  if (!_lugHintShown && wiz.luggage.length === 0) {
+    const idx = Object.keys(LUG_META).indexOf(rec);
+    const btn = document.querySelectorAll('#lugGrid .act-btn')[idx];
+    if (btn) togLuggage(rec, btn);
+  }
+  _lugHintShown = true;
 }
 
 function onDestInput() {
@@ -2557,12 +2650,13 @@ function updateSummary() {
   const nights = calcNights(wiz.from, wiz.to);
   const icons = {tauchen:'🤿',golf:'⛳',ski:'⛷️',wandern:'🥾',yoga:'🧘',sonstiger_sport:'🏓'};
   const acts = wiz.acts.map(a => icons[a]||a).join(' ');
+  const lug = (wiz.luggage||[]).map(l => LUG_META[l]?.icon||'📦').join(' ');
   const eventIcons2 = { urlaub:'🏖️', business:'💼', konzert:'🎸', kultur:'🎭', sport:'⚽', familie:'👨‍👩‍👧', bikepacking:'🚴', bildung:'🎓' };
   const eventLabels = { urlaub: t('evUrlaub'), business: t('evBusiness'), konzert: t('evKonzert'), kultur: t('evKultur'), sport: t('evSport'), familie: t('evFamilie'), bikepacking: t('evBikepacking'), bildung: t('evBildung') };
   const eventKey = wiz.event || wiz.type || 'urlaub';
   const type = (eventIcons2[eventKey] || '🏖️') + ' ' + (eventLabels[eventKey] || eventKey);
   document.getElementById('wSumText').innerHTML =
-    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} ${nights===1?t('night'):t('nights')}<br>${type} · ${wiz.abroad?'✈️ '+t('abroad'):'🏠 '+t('inland')}${acts?' · '+acts:''}`;
+    `${fmtDate(wiz.from)} – ${fmtDate(wiz.to)} · ${nights} ${nights===1?t('night'):t('nights')}<br>${type} · ${wiz.abroad?'✈️ '+t('abroad'):'🏠 '+t('inland')}${acts?' · '+acts:''}${lug?'<br>'+lug:''}`;
 }
 
 async function createTrip() {
@@ -2579,7 +2673,7 @@ async function createTrip() {
       date_from: wiz.from, date_to: wiz.to,
       trip_type: wiz.type, event_type: wiz.event || wiz.type, is_abroad: wiz.abroad,
       is_bikepacking: wiz.bike, bike_mode: wiz.mode,
-      activities: wiz.acts, climate: wiz.climate, avg_temp: wiz.temp,
+      activities: wiz.acts, luggage: wiz.luggage, climate: wiz.climate, avg_temp: wiz.temp,
       notes
     });
 
@@ -2719,7 +2813,8 @@ async function openTrip(id) {
     const tripBack = document.getElementById('tripBackBtn');
     if (tripBack) tripBack.textContent = `← ${lang==='en'?'Back':'Zurück'}`;
     document.getElementById('tName').textContent  = curTrip.name;
-    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}`;
+    const lugIcons = (curTrip.luggage||[]).map(l => LUG_META[l]?.icon||'📦').join(' ');
+    document.getElementById('tMeta').textContent  = `${fmtDate(curTrip.date_from)} – ${fmtDate(curTrip.date_to)} · ${curTrip.destination}${curTrip.destination_country ? ', '+curTrip.destination_country : ''}${curTrip.notes ? ' · 📝 '+curTrip.notes : ''}${lugIcons ? ' · '+lugIcons : ''}`;
 
     // Bei bereits abgeschlossener Reise Banner ausblenden
     const doneBanner = document.getElementById('tripDoneBanner');
@@ -3046,13 +3141,51 @@ function packRow(ti) {
   const qtyRaw = (ti.qty || '').replace('x','').trim();
   const qtyDisplay = qtyRaw ? `${qtyRaw}x` : '+';
   const qty    = `<span class="iqty" onclick="editQty('${ti.id}','${ti.qty||''}')" title="Menge ändern">${qtyDisplay}</span>`;
+  const lugOpts = curTrip?.luggage || [];
+  const lugMeta = ti.luggage_key ? LUG_META[ti.luggage_key] : null;
+  const lugBadge = lugOpts.length > 0
+    ? `<span class="ilug${lugMeta?' assigned':''}" id="lug_${ti.id}" onclick="openLugModal('${ti.id}')" title="${lang==='en'?'Assign to luggage':'Gepäckstück zuordnen'}">${lugMeta?lugMeta.icon:'🧳'}</span>`
+    : '';
   return `<div class="item-row${chk?' faded':''}" id="pr_${ti.id}">
     <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
     <span class="iname${chk?' packed':''}">${((lang==='en'&&ti.items?.name_en)||ti.items?.name||'?')}</span>
+    ${lugBadge}
     ${qty}
     <button onclick="removeFromPack('${ti.id}')" title="Aus Packliste entfernen"
       style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 6px;opacity:0.5;line-height:1">✕</button>
   </div>`;
+}
+
+// ── Gepäck-Zuordnung pro Item ──
+let _lugModalTiId = null;
+function openLugModal(tiId) {
+  _lugModalTiId = tiId;
+  const ti = curItems.find(i => i.id === tiId);
+  const opts = curTrip?.luggage || [];
+  const wrap = document.getElementById('mLugOptions');
+  wrap.innerHTML = opts.map(key => {
+    const meta = LUG_META[key] || {icon:'📦'};
+    const active = ti?.luggage_key === key;
+    return `<button class="manage-btn${active?' primary':''}" style="text-align:left;display:flex;align-items:center;gap:10px;width:100%" onclick="setLuggageForItem('${key}')">
+      <span style="font-size:22px">${meta.icon}</span><span style="flex:1">${lugLabel(key)}</span>${active?'✓':''}
+    </button>`;
+  }).join('') + `<button class="manage-btn" style="text-align:left;display:flex;align-items:center;gap:10px;width:100%;color:var(--muted)" onclick="setLuggageForItem(null)">
+      <span style="font-size:22px">🚫</span><span style="flex:1">${lang==='en'?'Not assigned':'Nicht zugeordnet'}</span>${!ti?.luggage_key?'✓':''}
+    </button>`;
+  document.getElementById('mLug').classList.add('open');
+}
+async function setLuggageForItem(key) {
+  const tiId = _lugModalTiId;
+  const ti = curItems.find(i => i.id === tiId);
+  if (ti) ti.luggage_key = key;
+  closeModal('mLug');
+  const badge = document.getElementById('lug_' + tiId);
+  if (badge) {
+    const meta = key ? LUG_META[key] : null;
+    badge.textContent = meta ? meta.icon : '🧳';
+    badge.classList.toggle('assigned', !!meta);
+  }
+  await sbPatch('trip_items', { id: `eq.${tiId}` }, { luggage_key: key });
 }
 
 // ── Mengen-Modal ──
