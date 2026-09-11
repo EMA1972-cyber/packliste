@@ -359,6 +359,7 @@ body {
 .act-btn.recommended { box-shadow: 0 0 0 2px var(--blue-500); }
 .act-btn.recommended::after { content: '★'; position: absolute; top: 4px; right: 6px; font-size: 11px; color: var(--blue-500); }
 .ilug { font-size: 15px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; flex-shrink: 0; opacity: .35; border: 1px solid var(--border); background: white; }
+.ilug-tag { font-style: italic; font-weight: 500; color: var(--blue-500); }
 .ilug.assigned { opacity: 1; background: var(--blue-50); border-color: var(--blue-100); }
 
 .ja-nein { display: flex; gap: 6px; flex-shrink: 0; }
@@ -891,12 +892,14 @@ body {
     <button class="tab-btn active" onclick="showTab('Vorschlaege',this)"><span data-i18n="tabSuggestions">📋 Vorschläge</span><br><span class="tab-pct" id="pctVorschlaege">–</span></button>
     <button class="tab-btn" onclick="showTab('Packen',this)"><span data-i18n="tabPack">🧳 Packen</span><br><span class="tab-pct" id="pctPacken">–</span></button>
     <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none" data-i18n="tabBags">🚲 Taschen</button>
+    <button class="tab-btn" id="tabGepaeck" onclick="showTab('Gepaeck',this)" style="display:none" data-i18n="tabLuggage">🧳 Gepäck</button>
     <button class="tab-btn" onclick="showTab('Todos',this)"><span data-i18n="tabTodos">✅ Aufgaben</span><br><span class="tab-pct" id="pctTodos">–</span></button>
   </div>
 
   <div class="tab-pane active" id="tpVorschlaege"></div>
   <div class="tab-pane" id="tpPacken"></div>
   <div class="tab-pane" id="tpTaschen"></div>
+  <div class="tab-pane" id="tpGepaeck"></div>
   <div class="tab-pane" id="tpTodos"></div>
 
   <button class="fab" onclick="openPool()" id="fabRemember">💡 Für nächstes Mal merken</button>
@@ -1165,6 +1168,7 @@ const TRANSLATIONS = {
     tabSuggestions: '📋 Vorschläge',
     tabPack: '🧳 Packen',
     tabBags: '🚲 Taschen',
+    tabLuggage: '🧳 Gepäck',
     tabTodos: '✅ Aufgaben',
     finishTrip: '✅ Reise abschließen',
     // Suggestions
@@ -1356,6 +1360,7 @@ const TRANSLATIONS = {
     tabSuggestions: '📋 Suggestions',
     tabPack: '🧳 Pack',
     tabBags: '🚲 Bags',
+    tabLuggage: '🧳 Luggage',
     tabTodos: '✅ To-Dos',
     finishTrip: '✅ Complete trip',
     // Suggestions
@@ -2847,6 +2852,7 @@ function renderAll(subs) {
   renderPacken(s);
   renderTodos();
   renderTaschen(s);
+  renderGepaeck();
 }
 
 function updateProgress() {
@@ -3153,11 +3159,12 @@ function packRow(ti) {
   const lugOpts = curTrip?.luggage || [];
   const lugMeta = ti.luggage_key ? LUG_META[ti.luggage_key] : null;
   const lugBadge = lugOpts.length > 0
-    ? `<span class="ilug${lugMeta?' assigned':''}" id="lug_${ti.id}" onclick="openLugModal('${ti.id}')" title="${lang==='en'?'Assign to luggage':'Gepäckstück zuordnen'}">${lugMeta?lugMeta.icon:'🧳'}</span>`
+    ? `<span class="ilug${lugMeta?' assigned':''}" onclick="openLugModal('${ti.id}')" title="${lang==='en'?'Assign to luggage':'Gepäckstück zuordnen'}">${lugMeta?lugMeta.icon:'🧳'}</span>`
     : '';
+  const lugTag = lugMeta ? ` <small class="ilug-tag">${lugLabel(ti.luggage_key)}</small>` : '';
   return `<div class="item-row${chk?' faded':''}" id="pr_${ti.id}">
     <div class="ichk${chk?' on':''}" onclick="checkItem('${ti.id}',${!chk})">${chk?'✓':''}</div>
-    <span class="iname${chk?' packed':''}">${((lang==='en'&&ti.items?.name_en)||ti.items?.name||'?')}</span>
+    <span class="iname${chk?' packed':''}">${((lang==='en'&&ti.items?.name_en)||ti.items?.name||'?')}${lugTag}</span>
     ${lugBadge}
     ${qty}
     <button onclick="removeFromPack('${ti.id}')" title="Aus Packliste entfernen"
@@ -3188,13 +3195,9 @@ async function setLuggageForItem(key) {
   const ti = curItems.find(i => i.id === tiId);
   if (ti) ti.luggage_key = key;
   closeModal('mLug');
-  const badge = document.getElementById('lug_' + tiId);
-  if (badge) {
-    const meta = key ? LUG_META[key] : null;
-    badge.textContent = meta ? meta.icon : '🧳';
-    badge.classList.toggle('assigned', !!meta);
-  }
   await sbPatch('trip_items', { id: `eq.${tiId}` }, { luggage_key: key });
+  renderPacken(window._subs);
+  renderGepaeck();
 }
 
 // ── Mengen-Modal ──
@@ -3368,6 +3371,70 @@ function renderTaschen(subs) {
   }
 
   document.getElementById('tpTaschen').innerHTML = h + '<div class="spacer"></div>';
+}
+
+// ── GEPÄCK-ÜBERSICHT (normale Reisen, nach Gepäckstück gruppiert) ──
+function renderGepaeck() {
+  const tab = document.getElementById('tabGepaeck');
+  const lugKeys = curTrip?.luggage || [];
+  if (curTrip.is_bikepacking || lugKeys.length === 0) {
+    tab.style.display = 'none';
+    return;
+  }
+  tab.style.display = '';
+
+  const jaItems = curItems.filter(ti => ti.decision === 'ja');
+  let h = '';
+
+  lugKeys.forEach(key => {
+    const items = jaItems.filter(ti => ti.luggage_key === key);
+    if (!items.length) return;
+    const p = items.filter(i => i.is_checked).length;
+    const meta = LUG_META[key] || { icon:'📦' };
+
+    const _ck = `gepaeck_${key}`;
+    const _collapsed = collapsedCats.has(_ck);
+    h += `<div class="cat-block" data-ck="${_ck}">
+      <div class="cat-hd" onclick="togCat(this)">
+        <span class="cat-hd-ico">${meta.icon}</span>
+        <span class="cat-hd-title">${lugLabel(key)}</span>
+        <span class="cat-count${p===items.length?' done':''}">${p}/${items.length}</span>
+        <span class="cat-chev${_collapsed?'':' open'}">▼</span>
+      </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
+
+    items.forEach(ti => h += packRow(ti));
+
+    h += `</div></div>`;
+  });
+
+  // Zugeordnete-aber-nicht-erfasste + noch nicht zugeordnete JA-Items separat zeigen
+  const unassigned = jaItems.filter(ti => !ti.luggage_key || !lugKeys.includes(ti.luggage_key));
+  if (unassigned.length) {
+    const p = unassigned.filter(i => i.is_checked).length;
+    const _ck = `gepaeck_unassigned`;
+    const _collapsed = collapsedCats.has(_ck);
+    h += `<div class="cat-block" data-ck="${_ck}">
+      <div class="cat-hd" onclick="togCat(this)">
+        <span class="cat-hd-ico">❓</span>
+        <span class="cat-hd-title">${lang==='en'?'Not assigned yet':'Noch nicht zugeordnet'}</span>
+        <span class="cat-count${p===unassigned.length?' done':''}">${p}/${unassigned.length}</span>
+        <span class="cat-chev${_collapsed?'':' open'}">▼</span>
+      </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
+
+    unassigned.forEach(ti => h += packRow(ti));
+
+    h += `</div></div>`;
+  }
+
+  if (!h) {
+    h = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
+      <div style="font-size:40px;margin-bottom:10px">🧳</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--ink)">${lang==='en'?'No items packed yet':'Noch keine Items gepackt'}</div>
+      <div style="font-size:13px;margin-top:5px">${lang==='en'?'Tap the bag icon on a packed item to assign it':'Beim Packen auf das Koffer-Symbol tippen, um zuzuordnen'}</div>
+    </div>`;
+  }
+
+  document.getElementById('tpGepaeck').innerHTML = h + '<div class="spacer"></div>';
 }
 
 // ── TODOS ──
