@@ -891,8 +891,8 @@ body {
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('Vorschlaege',this)"><span data-i18n="tabSuggestions">📋 Vorschläge</span><br><span class="tab-pct" id="pctVorschlaege">–</span></button>
     <button class="tab-btn" onclick="showTab('Packen',this)"><span data-i18n="tabPack">🧳 Packen</span><br><span class="tab-pct" id="pctPacken">–</span></button>
-    <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none" data-i18n="tabBags">🚲 Taschen</button>
-    <button class="tab-btn" id="tabGepaeck" onclick="showTab('Gepaeck',this)" style="display:none" data-i18n="tabLuggage">🧳 Gepäck</button>
+    <button class="tab-btn" id="tabTaschen" onclick="showTab('Taschen',this)" style="display:none"><span data-i18n="tabBags">🚲 Taschen</span><br><span class="tab-pct" id="pctTaschen">–</span></button>
+    <button class="tab-btn" id="tabGepaeck" onclick="showTab('Gepaeck',this)" style="display:none"><span data-i18n="tabLuggage">🧳 Gepäck</span><br><span class="tab-pct" id="pctGepaeck">–</span></button>
     <button class="tab-btn" onclick="showTab('Todos',this)"><span data-i18n="tabTodos">✅ Aufgaben</span><br><span class="tab-pct" id="pctTodos">–</span></button>
   </div>
 
@@ -3072,9 +3072,13 @@ function updateTabProgress() {
   const elV = document.getElementById('pctVorschlaege');
   const elP = document.getElementById('pctPacken');
   const elT = document.getElementById('pctTodos');
+  const elTaschen = document.getElementById('pctTaschen');
+  const elGepaeck = document.getElementById('pctGepaeck');
   if (elV) elV.textContent = pctV + '%';
   if (elP) elP.textContent = pctP + '%';
   if (elT) elT.textContent = pctT + '%';
+  if (elTaschen) elTaschen.textContent = pctP + '%';
+  if (elGepaeck) elGepaeck.textContent = pctP + '%';
 
   // Gesamtfortschritt oben aktualisieren
   const progEl = document.querySelector('.prog-pct');
