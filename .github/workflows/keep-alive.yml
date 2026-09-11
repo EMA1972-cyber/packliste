@@ -2,29 +2,74 @@ name: Keep Supabase alive
 
 on:
   schedule:
-    - cron: '0 8 * * *'   # täglich 08:00 UTC
+    - cron: '0 8 * * *'   # taeglich ca. 08:00 UTC (+ zufaellige Wartezeit im Job)
   workflow_dispatch:        # manuell auslösbar
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
+      - name: Zufaellige Wartezeit (0-45 Min), damit der Ping nicht taeglich exakt gleich aussieht
+        run: |
+          # Bei manuellem Start (workflow_dispatch) sofort loslegen, bei geplanten Laeufen jittern
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DELAY=$(( RANDOM % 2700 ))
+            echo "Warte ${DELAY}s vor dem Ping ..."
+            sleep "$DELAY"
+          fi
+
+      - name: Supabase Heartbeat (INSERT + Cleanup + Read)
         env:
-          # Public anon key (RLS-geschützt) – gültiger Key seit 13.06.2026
           SUPA_ANON: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWdubHR4bHB5bWdsaWt5eW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTI0NTIsImV4cCI6MjA5NjkyODQ1Mn0.a6VhC2QFLw9KRmtNam3fXvX4KX0mfdEn7NoPCqpqYYk"
+          UA: "PacklisteApp-Heartbeat/1.2 (+github-actions)"
         run: |
           set -euo pipefail
-          URL="https://dzignltxlpymglikyyox.supabase.co/rest/v1/categories?select=id&limit=1"
-          echo "Pinging Supabase ..."
-          HTTP=$(curl -s -o /tmp/resp -w "%{http_code}" \
+          BASE="https://dzignltxlpymglikyyox.supabase.co/rest/v1"
+
+          echo "== 1) INSERT Heartbeat-Zeile =="
+          HTTP=$(curl -s -o /tmp/insert_resp -w "%{http_code}" \
+            -A "$UA" \
+            -X POST "$BASE/_keepalive_pings" \
             -H "apikey: ${SUPA_ANON}" \
             -H "Authorization: Bearer ${SUPA_ANON}" \
-            "$URL")
-          echo "HTTP status: $HTTP"
-          echo "Response body: $(cat /tmp/resp)"
-          if [ "$HTTP" != "200" ]; then
-            echo "::error::Supabase-Ping fehlgeschlagen (HTTP $HTTP) – Projekt evtl. pausiert oder Key ungueltig!"
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d '{}')
+          echo "HTTP status: $HTTP | Body: $(cat /tmp/insert_resp)"
+          if [ "$HTTP" != "201" ] && [ "$HTTP" != "200" ]; then
+            echo "::error::INSERT fehlgeschlagen (HTTP $HTTP) – Projekt evtl. pausiert oder Key ungueltig!"
             exit 1
           fi
-          echo "Supabase-Ping OK (HTTP 200) – Projekt aktiv."
+
+          sleep 3
+
+          echo "== 2) Kurze Lesevariation auf echten Daten =="
+          TABLES=("categories" "subcategories")
+          PICK=${TABLES[$((RANDOM % ${#TABLES[@]}))]}
+          HTTP2=$(curl -s -o /tmp/read_resp -w "%{http_code}" \
+            -A "$UA" \
+            -H "apikey: ${SUPA_ANON}" \
+            -H "Authorization: Bearer ${SUPA_ANON}" \
+            "$BASE/${PICK}?select=id&limit=3")
+          echo "Tabelle: $PICK | HTTP status: $HTTP2 | Body: $(cat /tmp/read_resp)"
+          if [ "$HTTP2" != "200" ]; then
+            echo "::error::Lesezugriff fehlgeschlagen (HTTP $HTTP2)"
+            exit 1
+          fi
+
+          sleep 2
+
+          echo "== 3) Aufraeumen: Heartbeat-Zeilen aelter als 14 Tage loeschen =="
+          CUTOFF=$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%S)Z
+          HTTP3=$(curl -s -o /tmp/delete_resp -w "%{http_code}" \
+            -A "$UA" \
+            -X DELETE "$BASE/_keepalive_pings?created_at=lt.${CUTOFF}" \
+            -H "apikey: ${SUPA_ANON}" \
+            -H "Authorization: Bearer ${SUPA_ANON}")
+          echo "HTTP status: $HTTP3 | Body: $(cat /tmp/delete_resp)"
+          # Cleanup ist nice-to-have, kein harter Fehler falls es mal hakt
+          if [ "$HTTP3" != "200" ] && [ "$HTTP3" != "204" ]; then
+            echo "::warning::Cleanup-DELETE lieferte HTTP $HTTP3 (nicht kritisch)"
+          fi
+
+          echo "== Supabase-Heartbeat komplett OK =="
