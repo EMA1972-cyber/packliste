@@ -3394,6 +3394,7 @@ function renderGepaeck() {
     const items = jaItems.filter(ti => ti.luggage_key === key);
     if (!items.length) return;
     const p = items.filter(i => i.is_checked).length;
+    const openItems = items.filter(i => !i.is_checked);
     const meta = LUG_META[key] || { icon:'📦' };
 
     const _ck = `gepaeck_${key}`;
@@ -3406,7 +3407,11 @@ function renderGepaeck() {
         <span class="cat-chev${_collapsed?'':' open'}">▼</span>
       </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
-    items.forEach(ti => h += packRow(ti));
+    if (openItems.length) {
+      openItems.forEach(ti => h += packRow(ti));
+    } else {
+      h += `<div style="padding:16px 20px;text-align:center;color:var(--muted);font-size:13px">✅ ${lang==='en'?'Everything for this bag is packed!':'Alles für dieses Gepäckstück ist gepackt!'}</div>`;
+    }
 
     h += `</div></div>`;
   });
@@ -3415,6 +3420,7 @@ function renderGepaeck() {
   const unassigned = jaItems.filter(ti => !ti.luggage_key || !lugKeys.includes(ti.luggage_key));
   if (unassigned.length) {
     const p = unassigned.filter(i => i.is_checked).length;
+    const openUnassigned = unassigned.filter(i => !i.is_checked);
     const _ck = `gepaeck_unassigned`;
     const _collapsed = collapsedCats.has(_ck);
     h += `<div class="cat-block" data-ck="${_ck}">
@@ -3425,7 +3431,11 @@ function renderGepaeck() {
         <span class="cat-chev${_collapsed?'':' open'}">▼</span>
       </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
-    unassigned.forEach(ti => h += packRow(ti));
+    if (openUnassigned.length) {
+      openUnassigned.forEach(ti => h += packRow(ti));
+    } else {
+      h += `<div style="padding:16px 20px;text-align:center;color:var(--muted);font-size:13px">✅ ${lang==='en'?'All done!':'Alles erledigt!'}</div>`;
+    }
 
     h += `</div></div>`;
   }
