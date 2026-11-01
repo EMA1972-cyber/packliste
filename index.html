@@ -1008,7 +1008,7 @@ body {
 <div class="modal-ov" id="mLug">
   <div class="modal-sh">
     <div class="modal-bar"></div>
-    <div class="modal-title" data-i18n="lugAssignTitle">🧳 Gepäckstück wählen</div>
+    <div class="modal-title" id="mLugTitle" data-i18n="lugAssignTitle">🧳 Gepäckstück wählen</div>
     <div id="mLugOptions" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
     <div class="modal-btns">
       <button class="btn-ghost" style="flex:1" onclick="closeModal('mLug')" data-i18n="close">Schließen</button>
@@ -2473,12 +2473,11 @@ function updateLugHint() {
     b.classList.toggle('recommended', key === rec);
   });
 
-  // Beim allerersten Betreten dieses Schritts die Empfehlung als Startpunkt vorauswählen
-  if (!_lugHintShown && wiz.luggage.length === 0) {
-    const idx = Object.keys(LUG_META).indexOf(rec);
-    const btn = document.querySelectorAll('#lugGrid .act-btn')[idx];
-    if (btn) togLuggage(rec, btn);
-  }
+  // Hinweis: früher wurde die Empfehlung hier automatisch als "ausgewählt" markiert
+  // (wiz.luggage bekam den Wert, ohne dass der Nutzer aktiv getippt hat). Das führte dazu,
+  // dass z.B. "Rucksack" in der Gepäck-Zuordnung auftauchte, obwohl er nie bewusst gewählt wurde.
+  // Jetzt ist die Empfehlung nur noch eine optische Markierung (Stern/Rahmen) — ausgewählt wird
+  // ausschließlich durch einen aktiven Klick auf den Button (togLuggage).
   _lugHintShown = true;
 }
 
@@ -3183,6 +3182,7 @@ function openLugModal(tiId) {
   const ti = curItems.find(i => i.id === tiId);
   const opts = curTrip?.luggage || [];
   const wrap = document.getElementById('mLugOptions');
+  document.getElementById('mLugTitle').textContent = lang==='en' ? '🧳 Choose luggage' : '🧳 Gepäckstück wählen';
   wrap.innerHTML = opts.map(key => {
     const meta = LUG_META[key] || {icon:'📦'};
     const active = ti?.luggage_key === key;
@@ -3202,6 +3202,34 @@ async function setLuggageForItem(key) {
   await sbPatch('trip_items', { id: `eq.${tiId}` }, { luggage_key: key });
   renderPacken(window._subs);
   renderGepaeck();
+}
+
+// ── Gepäck-Zuordnung in einem Schritt für ALLE noch nicht zugeordneten Items ──
+function openBulkLugModal(e) {
+  if (e) e.stopPropagation();
+  const opts = curTrip?.luggage || [];
+  const wrap = document.getElementById('mLugOptions');
+  document.getElementById('mLugTitle').textContent = lang==='en'
+    ? '🧳 Assign ALL unassigned items to…'
+    : '🧳 ALLE noch nicht zugeordneten Items zu…';
+  wrap.innerHTML = opts.map(key => {
+    const meta = LUG_META[key] || {icon:'📦'};
+    return `<button class="manage-btn" style="text-align:left;display:flex;align-items:center;gap:10px;width:100%" onclick="setLuggageForAllUnassigned('${key}')">
+      <span style="font-size:22px">${meta.icon}</span><span style="flex:1">${lugLabel(key)}</span>
+    </button>`;
+  }).join('');
+  document.getElementById('mLug').classList.add('open');
+}
+async function setLuggageForAllUnassigned(key) {
+  closeModal('mLug');
+  const lugKeys = curTrip?.luggage || [];
+  const targets = curItems.filter(ti => ti.decision === 'ja' && (!ti.luggage_key || !lugKeys.includes(ti.luggage_key)));
+  if (!targets.length) return;
+  targets.forEach(ti => ti.luggage_key = key);
+  renderPacken(window._subs);
+  renderGepaeck();
+  const ids = targets.map(ti => ti.id).join(',');
+  await sbPatch('trip_items', { id: `in.(${ids})` }, { luggage_key: key });
 }
 
 // ── Mengen-Modal ──
@@ -3428,6 +3456,7 @@ function renderGepaeck() {
         <span class="cat-hd-ico">❓</span>
         <span class="cat-hd-title">${lang==='en'?'Not assigned yet':'Noch nicht zugeordnet'}</span>
         <span class="cat-count${p===unassigned.length?' done':''}">${p}/${unassigned.length}</span>
+        ${openUnassigned.length ? `<button class="cat-add-btn" onclick="openBulkLugModal(event)" title="${lang==='en'?'Assign all to one bag':'Alle einem Gepäckstück zuordnen'}">🧳➡️</button>` : ''}
         <span class="cat-chev${_collapsed?'':' open'}">▼</span>
       </div><div class="cat-body"${_collapsed?' style="display:none"':''}>`;
 
